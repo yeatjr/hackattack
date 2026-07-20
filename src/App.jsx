@@ -9,7 +9,7 @@ import {
   Settings, ShieldCheck, ChevronRight, ChevronDown, ChevronUp,
   DollarSign, AlertTriangle, CheckCircle2, TrendingDown, Sparkles,
   ArrowUpRight, ArrowDownRight, Bell, Search, Play, Pause, Plus, Info, Target, Heart,
-  Clock, Zap, UserX, MessageSquare, X,
+  Clock, Zap, UserX, MessageSquare, X, Globe,
 } from "lucide-react";
 
 // ─── FORMULAS & CONSTANTS ─────────────────────────────────────────────────────
@@ -83,61 +83,61 @@ const computeMetrics = ({ S, N, C, ARPU, promoters, detractors }) => {
 
 const customers = [
   {
-    id: 1,  name: "Acme Corp",         tier: "Enterprise", churn: 82, ltv: 142000, rar: 116440, action: "Empathetic Offboarding: Route to human, suppress automated emails",   health: 23, segment: "At-Risk",
+    id: 1,  name: "Sarah Jenkins",      tier: "Enterprise", churn: 82, ltv: 142000, rar: 116440, action: "Empathetic Offboarding: Route to human, suppress automated emails",   health: 23, segment: "At-Risk",
     stage: "Retention", stageIdx: 2,
     stageMetrics: { npsScore: -12, supportCsat: 2.1, usageConsistency: 22 },
     events: ["Missed renewal meeting","3 support tickets filed in 7 days","Login frequency down 62%"],
   },
   {
-    id: 2,  name: "BlueSky Analytics", tier: "Enterprise", churn: 71, ltv: 98000,  rar: 69580,  action: "Offer flexible pause/downgrade (Soft Landing)",                            health: 34, segment: "At-Risk",
+    id: 2,  name: "Marcus Chen",        tier: "Enterprise", churn: 71, ltv: 98000,  rar: 69580,  action: "Offer flexible pause/downgrade (Soft Landing)",                            health: 34, segment: "At-Risk",
     stage: "Retention", stageIdx: 2,
     stageMetrics: { npsScore: 2, supportCsat: 2.8, usageConsistency: 41 },
     events: ["Downgrade inquiry via live chat","Low usage on Analytics module","QBR scheduled for next week"],
   },
   {
-    id: 3,  name: "Meridian Group",    tier: "Premium",    churn: 65, ltv: 54000,  rar: 35100,  action: "Trigger 'Spotify-style' Personalized Value Recap (Show ROI)",              health: 41, segment: "Quiet Payer",
+    id: 3,  name: "Elena Rostova",      tier: "Premium",    churn: 65, ltv: 54000,  rar: 35100,  action: "Trigger 'Spotify-style' Personalized Value Recap (Show ROI)",              health: 41, segment: "Quiet Payer",
     stage: "Engagement", stageIdx: 1,
     stageMetrics: { featureAdoption: 28, sessionsPerWeek: 1.4, featureGap: 5 },
     events: ["Only 2 of 7 Premium features used","Last session: 8 days ago","No API usage detected"],
   },
   {
-    id: 4,  name: "Nova Systems",      tier: "Premium",    churn: 58, ltv: 47000,  rar: 27260,  action: "Trigger automated dunning management for failed card",                     health: 49, segment: "Quiet Payer",
+    id: 4,  name: "David Miller",       tier: "Premium",    churn: 58, ltv: 47000,  rar: 27260,  action: "Trigger automated dunning management for failed card",                     health: 49, segment: "Quiet Payer",
     stage: "Engagement", stageIdx: 1,
     stageMetrics: { featureAdoption: 35, sessionsPerWeek: 2.1, featureGap: 4 },
     events: ["Automation feature never activated","Session duration declining","Budget review flagged in CRM"],
   },
   {
-    id: 5,  name: "Vertex Solutions",  tier: "Enterprise", churn: 54, ltv: 110000, rar: 59400,  action: "Offer flexible pause/downgrade (Soft Landing)",                            health: 52, segment: "At-Risk",
+    id: 5,  name: "Sarah Montgomery",   tier: "Enterprise", churn: 54, ltv: 110000, rar: 59400,  action: "Offer flexible pause/downgrade (Soft Landing)",                            health: 52, segment: "At-Risk",
     stage: "Retention", stageIdx: 2,
     stageMetrics: { npsScore: 18, supportCsat: 3.2, usageConsistency: 58 },
     events: ["Champion left the company","New admin user onboarding","Positive QBR last quarter"],
   },
   {
-    id: 6,  name: "Cascade Partners",  tier: "Basic",      churn: 47, ltv: 12000,  rar: 5640,   action: "Offer flexible pause/downgrade (Soft Landing)",                            health: 60, segment: "Casual",
+    id: 6,  name: "Oliver Vance",       tier: "Basic",      churn: 47, ltv: 12000,  rar: 5640,   action: "Offer flexible pause/downgrade (Soft Landing)",                            health: 60, segment: "Casual",
     stage: "Onboarding", stageIdx: 0,
     stageMetrics: { setupCompletion: 62, timeToFirstValue: 14, supportTickets: 4 },
     events: ["Setup only 62% complete","Team members not yet invited","First value milestone not reached"],
   },
   {
-    id: 7,  name: "Horizon Tech",      tier: "Premium",    churn: 39, ltv: 38000,  rar: 14820,  action: "Grant VIP early access / Anniversary Perk (Loyalty)",                      health: 67, segment: "Power User",
+    id: 7,  name: "Sophia Martinez",    tier: "Premium",    churn: 39, ltv: 38000,  rar: 14820,  action: "Grant VIP early access / Anniversary Perk (Loyalty)",                      health: 67, segment: "Power User",
     stage: "Loyalty", stageIdx: 3,
     stageMetrics: { expansionRevenue: 8400, referrals: 2, feedbackSubmissions: 7 },
-    events: ["Referred Summit Digital","Submitted 3 feature requests","Enrolled in beta program"],
+    events: ["Referred Lucas Vance","Submitted 3 feature requests","Enrolled in beta program"],
   },
   {
-    id: 8,  name: "Summit Digital",    tier: "Basic",      churn: 31, ltv: 8000,   rar: 2480,   action: "Trigger 'Spotify-style' Personalized Value Recap (Show ROI)",              health: 72, segment: "Casual",
+    id: 8,  name: "Lucas Vance",        tier: "Basic",      churn: 31, ltv: 8000,   rar: 2480,   action: "Trigger 'Spotify-style' Personalized Value Recap (Show ROI)",              health: 72, segment: "Casual",
     stage: "Engagement", stageIdx: 1,
     stageMetrics: { featureAdoption: 55, sessionsPerWeek: 3.2, featureGap: 1 },
-    events: ["Arrived via Horizon Tech referral","Strong basic feature usage","Ready for upgrade conversation"],
+    events: ["Arrived via Sophia Martinez referral","Strong basic feature usage","Ready for upgrade conversation"],
   },
   {
-    id: 9,  name: "Apex Ventures",     tier: "Enterprise", churn: 24, ltv: 88000,  rar: 21120,  action: "Grant VIP early access / Anniversary Perk (Loyalty)",                      health: 79, segment: "Power User",
+    id: 9,  name: "Emma Harrison",      tier: "Enterprise", churn: 24, ltv: 88000,  rar: 21120,  action: "Grant VIP early access / Anniversary Perk (Loyalty)",                      health: 79, segment: "Power User",
     stage: "Loyalty", stageIdx: 3,
     stageMetrics: { expansionRevenue: 22000, referrals: 4, feedbackSubmissions: 12 },
     events: ["Expanded to 2 additional teams","Submitted roadmap feedback","Attended annual user conference"],
   },
   {
-    id: 10, name: "Clearwater Inc",    tier: "Basic",      churn: 18, ltv: 6000,   rar: 1080,   action: "Grant VIP early access / Anniversary Perk (Loyalty)",                      health: 88, segment: "Power User",
+    id: 10, name: "Jonathan Reynolds", tier: "Basic",      churn: 18, ltv: 6000,   rar: 1080,   action: "Grant VIP early access / Anniversary Perk (Loyalty)",                      health: 88, segment: "Power User",
     stage: "Loyalty", stageIdx: 3,
     stageMetrics: { expansionRevenue: 1200, referrals: 1, feedbackSubmissions: 3 },
     events: ["Consistent weekly usage","Gave NPS score of 10","Exploring Premium upgrade"],
@@ -187,7 +187,7 @@ const ACTION_IMPACTS = {
 // ─── CUSTOMER HISTORY DATA ──────────────────────────────────────────────────
 
 const CUSTOMER_HISTORIES = {
-  1: [ // Acme Corp
+  1: [ // Sarah Jenkins
     { date:"2024-11-15", type:"churn_signal",  title:"Login Frequency Dropped 62%",             detail:"Weekly logins fell from 18 to 7 — flagged by health scoring engine." },
     { date:"2024-11-12", type:"support",       title:"Support Ticket #4821 Opened",             detail:"API timeout errors on Salesforce sync. Resolved by engineering in 6h." },
     { date:"2024-10-28", type:"communication", title:"QBR Attempt — No Response",               detail:"CSM sent QBR invite; champion did not respond within 5 business days." },
@@ -203,7 +203,7 @@ const CUSTOMER_HISTORIES = {
     { date:"2023-11-01", type:"expansion",     title:"Upgraded to Enterprise Tier",             detail:"Upgraded from Premium — added SSO, advanced analytics, and API access." },
     { date:"2023-09-15", type:"onboarding",    title:"Account Created",                        detail:"Initial setup completed. Assigned CSM and onboarding success plan." },
   ],
-  2: [ // BlueSky Analytics
+  2: [ // Marcus Chen
     { date:"2024-11-10", type:"churn_signal",  title:"Downgrade Inquiry via Live Chat",        detail:"User asked about cancelling Analytics add-on. CSM alerted immediately." },
     { date:"2024-10-22", type:"engagement",    title:"Analytics Module Usage Declined",        detail:"Monthly active users on Analytics fell from 12 to 4 over 30 days." },
     { date:"2024-10-05", type:"communication", title:"QBR Scheduled for Next Week",             detail:"CSM confirmed attendance of 3 stakeholders. Risk deck prepared." },
@@ -213,7 +213,7 @@ const CUSTOMER_HISTORIES = {
     { date:"2024-05-20", type:"milestone",     title:"First Automated Report Sent",            detail:"Account reached reporting automation milestone after 60 days." },
     { date:"2024-03-01", type:"onboarding",    title:"Account Created",                        detail:"Enterprise signup via direct sales. Full onboarding session booked." },
   ],
-  3: [ // Meridian Group
+  3: [ // Elena Rostova
     { date:"2024-11-08", type:"engagement",    title:"Last Session: 8 Days Ago",               detail:"No login detected in 8 days. Automated re-engagement email triggered." },
     { date:"2024-10-14", type:"churn_signal",  title:"Feature Usage Gap Detected",             detail:"5 of 7 Premium features never activated. Health score dropped to 41." },
     { date:"2024-09-25", type:"support",       title:"API Activation Ticket Filed",            detail:"User unsure how to connect API. L1 support provided documentation." },
@@ -222,7 +222,7 @@ const CUSTOMER_HISTORIES = {
     { date:"2024-05-18", type:"onboarding",    title:"Onboarding Completed",                   detail:"Setup wizard finished. Only core modules configured (2/7)." },
     { date:"2024-04-02", type:"onboarding",    title:"Account Created",                        detail:"Premium signup. Initial contact made by inside sales team." },
   ],
-  4: [ // Nova Systems
+  4: [ // David Miller
     { date:"2024-11-05", type:"churn_signal",  title:"Budget Review Flagged in CRM",           detail:"Account champion mentioned Q1 budget cuts in email. CSM alerted." },
     { date:"2024-10-18", type:"engagement",    title:"Automation Feature Never Activated",     detail:"30 days post-onboarding — Automation module still at 0% usage." },
     { date:"2024-09-30", type:"support",       title:"Import Failure — 7 Errors in 5 Days",   detail:"Recurring CSV import failures. Root cause: malformed column headers." },
@@ -230,7 +230,7 @@ const CUSTOMER_HISTORIES = {
     { date:"2024-07-10", type:"onboarding",    title:"Onboarding Completed",                   detail:"Setup score 78%. Automation module skipped by user during setup." },
     { date:"2024-06-15", type:"onboarding",    title:"Account Created",                        detail:"Premium signup via marketing webinar lead." },
   ],
-  5: [ // Vertex Solutions
+  5: [ // Sarah Montgomery
     { date:"2024-11-02", type:"communication", title:"New Admin User Onboarding Started",      detail:"Previous champion (Sarah M.) left. Re-onboarding initiated for new admin." },
     { date:"2024-10-25", type:"churn_signal",  title:"Champion Left the Company",              detail:"Sarah M. (primary champion) resigned. Account now at heightened risk." },
     { date:"2024-09-10", type:"nps",           title:"NPS Survey: 7/10",                        detail:"\"Solid platform. Our team is still getting used to the advanced features.\"" },
@@ -239,28 +239,28 @@ const CUSTOMER_HISTORIES = {
     { date:"2024-02-20", type:"milestone",     title:"Power User Milestone Hit",               detail:"7 of 9 Enterprise features active. Team usage at 85% weekly." },
     { date:"2023-11-10", type:"onboarding",    title:"Account Created",                        detail:"Enterprise deal closed. Full white-glove onboarding scheduled." },
   ],
-  6: [ // Cascade Partners
+  6: [ // Oliver Vance
     { date:"2024-11-14", type:"churn_signal",  title:"Day 14 — First Value Not Reached",      detail:"Setup only 62% complete. Time-to-first-value deadline missed." },
     { date:"2024-11-10", type:"support",       title:"Support Ticket — Team Invite Issue",    detail:"User couldn't invite team members. Permissions bug identified and fixed." },
     { date:"2024-11-05", type:"onboarding",    title:"Onboarding Email Series Started",       detail:"5-email drip sequence initiated. Open rate: 80%." },
     { date:"2024-11-01", type:"onboarding",    title:"Account Created",                       detail:"Basic plan signup via self-serve. Onboarding wizard started." },
   ],
-  7: [ // Horizon Tech
+  7: [ // Sophia Martinez
     { date:"2024-11-01", type:"expansion",     title:"Enrolled in Beta Program",              detail:"Invited to test v2 reporting engine. Provided detailed feedback within 48h." },
-    { date:"2024-10-12", type:"milestone",     title:"3 Feature Requests Shipped",            detail:"Product team delivered 3 of Horizon Tech's roadmap requests." },
-    { date:"2024-09-05", type:"expansion",     title:"Referred Summit Digital",               detail:"Successful referral — Summit Digital signed Basic plan. $8k ACV added." },
+    { date:"2024-10-12", type:"milestone",     title:"3 Feature Requests Shipped",            detail:"Product team delivered 3 of Sophia Martinez's roadmap requests." },
+    { date:"2024-09-05", type:"expansion",     title:"Referred Lucas Vance",                  detail:"Successful referral — Lucas Vance signed Basic plan. $8k ACV added." },
     { date:"2024-07-20", type:"nps",           title:"NPS Survey: 9/10",                       detail:"\"Best-in-class for our use case. Would recommend to any SaaS team.\"" },
     { date:"2024-05-10", type:"communication", title:"Co-Marketing Case Study Published",     detail:"Joint success story published on blog — 2.4k views in first week." },
     { date:"2024-01-15", type:"milestone",     title:"2-Year Loyalty Milestone",             detail:"Recognised with personalised gift and dedicated roadmap session." },
     { date:"2023-06-01", type:"onboarding",    title:"Account Created",                       detail:"Premium plan. Self-serve signup with immediate feature adoption." },
   ],
-  8: [ // Summit Digital
+  8: [ // Lucas Vance
     { date:"2024-10-30", type:"engagement",    title:"Upgrade Conversation Initiated",        detail:"CSM reached out re: Premium upgrade. Champion requested pricing deck." },
     { date:"2024-10-01", type:"milestone",     title:"Strong Basic Feature Usage",            detail:"All 4 Basic-tier features activated. Weekly usage consistently above benchmark." },
-    { date:"2024-09-15", type:"onboarding",    title:"Arrived via Horizon Tech Referral",    detail:"Referred by Horizon Tech. Onboarded within 3 days of signup." },
+    { date:"2024-09-15", type:"onboarding",    title:"Arrived via Sophia Martinez Referral",  detail:"Referred by Sophia Martinez. Onboarded within 3 days of signup." },
     { date:"2024-09-10", type:"onboarding",    title:"Account Created",                       detail:"Basic plan self-serve signup. Initial setup completed same day." },
   ],
-  9: [ // Apex Ventures
+  9: [ // Emma Harrison
     { date:"2024-11-05", type:"expansion",     title:"Submitted Roadmap Feedback",           detail:"Submitted 12 detailed feature requests via roadmap portal." },
     { date:"2024-10-20", type:"expansion",     title:"Expanded to 2 Additional Teams",      detail:"Finance and Operations teams onboarded. Seat count grew from 22 to 41." },
     { date:"2024-09-14", type:"milestone",     title:"Annual User Conference Attended",      detail:"CEO and 3 team leads attended. Spoke on retention ROI panel." },
@@ -270,7 +270,7 @@ const CUSTOMER_HISTORIES = {
     { date:"2023-06-01", type:"expansion",     title:"Upgraded to Enterprise",              detail:"Upgraded from Premium after 6 months. Full SSO and API integration live." },
     { date:"2022-11-20", type:"onboarding",    title:"Account Created",                      detail:"Enterprise signup via strategic partnership program." },
   ],
-  10: [ // Clearwater Inc
+  10: [ // Jonathan Reynolds
     { date:"2024-10-28", type:"nps",           title:"NPS Survey: 10/10",                     detail:"\"Simple, powerful, and the support team is always there when we need them.\"" },
     { date:"2024-09-15", type:"engagement",    title:"Exploring Premium Upgrade",            detail:"User browsed Premium pricing page 4 times. Upgrade intent signal detected." },
     { date:"2024-07-04", type:"milestone",     title:"Consistent Weekly Usage — 6 Months",  detail:"6 consecutive months of above-benchmark weekly activity. Loyalty badge awarded." },
@@ -297,9 +297,9 @@ const HEALTH_ALERTS_DATA = [
     btnCls:     "bg-amber-500 hover:bg-amber-600 text-white",
     dotColor:   "bg-amber-400",
     accounts: [
-      { name: "Cascade Partners", detail: "Day 14 · Setup only 62% complete",  meta: "Basic"   },
-      { name: "TechStart Inc",    detail: "Day 18 · Setup only 45% complete",  meta: "Basic"   },
-      { name: "DataBridge Co",   detail: "Day 11 · Setup 71%, no team invite", meta: "Premium" },
+      { name: "Oliver Vance",      detail: "Day 14 · Setup only 62% complete",  meta: "Basic"   },
+      { name: "Leo Sterling",      detail: "Day 18 · Setup only 45% complete",  meta: "Basic"   },
+      { name: "Grace Kelly",       detail: "Day 11 · Setup 71%, no team invite", meta: "Premium" },
     ],
   },
   {
@@ -316,9 +316,9 @@ const HEALTH_ALERTS_DATA = [
     btnCls:     "bg-rose-500 hover:bg-rose-600 text-white",
     dotColor:   "bg-rose-400",
     accounts: [
-      { name: "Meridian Group", detail: "12 errors in 7 days · API timeout",  meta: "High" },
-      { name: "Nova Systems",   detail: "7 errors in 5 days · Import failed",  meta: "Med"  },
-      { name: "Summit Digital", detail: "4 errors in 3 days · Auth loop",     meta: "Low"  },
+      { name: "Elena Rostova", detail: "12 errors in 7 days · API timeout",  meta: "High" },
+      { name: "David Miller",   detail: "7 errors in 5 days · Import failed",  meta: "Med"  },
+      { name: "Lucas Vance",   detail: "4 errors in 3 days · Auth loop",     meta: "Low"  },
     ],
   },
   {
@@ -335,9 +335,9 @@ const HEALTH_ALERTS_DATA = [
     btnCls:     "bg-blue-500 hover:bg-blue-600 text-white",
     dotColor:   "bg-blue-400",
     accounts: [
-      { name: "Clearwater Inc",  detail: "38 days silent · Last: Email open",   meta: "Basic"      },
-      { name: "Apex Ventures",   detail: "33 days silent · Last: QBR meeting",  meta: "Enterprise" },
-      { name: "Summit Digital",  detail: "31 days silent · Last: Onboarding",   meta: "Basic"      },
+      { name: "Jonathan Reynolds", detail: "38 days silent · Last: Email open",   meta: "Basic"      },
+      { name: "Emma Harrison",     detail: "33 days silent · Last: QBR meeting",  meta: "Enterprise" },
+      { name: "Lucas Vance",       detail: "31 days silent · Last: Onboarding",   meta: "Basic"      },
     ],
   },
   {
@@ -354,9 +354,9 @@ const HEALTH_ALERTS_DATA = [
     btnCls:     "bg-purple-500 hover:bg-purple-600 text-white",
     dotColor:   "bg-purple-400",
     accounts: [
-      { name: "Acme Corp",          detail: "\"Support is completely unresponsive...\"",    meta: "Critical" },
-      { name: "BlueSky Analytics",  detail: "\"Considering cancelling our contract...\"",  meta: "High"     },
-      { name: "Nova Systems",       detail: "\"Regression broke our entire workflow...\"", meta: "High"     },
+      { name: "Sarah Jenkins",      detail: "\"Support is completely unresponsive...\"",    meta: "Critical" },
+      { name: "Marcus Chen",        detail: "\"Considering cancelling our contract...\"",  meta: "High"     },
+      { name: "David Miller",       detail: "\"Regression broke our entire workflow...\"", meta: "High"     },
     ],
   },
 ];
@@ -580,11 +580,11 @@ function CustomerTimeline({ events }) {
 
 function ProactiveHealthCenter() {
   const [alerts, setAlerts] = useState([
-    { id: 1, name: "Acme Corp",          category: "Sentiment Escalation",   rar: 116440, risk: "Critical", badgeCls: "text-rose-700 bg-rose-50 border border-rose-100", actionLabel: "Assign CSM" },
-    { id: 2, name: "BlueSky Analytics",  category: "Sentiment Escalation",   rar: 69580,  risk: "Critical", badgeCls: "text-rose-700 bg-rose-50 border border-rose-100", actionLabel: "Assign CSM" },
-    { id: 3, name: "Meridian Group",    category: "Predictive Friction",    rar: 35100,  risk: "At Risk",  badgeCls: "text-amber-700 bg-amber-50 border border-amber-100", actionLabel: "Outreach" },
-    { id: 4, name: "Cascade Partners",  category: "Onboarding Bottleneck",  rar: 5640,   risk: "At Risk",  badgeCls: "text-amber-700 bg-amber-50 border border-amber-100", actionLabel: "Send Nudge" },
-    { id: 5, name: "Apex Ventures",     category: "Orphaned Account",       rar: 21120,  risk: "At Risk",  badgeCls: "text-amber-700 bg-amber-50 border border-amber-100", actionLabel: "Schedule QBR" },
+    { id: 1, name: "Sarah Jenkins",      category: "Sentiment Escalation",   rar: 116440, risk: "Critical", badgeCls: "text-rose-700 bg-rose-50 border border-rose-100", actionLabel: "Assign CSM" },
+    { id: 2, name: "Marcus Chen",        category: "Sentiment Escalation",   rar: 69580,  risk: "Critical", badgeCls: "text-rose-700 bg-rose-50 border border-rose-100", actionLabel: "Assign CSM" },
+    { id: 3, name: "Elena Rostova",      category: "Predictive Friction",    rar: 35100,  risk: "At Risk",  badgeCls: "text-amber-700 bg-amber-50 border border-amber-100", actionLabel: "Outreach" },
+    { id: 4, name: "Oliver Vance",       category: "Onboarding Bottleneck",  rar: 5640,   risk: "At Risk",  badgeCls: "text-amber-700 bg-amber-50 border border-amber-100", actionLabel: "Send Nudge" },
+    { id: 5, name: "Emma Harrison",      category: "Orphaned Account",       rar: 21120,  risk: "At Risk",  badgeCls: "text-amber-700 bg-amber-50 border border-amber-100", actionLabel: "Schedule QBR" },
   ]);
 
   const handleAction = (id) => {
@@ -1009,7 +1009,7 @@ function Customer360View() {
         };
       case 3:
         return {
-          diagnosis: "Value forgetting gap. Meridian Group is using only 2 of their 7 Premium features and has been inactive for 8 days.",
+          diagnosis: "Value forgetting gap. Elena Rostova is using only 2 of their 7 Premium features and has been inactive for 8 days.",
           actionLabel: "Generate Year-in-Review Digest",
         };
       case 4:
@@ -1722,6 +1722,297 @@ function RetentionStrategyMatrix() {
   );
 }
 
+// ─── REGIONAL ISSUES DATA ────────────────────────────────────────────────────
+
+const REGIONAL_ISSUES = {
+  "silicon-valley": {
+    city: "San Francisco",
+    region: "North America (West)",
+    issue: "API Timeout Errors",
+    volume: 12,
+    severity: "Critical",
+    severityCls: "text-rose-700 bg-rose-50 border-rose-100",
+    affectedUsers: ["Sarah Jenkins", "Oliver Vance"],
+    nlpQuotes: [
+      "\"Salesforce sync fails silently. API returns 504 Gateway Timeout during batch imports.\"",
+      "\"API calls are taking upwards of 12 seconds since the v2.4 patch release.\""
+    ],
+    distribution: [
+      { name: "API Issues", value: 60 },
+      { name: "SSO Config", value: 25 },
+      { name: "Data Import", value: 15 }
+    ]
+  },
+  "new-york": {
+    city: "New York",
+    region: "North America (East)",
+    issue: "Billing & Failed Payments",
+    volume: 8,
+    severity: "High",
+    severityCls: "text-amber-700 bg-amber-50 border-amber-100",
+    affectedUsers: ["David Miller", "Lucas Vance"],
+    nlpQuotes: [
+      "\"Auto-renewal failed twice even though the card has sufficient credit. No warning sent.\"",
+      "\"Dunning emails are sending to expired admins instead of our accounting inbox.\""
+    ],
+    distribution: [
+      { name: "Failed Card", value: 50 },
+      { name: "Invoice Setup", value: 30 },
+      { name: "Dunning Loop", value: 20 }
+    ]
+  },
+  "london": {
+    city: "London",
+    region: "Europe (UK)",
+    issue: "Onboarding Stalls",
+    volume: 5,
+    severity: "Medium",
+    severityCls: "text-blue-700 bg-blue-50 border-blue-100",
+    affectedUsers: ["Oliver Vance"],
+    nlpQuotes: [
+      "\"Team invitation links expire too fast (24h). Admins have to keep re-sending them.\"",
+      "\"Setup checklist is confusing. Users get stuck at step 4 (integration keys) and leave.\""
+    ],
+    distribution: [
+      { name: "Invite Expiry", value: 45 },
+      { name: "Step Guide", value: 35 },
+      { name: "Team Setup", value: 20 }
+    ]
+  },
+  "tokyo": {
+    city: "Tokyo",
+    region: "Asia Pacific (JP)",
+    issue: "UI & Workflow Friction",
+    volume: 4,
+    severity: "Low",
+    severityCls: "text-slate-600 bg-slate-100 border-slate-200",
+    affectedUsers: ["Sophia Martinez"],
+    nlpQuotes: [
+      "\"Dashboard filters reset whenever we change tabs, forcing us to rebuild reports.\"",
+      "\"Navigation layout is confusing for our frontline support agents.\""
+    ],
+    distribution: [
+      { name: "Tab State", value: 55 },
+      { name: "Mobile View", value: 30 },
+      { name: "Colors", value: 15 }
+    ]
+  },
+  "sydney": {
+    city: "Sydney",
+    region: "Asia Pacific (AU)",
+    issue: "Value Forgetting",
+    volume: 2,
+    severity: "Low",
+    severityCls: "text-slate-600 bg-slate-100 border-slate-200",
+    affectedUsers: ["Jonathan Reynolds", "Emma Harrison"],
+    nlpQuotes: [
+      "\"Platform works well but we forget to check the dashboard unless there is an alert.\"",
+      "\"We need a weekly summary email to keep stakeholders aligned on value.\""
+    ],
+    distribution: [
+      { name: "Report Email", value: 70 },
+      { name: "CSM Touchpoint", value: 20 },
+      { name: "Alert Settings", value: 10 }
+    ]
+  }
+};
+
+function ReportsView() {
+  const [selectedHotspot, setSelectedHotspot] = useState("silicon-valley");
+  const data = REGIONAL_ISSUES[selectedHotspot];
+
+  return (
+    <div className="space-y-6">
+      {/* Header banner */}
+      <div className="bg-slate-900 border border-slate-800 rounded-md p-4 text-white flex items-center gap-4 shadow-sm font-sans">
+        <div className="w-8 h-8 bg-white/10 rounded flex items-center justify-center flex-shrink-0">
+          <Globe size={15} />
+        </div>
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-wider">User Issues Regional Map</h2>
+          <p className="text-[11px] text-slate-400 mt-0.5">Interactive geographical analysis of customer support friction points. Click on hotspots to view detail reports.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Interactive map box */}
+        <div className="lg:col-span-3 bg-white rounded-md border border-gray-200 p-4 flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-0.5">Issue Distribution Map</h3>
+            <p className="text-[10px] text-gray-405 mt-0.5 mb-4">Select a regional hub to load support logs and at-risk revenue metrics</p>
+          </div>
+
+          {/* SVG Map Container */}
+          <div className="relative w-full h-[280px] bg-slate-50 border border-slate-100 rounded flex items-center justify-center overflow-hidden select-none">
+            <svg viewBox="0 0 800 400" className="w-full h-full text-slate-300">
+              {/* Continental shapes simplified coordinates */}
+              {/* North America */}
+              <path d="M 80 80 L 250 80 L 220 180 L 150 200 L 100 150 Z M 160 200 L 180 250 L 160 270" fill="#f8fafc" stroke="#cbd5e1" strokeWidth={1} />
+              {/* South America */}
+              <path d="M 200 260 L 250 280 L 230 380 L 190 350 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth={1} />
+              {/* Europe */}
+              <path d="M 370 70 L 480 70 L 450 170 L 390 170 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth={1} />
+              {/* Africa */}
+              <path d="M 390 190 L 460 190 L 440 320 L 370 230 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth={1} />
+              {/* Asia */}
+              <path d="M 480 60 L 720 70 L 680 220 L 520 220 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth={1} />
+              {/* Australia */}
+              <path d="M 640 280 L 730 290 L 700 350 L 620 330 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth={1} />
+
+              {/* Grid Lines for tech aesthetic */}
+              <g stroke="#f1f5f9" strokeDasharray="3 3" strokeWidth={0.5}>
+                <line x1={0} y1={100} x2={800} y2={100} />
+                <line x1={0} y1={200} x2={800} y2={200} />
+                <line x1={0} y1={300} x2={800} y2={300} />
+                <line x1={200} y1={0} x2={200} y2={400} />
+                <line x1={400} y1={0} x2={400} y2={400} />
+                <line x1={600} y1={0} x2={600} y2={400} />
+              </g>
+
+              {/* Hotspots */}
+              {Object.entries(REGIONAL_ISSUES).map(([id, info]) => {
+                const coords = {
+                  "silicon-valley": { x: 120, y: 110 },
+                  "new-york":       { x: 210, y: 120 },
+                  "london":         { x: 410, y: 95  },
+                  "tokyo":          { x: 670, y: 115 },
+                  "sydney":         { x: 690, y: 310 }
+                }[id];
+
+                if (!coords) return null;
+
+                const isSelected = selectedHotspot === id;
+                const markerColor = info.severity === "Critical" ? "fill-rose-500 stroke-rose-600" :
+                                    info.severity === "High" ? "fill-amber-500 stroke-amber-600" :
+                                    "fill-blue-500 stroke-blue-600";
+
+                return (
+                  <g key={id} className="cursor-pointer" onClick={() => setSelectedHotspot(id)}>
+                    {/* Pulsing Outer Circle */}
+                    <circle cx={coords.x} cy={coords.y} r={isSelected ? 16 : 10} className={`${markerColor} opacity-20`} />
+                    {/* Inner Core Circle */}
+                    <circle cx={coords.x} cy={coords.y} r={6} className={`${markerColor} transition-all`} />
+                    {/* City Label */}
+                    <text x={coords.x} y={coords.y - 12} textAnchor="middle" className="text-[10px] font-bold fill-slate-700" style={{ fontFamily: "monospace" }}>
+                      {info.city}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+
+          <div className="mt-4 flex justify-between items-center text-[10px] text-slate-400 font-mono">
+            <span>Geographic Distribution Overlay</span>
+            <div className="flex gap-3">
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" /> Critical</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> High</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Med/Low</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Detailed logs box */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="bg-white rounded-md border border-gray-200 p-4 h-full flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider font-mono">{data.region}</span>
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase ${data.severityCls}`}>{data.severity} Priority</span>
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">{data.city}: {data.issue}</h3>
+              <p className="text-[10px] text-slate-405 mt-0.5">{data.volume} accounts reporting this week</p>
+
+              {/* Bar Chart representing sub issues */}
+              <div className="mt-4 pb-4 border-b border-gray-100">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Issue Breakdown</p>
+                <div className="space-y-2">
+                  {data.distribution.map(d => (
+                    <div key={d.name}>
+                      <div className="flex justify-between text-[10px] font-semibold text-slate-650 mb-0.5">
+                        <span>{d.name}</span>
+                        <span>{d.value}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div className="bg-blue-650 h-1.5 rounded-full" style={{ width: `${d.value}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Affected users */}
+              <div className="mt-4 pb-4 border-b border-gray-100">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Affected Accounts</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {data.affectedUsers.map(user => (
+                    <span key={user} className="bg-slate-100 border border-gray-200 text-slate-700 text-[10px] px-2 py-0.5 rounded font-semibold font-mono">
+                      👤 {user}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* User transcript quotes */}
+              <div className="mt-4">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">NLP Support Transcripts</p>
+                <div className="space-y-2.5 max-h-[140px] overflow-y-auto">
+                  {data.nlpQuotes.map((quote, idx) => (
+                    <div key={idx} className="bg-slate-50 border border-gray-200 rounded p-2.5 text-xs text-slate-600 leading-relaxed italic relative">
+                      {quote}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Global Issues list */}
+      <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
+        <div className="px-4 py-2.5 bg-slate-50 border-b border-gray-200">
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Issue Playbook Leaderboard</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-gray-200">
+                {["Issue Focus", "Severity", "Total Reports", "Revenue at Risk", "Active Playbook"].map(h => (
+                  <th key={h} className="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-left">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {[
+                { issue: "API Timeout Errors", severity: "Critical", count: 12, rar: 122080, playbook: "Deploy smart API retry sequence & alert dev team" },
+                { issue: "Billing & Failed Payments", severity: "High", count: 8, rar: 29740, playbook: "Initiate smart dunning process and payment page pop-ups" },
+                { issue: "Onboarding Stalls", severity: "Medium", count: 5, rar: 5640, playbook: "Auto-trigger walkthrough tours and client callback call" },
+                { issue: "UI & Workflow Friction", severity: "Low", count: 4, rar: 14820, playbook: "Send VIP reward survey & queue usability feedback" },
+                { issue: "Value Forgetting", severity: "Low", count: 2, rar: 22200, playbook: "Trigger personalized value recap digest" }
+              ].map(row => (
+                <tr key={row.issue} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-4 py-2.5 font-bold text-slate-800">{row.issue}</td>
+                  <td className="px-4 py-2.5">
+                    <span className={`px-2 py-0.5 rounded font-bold text-[9px] uppercase ${
+                      row.severity === "Critical" ? "bg-rose-100 text-rose-700" :
+                      row.severity === "High" ? "bg-amber-100 text-amber-700" :
+                      "bg-blue-100 text-blue-700"
+                    }`}>{row.severity}</span>
+                  </td>
+                  <td className="px-4 py-2.5 font-mono text-slate-600">{row.count} accounts</td>
+                  <td className="px-4 py-2.5 font-mono font-bold text-rose-600">${row.rar.toLocaleString()}</td>
+                  <td className="px-4 py-2.5 text-slate-650">{row.playbook}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── PLACEHOLDER ──────────────────────────────────────────────────────────────
 
 function PlaceholderView({ title, icon: Icon, description }) {
@@ -1746,7 +2037,6 @@ const navItems = [
   { id: "insights",   label: "Insights",     icon: Lightbulb       },
   { id: "simulator",  label: "Simulator",    icon: Activity        },
   { id: "reports",    label: "Reports",      icon: FileBarChart2   },
-  { id: "settings",   label: "Settings",     icon: Settings        },
 ];
 
 const pageMeta = {
@@ -1776,8 +2066,7 @@ export default function App() {
       case "customers":  return <Customer360View />;
       case "insights":   return <InsightsView />;
       case "simulator":  return <SimulatorView />;
-      case "reports":    return <PlaceholderView title="Reports"  icon={FileBarChart2} description="Export and schedule custom reports." />;
-      case "settings":   return <PlaceholderView title="Settings" icon={Settings}      description="Configure integrations, alerts, and team access." />;
+      case "reports":    return <ReportsView />;
       default: return null;
     }
   };
@@ -1818,15 +2107,15 @@ export default function App() {
           </nav>
         </div>
 
-        {/* Bottom Utility */}
-        <div className="p-3 border-t border-slate-800">
-          <button 
-            onClick={() => handleTabChange("settings")}
-            className="flex items-center gap-2.5 px-3 py-2 rounded text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200 w-full text-left cursor-pointer transition-colors"
-          >
-            <Settings size={14} />
-            <span>Settings</span>
-          </button>
+        {/* Bottom User Profile */}
+        <div className="p-3 border-t border-slate-850 flex items-center gap-2.5 text-slate-300 select-none">
+          <div className="w-8 h-8 rounded bg-blue-650 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+            JD
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-slate-200 truncate">Jane Doe</p>
+            <p className="text-[9px] text-slate-500 font-semibold uppercase tracking-wider">CS Director</p>
+          </div>
         </div>
       </aside>
 
