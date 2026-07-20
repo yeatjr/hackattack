@@ -2641,18 +2641,59 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
       <section className="bg-slate-50 border-t border-gray-200 text-slate-900 py-16 lg:py-24 px-6 sm:px-12 select-none">
         <div className="max-w-4xl mx-auto text-center space-y-8 relative">
           
-          {/* Chat bubbles mockups stack above heading */}
-          <div className="flex flex-col gap-3 items-center max-w-lg mx-auto mb-10">
-            <div className="bg-white border border-gray-200 rounded-xl p-3 text-[10px] text-slate-750 max-w-xs self-start text-left relative shadow-sm">
-              <span className="absolute -top-4 left-3 text-[9px] font-bold text-slate-400 uppercase tracking-wider">User Query</span>
-              How does ChurnGuard calculate risk?
-            </div>
-            <div className="bg-blue-600 text-white rounded-xl p-3 text-[10px] max-w-xs self-end text-left relative shadow-md">
-              <span className="absolute -top-4 right-3 text-[9px] font-bold text-blue-300 uppercase tracking-wider">Guardy response</span>
-              We combine usage consistency, support CSAT, and transcript sentiment text to generate real-time health scores...
-            </div>
-            <div className="hidden sm:block bg-white border border-gray-200 rounded-xl p-3 text-[10px] text-slate-655 max-w-xs self-start text-left shadow-sm">
-              What playbooks are supported?
+          {/* Chat bubbles mockups stack inside a structured chat window box above heading */}
+          <div className="flex justify-center mb-10">
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-xl max-w-sm w-full overflow-hidden select-none text-left">
+              {/* Chat Box Header */}
+              <div className="bg-slate-50 border-b border-gray-150 px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs">🛡️</div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-800 leading-tight">Guardy AI Co-Pilot</p>
+                    <p className="text-[8px] text-emerald-600 flex items-center gap-1 font-semibold leading-none mt-0.5">
+                      <span className="w-1 h-1 rounded-full bg-emerald-500 inline-block animate-pulse" /> Active Now
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                </div>
+              </div>
+
+              {/* Chat Box Body */}
+              <div className="p-4 space-y-4 bg-slate-50/10 min-h-[200px] flex flex-col justify-end">
+                {/* User Bubble */}
+                <div className="space-y-1 self-start max-w-[85%] text-left">
+                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block ml-1">User Query</span>
+                  <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-2.5 text-[10px] text-slate-750 shadow-sm leading-relaxed">
+                    How does ChurnGuard calculate risk?
+                  </div>
+                </div>
+
+                {/* Guardy Response */}
+                <div className="space-y-1 self-end max-w-[85%] text-left">
+                  <span className="text-[8px] font-bold text-blue-500 uppercase tracking-wider block mr-1 text-right">Guardy response</span>
+                  <div className="bg-blue-600 text-white rounded-2xl rounded-tr-none p-2.5 text-[10px] shadow-md leading-relaxed">
+                    We combine usage consistency, support CSAT, and transcript sentiment text to generate real-time health scores...
+                  </div>
+                </div>
+
+                {/* Suggested suggestion bubble */}
+                <div className="border border-gray-200 border-dashed rounded-full px-3 py-1.5 text-[9px] text-slate-500 hover:bg-slate-50 cursor-pointer self-start w-fit bg-white transition-colors">
+                  ✨ What playbooks are supported?
+                </div>
+              </div>
+
+              {/* Chat Box Input Footer */}
+              <div className="border-t border-gray-150 p-2.5 bg-slate-50/30 flex items-center gap-2">
+                <div className="bg-white border border-gray-200 rounded-full px-3 py-1.5 text-[9px] text-slate-400 flex-grow text-left">
+                  Ask Guardy a question...
+                </div>
+                <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs shadow-sm">
+                  ➔
+                </div>
+              </div>
             </div>
           </div>
 
