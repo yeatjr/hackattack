@@ -1052,7 +1052,7 @@ function Customer360View() {
   return (
     <div className="flex gap-6 items-start">
       {/* Sidebar collapsible stages list */}
-      <div className="w-64 flex-shrink-0 bg-white rounded-md border border-gray-200 overflow-hidden select-none">
+      <div className="w-64 flex-shrink-0 bg-white rounded-md border border-gray-200 overflow-hidden select-none sticky top-6">
         <div className="px-4 py-3 border-b border-gray-200 bg-slate-50">
           <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">Account Directory</p>
           <p className="text-[10px] text-slate-400 mt-0.5">{customers.length} accounts mapped</p>
