@@ -2264,126 +2264,127 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
       </header>
 
       {/* ── 1. Hero Section ── */}
-      <section className="px-6 sm:px-12 py-12 lg:py-20 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-        <div className="lg:col-span-6 space-y-6">
-          {/* Pill */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-250 rounded-full text-[10px] font-bold text-slate-600 shadow-sm select-none">
+      <section className="px-6 sm:px-12 py-12 lg:py-20 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center bg-white">
+        {/* Left Column (Copy & CTAs) */}
+        <div className="lg:col-span-6 space-y-6 text-left">
+          {/* Pill Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-slate-600 shadow-sm select-none">
             <span className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center text-[8px] text-white">✓</span>
-            Part of the CS Innovations Sandbox 2025
-            <span className="text-slate-400">›</span>
+            Part of the CS Innovations Sandbox 2025 &gt;
           </div>
 
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight tracking-tight">
-            Protect B2B revenue.<br/>
-            Stop churn <span className="bg-[#e4ff6b] text-slate-900 px-3 py-0.5 rounded-sm inline-block">before it happens</span>
+            Predict churn risk.<br/>
+            <span className="bg-[#e4ff6b] text-slate-900 px-3 py-0.5 rounded-sm inline-block mt-2">Protect your revenue.</span>
           </h1>
 
-          {/* Subheading */}
-          <p className="text-base text-slate-500 leading-relaxed max-w-lg">
-            Proactive retention scoring, automated playbook execution, and simulator outcomes for enterprise Customer Success teams.
+          {/* Subheadline */}
+          <p className="text-sm sm:text-base text-slate-500 leading-relaxed max-w-lg">
+            Empower your CS team to predict risk, automate retention plays, and forecast revenue impact—all in one platform.
           </p>
 
-          {/* Social proof reviews */}
+          {/* Social Proof */}
           <div className="flex items-center gap-3 pt-2">
             <div className="flex -space-x-2">
-              <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-350 overflow-hidden flex items-center justify-center font-bold text-[9px] text-slate-700">JD</div>
-              <div className="w-8 h-8 rounded-full border-2 border-white bg-blue-200 overflow-hidden flex items-center justify-center font-bold text-[9px] text-blue-700">AC</div>
-              <div className="w-8 h-8 rounded-full border-2 border-white bg-amber-200 overflow-hidden flex items-center justify-center font-bold text-[9px] text-amber-700">SM</div>
+              <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-300 overflow-hidden flex items-center justify-center font-bold text-[9px] text-slate-700 select-none">JD</div>
+              <div className="w-8 h-8 rounded-full border-2 border-white bg-blue-200 overflow-hidden flex items-center justify-center font-bold text-[9px] text-blue-700 select-none">AC</div>
+              <div className="w-8 h-8 rounded-full border-2 border-white bg-amber-200 overflow-hidden flex items-center justify-center font-bold text-[9px] text-amber-700 select-none">SM</div>
             </div>
             <a href="#advantages" className="text-xs font-bold text-slate-700 underline hover:text-slate-900">See Success Case Studies</a>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action CTAs */}
           <div className="flex items-center gap-3.5 pt-4">
             <button
               onClick={onEnterConsole}
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer"
             >
-              Launch Command Center
+              See It In Action
             </button>
             <button
               onClick={onOpenChat}
-              className="px-6 py-3 border border-blue-600 text-blue-600 font-bold rounded-full text-xs hover:bg-slate-105 bg-white transition-all text-center cursor-pointer"
+              className="px-6 py-3 border border-blue-600 text-blue-600 font-bold rounded-full text-xs hover:bg-blue-50/50 bg-white transition-all text-center cursor-pointer"
             >
               Explore AI Playbooks
             </button>
           </div>
         </div>
 
-        {/* Hero Visual Mockups Stack */}
-        <div className="lg:col-span-6 relative h-[420px] flex items-center justify-center mt-10 lg:mt-0 select-none">
-          {/* Mockup 3: Desktop Browser Card in background */}
-          <div className="w-[360px] sm:w-[460px] h-[260px] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-float-browser absolute left-4 z-10 opacity-90">
-            {/* Window bar */}
-            <div className="h-6 bg-slate-50 border-b border-gray-200 px-3 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-slate-350" />
-              <span className="w-2 h-2 rounded-full bg-slate-350" />
-              <span className="w-2 h-2 rounded-full bg-slate-350" />
-              <span className="text-[9px] text-slate-400 font-mono ml-4">app.churnguard.io</span>
+        {/* Right Column (Floating UI Mockups) */}
+        <div className="lg:col-span-6 relative h-[450px] flex items-center justify-center mt-10 lg:mt-0 select-none">
+          {/* Background Card (Desktop View - Wide, tilted, subtle) */}
+          <div className="w-[360px] sm:w-[460px] h-[265px] bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden animate-float-browser absolute left-4 z-10 opacity-90">
+            {/* Window Header */}
+            <div className="h-7 bg-slate-50 border-b border-gray-200 px-3 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-red-400" />
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-[9px] text-slate-400 font-mono ml-4">app.churnguard.io/dashboard</span>
             </div>
-            <div className="p-3 space-y-3">
-              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                <span className="text-[10px] font-bold text-slate-800">ChurnGuard</span>
-                <div className="flex gap-2 text-[8px] text-slate-400 font-semibold">
-                  <span>Dashboard</span>
-                  <span>Customer 360</span>
-                  <span>Playbooks</span>
+            {/* Window Content */}
+            <div className="p-4 space-y-3">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-150">
+                <span className="text-[10px] font-extrabold text-slate-800 tracking-tight">ChurnGuard System Status</span>
+                <div className="flex gap-2 text-[8px] text-slate-400 font-bold uppercase tracking-wider">
+                  <span>Overview</span>
+                  <span>Alerts</span>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded bg-slate-100 h-28 border border-gray-250 p-2 text-[9px] text-slate-500 overflow-hidden space-y-1">
-                  <span className="bg-rose-50 border border-rose-100 text-rose-700 text-[8px] px-1 rounded font-bold uppercase">Critical Risk</span>
-                  <p className="font-bold text-slate-700">Sarah Jenkins</p>
-                  <p className="text-[8px] text-slate-400">NPS Score: -12. 3 tickets open. Login down 62%.</p>
+              <div className="bg-rose-50 border border-rose-150 rounded-lg p-3 text-[9px] text-rose-800 space-y-1.5 shadow-sm text-left">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                  <span className="font-extrabold uppercase tracking-wide text-[8px] bg-rose-100 px-1 py-0.5 rounded text-rose-700">CRITICAL RISK</span>
                 </div>
-                <div className="space-y-2">
-                  <h4 className="text-[11px] font-bold text-slate-850">B2B Command Center</h4>
-                  <p className="text-[9px] text-slate-400">Map churn risk, track health accordion directories, and apply early playbooks.</p>
-                  <div className="flex justify-between text-[9px] font-bold border-t border-gray-100 pt-1.5 text-slate-700">
-                    <span>Target Retention</span>
-                    <span className="text-emerald-600">85%</span>
-                  </div>
+                <div>
+                  <p className="font-extrabold text-slate-900 text-xs">Sarah Jenkins</p>
+                  <p className="text-[10px] text-slate-600 mt-0.5 leading-relaxed">
+                    NPS Score: <span className="font-bold text-rose-600">-12</span> · 3 tickets open · Login down <span className="font-bold text-rose-600">62%</span>.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Mockup 1: Mobile Phone Card in foreground */}
-          <div className="w-[200px] h-[340px] bg-white border border-gray-200 rounded-[2rem] p-3.5 shadow-2xl animate-float-phone absolute right-16 z-20">
-            <div className="w-16 h-4 bg-slate-100 rounded-full mx-auto mb-3 border border-gray-200 flex items-center justify-center"><span className="w-2 h-2 rounded-full bg-slate-300" /></div>
-            <div className="space-y-3 font-sans">
+          {/* Foreground Card (Mobile/Widget View - Prominent, overlapping) */}
+          <div className="w-[210px] h-[350px] bg-white border border-gray-200 rounded-[2rem] p-3.5 shadow-2xl animate-float-phone absolute right-12 z-20">
+            {/* Speaker & camera slot */}
+            <div className="w-16 h-4 bg-slate-100 rounded-full mx-auto mb-3.5 border border-gray-200 flex items-center justify-center">
+              <span className="w-2 h-2 rounded-full bg-slate-300" />
+            </div>
+            {/* Content list */}
+            <div className="space-y-3 font-sans text-left">
+              {/* Header card with name */}
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-extrabold text-slate-850">Welcome back, Jane! 👋</span>
-                <span className="text-[10px]">⚙️</span>
+                <span className="text-[9px] font-extrabold text-slate-850">Jane Doe</span>
+                <span className="text-[9px] text-slate-400 font-semibold uppercase">CS Director</span>
               </div>
-              <div className="bg-blue-600 text-white rounded p-2.5 shadow-sm space-y-0.5">
-                <p className="text-[8px] text-blue-200 font-medium uppercase tracking-wider">At-Risk Revenue (RAR)</p>
-                <p className="text-sm font-bold font-mono">$292,860</p>
-                <div className="flex justify-between text-[7px] text-blue-200 border-t border-blue-500/50 pt-1.5 mt-1.5">
-                  <span>Critical Alerts</span>
-                  <span className="font-bold">5 Active</span>
-                </div>
+              {/* Blue box for RAR */}
+              <div className="bg-blue-600 text-white rounded-xl p-3 shadow-sm space-y-1">
+                <p className="text-[8px] text-blue-200 font-extrabold uppercase tracking-wider">AT-RISK REVENUE (RAR)</p>
+                <p className="text-base font-extrabold font-mono">$292,860</p>
               </div>
+              {/* Sub-metrics */}
               <div className="grid grid-cols-2 gap-1.5 text-[8px]">
-                <div className="bg-slate-50 border border-gray-200 rounded p-1.5">
-                  <p className="text-slate-400">CSM Actions</p>
-                  <p className="font-bold font-mono text-slate-700">12 Done</p>
+                <div className="bg-slate-50 border border-gray-150 rounded-lg p-2">
+                  <p className="text-slate-400 font-medium">CSM Actions</p>
+                  <p className="font-bold text-slate-700 mt-0.5">12 Done</p>
                 </div>
-                <div className="bg-slate-50 border border-gray-200 rounded p-1.5">
-                  <p className="text-slate-400">Yield Saved</p>
-                  <p className="font-bold font-mono text-emerald-600">+$24,400</p>
+                <div className="bg-slate-50 border border-gray-150 rounded-lg p-2">
+                  <p className="text-slate-400 font-medium">Yield Saved</p>
+                  <p className="font-bold text-emerald-600 mt-0.5">+$24,400</p>
                 </div>
               </div>
-              <div>
-                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Top At-Risk Accounts</p>
-                <div className="space-y-1">
+              {/* List items */}
+              <div className="space-y-2">
+                <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-wider">Top At-Risk Accounts</p>
+                <div className="space-y-1.5">
                   {[
                     { name: "Sarah Jenkins", val: "$116K" },
                     { name: "Marcus Chen", val: "$69K" },
                   ].map(p => (
-                    <div key={p.name} className="flex justify-between items-center text-[7px] border-b border-gray-50 pb-1">
-                      <span className="font-bold text-slate-750 truncate w-24">👤 {p.name}</span>
+                    <div key={p.name} className="flex justify-between items-center text-[8px] border-b border-gray-50 pb-1">
+                      <span className="font-bold text-slate-700 truncate w-24">👤 {p.name}</span>
                       <span className="font-mono text-rose-600 font-bold">{p.val}</span>
                     </div>
                   ))}
@@ -2392,14 +2393,14 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
             </div>
           </div>
 
-          {/* Mockup 2: Floating Small Card */}
-          <div className="bg-white border border-gray-150 rounded-lg p-2.5 shadow-xl animate-float-badge absolute top-12 right-2 z-35 flex items-center gap-2">
+          {/* Floating Alert Pill (Hovering top right) */}
+          <div className="bg-white border border-gray-150 rounded-xl p-3 shadow-2xl animate-float-badge absolute top-8 right-0 z-35 flex items-center gap-2 max-w-[170px] text-left">
             <span className="text-xs">⚠️</span>
             <div className="min-w-[90px]">
-              <p className="text-[8px] font-bold text-slate-900">Sarah Jenkins</p>
-              <p className="text-[7px] text-slate-400">Sentiment Escalation</p>
+              <p className="text-[8px] font-extrabold text-slate-900 leading-tight">Sarah Jenkins</p>
+              <p className="text-[7px] text-slate-400 font-semibold leading-relaxed mt-0.5">Sentiment Escalation</p>
             </div>
-            <span className="text-[9px] font-bold font-mono text-rose-600 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded ml-2">
+            <span className="text-[9px] font-bold font-mono text-rose-600 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded ml-1">
               $116K
             </span>
           </div>
