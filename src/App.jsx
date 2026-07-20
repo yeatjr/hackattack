@@ -2511,11 +2511,11 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
       </section>
 
       {/* ── 3. Tailored Advantages Section ── */}
-      <section id="advantages" className="bg-slate-900 border-t border-slate-800 text-slate-100 py-16 lg:py-24 px-6 sm:px-12 select-none">
+      <section id="advantages" className="bg-white border-t border-gray-200 text-slate-900 py-16 lg:py-24 px-6 sm:px-12 select-none">
         <div className="max-w-7xl mx-auto space-y-12">
           {/* Centered Heading */}
           <div className="text-center space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Tailored Advantages for</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Tailored Advantages for</h2>
             {/* Nav pills */}
             <div className="flex justify-center gap-1.5 flex-wrap pt-4">
               {["Customer Success Teams", "Finance Directors", "Executive Sponsors"].map(tab => {
@@ -2528,7 +2528,7 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
                     className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider transition-all cursor-pointer ${
                       isActive 
                         ? "bg-blue-600 text-white shadow-sm" 
-                        : "bg-slate-850 border border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white"
+                        : "bg-slate-100 text-slate-500 hover:bg-slate-205"
                     }`}
                   >
                     {tab}
@@ -2598,11 +2598,11 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
                 { num: "02", title: "Automated CS Playbooks", desc: "Deploy Soft Landings and Spotify-style Value Recaps automatically to targeted client tiers." },
                 { num: "03", title: "Accelerated CS Onboarding", desc: "Recognize setup bottlenecks and time-to-first-value markers to guide clients gracefully." }
               ].map(adv => (
-                <div key={adv.num} className="flex gap-4 p-4 border border-slate-800 bg-slate-850 rounded-xl shadow-sm items-start hover:border-slate-700 transition-colors">
-                  <span className="text-xs font-bold font-mono bg-slate-800 text-blue-400 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
+                <div key={adv.num} className="flex gap-4 p-4 border border-gray-200 bg-white rounded-xl shadow-sm items-start hover:border-gray-300 transition-colors">
+                  <span className="text-xs font-bold font-mono bg-blue-50 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-100">{adv.title}</h4>
-                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">{adv.desc}</p>
+                    <h4 className="text-xs font-bold text-slate-900">{adv.title}</h4>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{adv.desc}</p>
                   </div>
                 </div>
               ))}
@@ -2611,11 +2611,11 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
                 { num: "02", title: "LTV & ARR Risk Mapping", desc: "Align customer monthly recurring revenue directly to active risk exposure categories." },
                 { num: "03", title: "Renewal Risk Safeguards", desc: "Map executive sponsor departures and budget reviews early to protect recurring contract values." }
               ].map(adv => (
-                <div key={adv.num} className="flex gap-4 p-4 border border-slate-800 bg-slate-850 rounded-xl shadow-sm items-start hover:border-slate-700 transition-colors">
-                  <span className="text-xs font-bold font-mono bg-slate-800 text-blue-400 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
+                <div key={adv.num} className="flex gap-4 p-4 border border-gray-200 bg-white rounded-xl shadow-sm items-start hover:border-gray-300 transition-colors">
+                  <span className="text-xs font-bold font-mono bg-blue-50 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-100">{adv.title}</h4>
-                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">{adv.desc}</p>
+                    <h4 className="text-xs font-bold text-slate-900">{adv.title}</h4>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{adv.desc}</p>
                   </div>
                 </div>
               ))}
@@ -2624,11 +2624,11 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
                 { num: "02", title: "Interactive Metrics Simulator", desc: "Adjust expansion metrics and see exact calculated LTV and saved revenue effects immediately." },
                 { num: "03", title: "Customer 360 Accordion Tracking", desc: "Monitor onboarding, engagement, retention, and loyalty timeline steps on any individual client." }
               ].map(adv => (
-                <div key={adv.num} className="flex gap-4 p-4 border border-slate-800 bg-slate-850 rounded-xl shadow-sm items-start hover:border-slate-700 transition-colors">
-                  <span className="text-xs font-bold font-mono bg-slate-800 text-blue-400 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
+                <div key={adv.num} className="flex gap-4 p-4 border border-gray-200 bg-white rounded-xl shadow-sm items-start hover:border-gray-300 transition-colors">
+                  <span className="text-xs font-bold font-mono bg-blue-50 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-100">{adv.title}</h4>
-                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">{adv.desc}</p>
+                    <h4 className="text-xs font-bold text-slate-900">{adv.title}</h4>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{adv.desc}</p>
                   </div>
                 </div>
               ))}
@@ -2638,12 +2638,12 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
       </section>
 
       {/* ── 4. Meet Guardy Section ── */}
-      <section className="bg-white border-t border-gray-250 text-slate-900 py-16 lg:py-24 px-6 sm:px-12 select-none">
+      <section className="bg-slate-50 border-t border-gray-200 text-slate-900 py-16 lg:py-24 px-6 sm:px-12 select-none">
         <div className="max-w-4xl mx-auto text-center space-y-8 relative">
           
           {/* Chat bubbles mockups stack above heading */}
           <div className="flex flex-col gap-3 items-center max-w-lg mx-auto mb-10">
-            <div className="bg-slate-100 border border-gray-200 rounded-xl p-3 text-[10px] text-slate-750 max-w-xs self-start text-left relative">
+            <div className="bg-white border border-gray-200 rounded-xl p-3 text-[10px] text-slate-750 max-w-xs self-start text-left relative shadow-sm">
               <span className="absolute -top-4 left-3 text-[9px] font-bold text-slate-400 uppercase tracking-wider">User Query</span>
               How does ChurnGuard calculate risk?
             </div>
@@ -2651,7 +2651,7 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
               <span className="absolute -top-4 right-3 text-[9px] font-bold text-blue-300 uppercase tracking-wider">Guardy response</span>
               We combine usage consistency, support CSAT, and transcript sentiment text to generate real-time health scores...
             </div>
-            <div className="hidden sm:block bg-slate-100 border border-gray-200 rounded-xl p-3 text-[10px] text-slate-650 max-w-xs self-start text-left">
+            <div className="hidden sm:block bg-white border border-gray-200 rounded-xl p-3 text-[10px] text-slate-655 max-w-xs self-start text-left shadow-sm">
               What playbooks are supported?
             </div>
           </div>
