@@ -2739,9 +2739,167 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
     </div>
   );
 }
+// ─── LOGIN PAGE VIEW ─────────────────────────────────────────────────────────
+
+function LoginPageView({ onLoginSuccess, onBackToLanding }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onLoginSuccess();
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-stretch select-none font-sans overflow-hidden">
+      {/* Left Pane - Cover Image (Hidden on mobile) */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden items-end p-12">
+        <img 
+          src="/login_cover.jpg" 
+          alt="ChurnGuard Business Cover" 
+          className="absolute inset-0 w-full h-full object-cover opacity-85"
+        />
+        {/* Dark overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-slate-900/10 z-10" />
+
+        {/* Text content over overlay */}
+        <div className="relative z-20 space-y-4 max-w-lg text-left">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-8 h-8 rounded bg-blue-650 flex items-center justify-center text-white text-base shadow-lg">🛡️</div>
+            <span className="font-extrabold text-sm tracking-tight text-white uppercase">ChurnGuard</span>
+          </div>
+          <h1 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight">
+            Protect Your Revenue <br />with Confidence.
+          </h1>
+          <p className="text-sm text-slate-300 leading-relaxed">
+            Experience a new standard of efficiency through an intelligent, beautifully designed customer retention command center.
+          </p>
+        </div>
+      </div>
+
+      {/* Right Pane - Form Container */}
+      <div className="w-full lg:w-1/2 bg-white flex flex-col justify-center px-6 sm:px-16 lg:px-24 py-12 relative">
+        {/* Back link */}
+        <button 
+          onClick={onBackToLanding}
+          className="absolute top-6 left-6 sm:left-12 flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+        >
+          ← Back to homepage
+        </button>
+
+        <div className="max-w-md w-full mx-auto space-y-6 text-center">
+          {/* Logo & Header */}
+          <div className="space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xl mx-auto shadow-md">🛡️</div>
+            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Log in or Sign up</h2>
+            <p className="text-xs text-slate-450 font-medium">Welcome to ChurnGuard command center</p>
+          </div>
+
+          {/* Social Logins */}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <button className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-slate-50 py-2.5 rounded-lg text-[10px] font-bold text-slate-700 transition-all cursor-pointer bg-white shadow-sm">
+              <span className="text-xs">🍏</span> Use Apple
+            </button>
+            <button className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-slate-50 py-2.5 rounded-lg text-[10px] font-bold text-slate-700 transition-all cursor-pointer bg-white shadow-sm">
+              <span className="text-xs">🌐</span> Use Google
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 py-1.5">
+            <div className="flex-1 h-[1px] bg-gray-150" />
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">or</span>
+            <div className="flex-1 h-[1px] bg-gray-150" />
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4 text-left">
+            {/* Email Field */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block ml-1">Email</label>
+              <div className="relative">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email here"
+                  className="w-full px-3.5 py-2.5 border border-gray-205 rounded-lg text-xs text-slate-800 placeholder-gray-450 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-600 transition-all"
+                />
+                <span className="absolute right-3.5 top-3 text-[10px] text-slate-400">✉️</span>
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block ml-1">Password</label>
+              <div className="relative">
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Input your password"
+                  className="w-full px-3.5 py-2.5 border border-gray-255 rounded-lg text-xs text-slate-800 placeholder-gray-450 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-600 transition-all"
+                />
+                <span className="absolute right-3.5 top-3 text-[10px] text-slate-400">🔑</span>
+              </div>
+            </div>
+
+            {/* Remember Me checkbox */}
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2 text-[10px] font-bold text-slate-500 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                Remember me
+              </label>
+            </div>
+
+            {/* Actions Stack */}
+            <div className="space-y-2.5 pt-3">
+              {/* Primary Login Button */}
+              <button
+                type="submit"
+                className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold rounded-lg shadow-md hover:shadow-lg transition-all cursor-pointer uppercase tracking-wider text-center"
+              >
+                Log In
+              </button>
+
+              {/* Demo Account Button */}
+              <button
+                type="button"
+                onClick={onLoginSuccess}
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-[11px] font-bold rounded-lg shadow-md hover:shadow-lg transition-all cursor-pointer uppercase tracking-wider text-center flex items-center justify-center gap-1.5 animate-pulse"
+              >
+                ⚡ Log In with Demo Account
+              </button>
+            </div>
+          </form>
+
+          {/* Helper Footer Links */}
+          <div className="space-y-2 pt-2 text-[10px] text-slate-400 font-semibold">
+            <p>
+              Did you forget your password?{" "}
+              <a href="#" className="text-blue-600 hover:underline">Reset password</a>
+            </p>
+            <p>
+              Don't have an account?{" "}
+              <a href="#" className="text-slate-800 hover:underline">Sign up for free</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
-  const [showLanding, setShowLanding] = useState(true);
+  const [appState, setAppState] = useState("landing"); // "landing" | "login" | "console"
   const [chatOpen, setChatOpen] = useState(false);
   const [activeTab, setActiveTab]     = useState("dashboard");
   const [transitioning, setTransit]   = useState(false);
@@ -2765,11 +2923,11 @@ export default function App() {
 
   const currentNav = navItems.find(n => n.id === activeTab);
 
-  if (showLanding) {
+  if (appState === "landing") {
     return (
       <>
         <LandingPageView 
-          onEnterConsole={() => setShowLanding(false)} 
+          onEnterConsole={() => setAppState("login")} 
           onOpenChat={() => setChatOpen(true)} 
         />
         <GuardyChatWidget 
@@ -2778,6 +2936,15 @@ export default function App() {
           onOpen={() => setChatOpen(true)} 
         />
       </>
+    );
+  }
+
+  if (appState === "login") {
+    return (
+      <LoginPageView 
+        onLoginSuccess={() => setAppState("console")} 
+        onBackToLanding={() => setAppState("landing")} 
+      />
     );
   }
 
@@ -2834,7 +3001,7 @@ export default function App() {
           {/* Breadcrumbs / Page Title */}
           <div className="flex items-center gap-4 text-xs font-medium">
             <button 
-              onClick={() => setShowLanding(true)}
+              onClick={() => setAppState("landing")}
               className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-gray-300 rounded font-semibold text-slate-700 transition-colors cursor-pointer text-[10px]"
             >
               ← Back to ChurnGuard Landing
