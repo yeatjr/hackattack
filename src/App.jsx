@@ -2048,9 +2048,652 @@ const pageMeta = {
   settings:   { subtitle: "Platform configuration and integrations" },
 };
 
-// ─── ROOT APP ─────────────────────────────────────────────────────────────────
+// ─── HOMIE CHATBOT WIDGET ────────────────────────────────────────────────────
+
+const HOMIE_RESPONSES = {
+  "do i own the property if i buy shares?": "By owning shares in a Homeshare property, you own legal units in the specific home trust that holds title to the property. You are a registered beneficial co-owner, and your ownership is fully protected under New Zealand trust law.",
+  "how do i start earning rental income with homeshare?": "Rental income is collected monthly from the tenants of the property. Homeshare automatically deducts management expenses and deposits your net share of the rent directly into your Homeshare wallet on the 1st of every month.",
+  "is this regulated in new zealand?": "Yes, Homeshare is structured in compliance with New Zealand financial regulations. Properties are held in individual Managed Investment Schemes (MIS) or clean trust structures overseen by a licensed independent trustee.",
+  "do i own the property?": "By owning shares in a Homeshare property, you own legal units in the specific home trust that holds title to the property. You are a registered beneficial co-owner, and your ownership is fully protected under New Zealand trust law.",
+  "how do i earn rent?": "Rental income is collected monthly from the tenants of the property. Homeshare automatically deducts management expenses and deposits your net share of the rent directly into your Homeshare wallet on the 1st of every month.",
+  "is this regulated in nz?": "Yes, Homeshare is structured in compliance with New Zealand financial regulations. Properties are held in individual Managed Investment Schemes (MIS) or clean trust structures overseen by a licensed independent trustee.",
+  "how do i sell my shares?": "You can list your fractional shares on our built-in secondary market at any time. Other verified investors on the platform can purchase them directly, providing you with flexible liquidity when you need to cash out."
+};
+
+function HomieChatWidget({ isOpen, onClose, onOpen }) {
+  const [messages, setMessages] = useState([
+    { sender: "homie", text: "Hi! I'm Homie, your property co-pilot. Ask me anything about how Homeshare works, New Zealand regulations, or property fractional shares!" }
+  ]);
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isTyping]);
+
+  const handleSend = (textToSend) => {
+    const text = textToSend || input;
+    if (!text.trim()) return;
+
+    // Add user message
+    setMessages(prev => [...prev, { sender: "user", text }]);
+    if (!textToSend) setInput("");
+    setIsTyping(true);
+
+    // AI Response Simulation
+    setTimeout(() => {
+      setIsTyping(false);
+      const cleanText = text.toLowerCase().trim();
+      let reply = "That's a great question! Homeshare fractional investing allows you to build a diversified property portfolio starting from just $100. Our platform handles all tenant management, maintenance, and distribution of rental yield so you can enjoy passive real estate returns. Let me know if you would like me to clarify anything else!";
+      
+      // Match keywords
+      for (const [key, val] of Object.entries(HOMIE_RESPONSES)) {
+        if (cleanText.includes(key) || key.includes(cleanText)) {
+          reply = val;
+          break;
+        }
+      }
+      setMessages(prev => [...prev, { sender: "homie", text: reply }]);
+    }, 1000);
+  };
+
+  if (!isOpen) {
+    return (
+      <button
+        onClick={onOpen}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-105 z-50 group"
+      >
+        <div className="relative">
+          <MessageSquare size={22} />
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-white" />
+        </div>
+      </button>
+    );
+  }
+
+  return (
+    <div className="fixed bottom-6 right-6 w-80 sm:w-96 h-[460px] bg-white rounded-xl border border-gray-200 shadow-2xl z-50 flex flex-col overflow-hidden font-sans">
+      {/* Header */}
+      <div className="bg-slate-900 p-3.5 text-white flex items-center justify-between border-b border-slate-800">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-xs font-bold text-white shadow-sm">
+            🏠
+          </div>
+          <div>
+            <h4 className="text-xs font-bold tracking-tight">Homie</h4>
+            <p className="text-[9px] text-emerald-400 font-medium flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
+              Property Co-Pilot · Online
+            </p>
+          </div>
+        </div>
+        <button onClick={onClose} className="text-slate-400 hover:text-white cursor-pointer transition-colors p-1">
+          <X size={16} />
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/50">
+        {messages.map((m, idx) => (
+          <div key={idx} className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-[85%] rounded-lg p-3 text-xs leading-relaxed ${
+              m.sender === "user" 
+                ? "bg-blue-600 text-white font-medium" 
+                : "bg-white border border-gray-200 text-slate-800 shadow-sm"
+            }`}>
+              {m.text}
+            </div>
+          </div>
+        ))}
+        {isTyping && (
+          <div className="flex justify-start">
+            <div className="bg-white border border-gray-200 rounded-lg p-3 text-slate-400 text-xs shadow-sm flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-slate-450 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-1.5 h-1.5 bg-slate-450 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-1.5 h-1.5 bg-slate-450 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Quick Suggestions */}
+      <div className="px-3 py-2 border-t border-gray-100 bg-white flex gap-1.5 overflow-x-auto whitespace-nowrap scrollbar-none">
+        {["Do I own the property?", "How do I earn rent?", "Is this regulated in NZ?"].map(q => (
+          <button
+            key={q}
+            onClick={() => handleSend(q)}
+            className="text-[10px] bg-slate-100 hover:bg-slate-200 border border-gray-200 text-slate-700 px-2.5 py-1 rounded-full font-semibold transition-colors cursor-pointer"
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+
+      {/* Input */}
+      <form
+        onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+        className="p-3 bg-white border-t border-gray-200 flex items-center gap-2"
+      >
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask Homie a question..."
+          className="flex-1 border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-blue-500 font-sans"
+        />
+        <button
+          type="submit"
+          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded cursor-pointer transition-colors"
+        >
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ─── LANDING PAGE VIEW ────────────────────────────────────────────────────────
+
+function LandingPageView({ onEnterConsole, onOpenChat }) {
+  const [advTab, setAdvTab] = useState("experienced");
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans overflow-x-hidden">
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(-4deg); }
+          50% { transform: translateY(-12px) rotate(-3deg); }
+        }
+        @keyframes float-reverse {
+          0%, 100% { transform: translateY(0px) rotate(6deg); }
+          50% { transform: translateY(10px) rotate(5deg); }
+        }
+        @keyframes float-desktop {
+          0%, 100% { transform: translateY(0px) rotate(2deg); }
+          50% { transform: translateY(-8px) rotate(1.5deg); }
+        }
+        .animate-float-phone {
+          animation: float 6s ease-in-out infinite;
+        }
+        .animate-float-badge {
+          animation: float-reverse 5s ease-in-out infinite;
+        }
+        .animate-float-browser {
+          animation: float-desktop 7s ease-in-out infinite;
+        }
+        .scrollbar-none::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-none {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+
+      {/* ── Landing Header ── */}
+      <header className="h-16 bg-white border-b border-gray-200 px-6 sm:px-12 flex items-center justify-between sticky top-0 z-40">
+        <div className="flex items-center gap-8">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded bg-blue-600 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">🏠</span>
+            </div>
+            <span className="font-extrabold text-sm tracking-tight text-slate-900 uppercase">homeshare</span>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-500">
+            <a href="#properties" className="hover:text-slate-900 transition-colors">Properties</a>
+            <a href="#how-it-works" className="hover:text-slate-900 transition-colors">How it works</a>
+            <a href="#advantages" className="hover:text-slate-900 transition-colors">First home buyers</a>
+            <a href="#advantages" className="hover:text-slate-900 transition-colors">About Us</a>
+          </nav>
+        </div>
+
+        {/* Console Link */}
+        <button
+          onClick={onEnterConsole}
+          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded shadow-sm cursor-pointer transition-colors"
+        >
+          Launch Command Center Dashboard →
+        </button>
+      </header>
+
+      {/* ── 1. Hero Section ── */}
+      <section className="px-6 sm:px-12 py-12 lg:py-20 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div className="lg:col-span-6 space-y-6">
+          {/* FMA Sandbox Pill */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-250 rounded-full text-[10px] font-bold text-slate-600 shadow-sm select-none">
+            <span className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center text-[8px] text-white">★</span>
+            Part of the FMA Sandbox 2025
+            <span className="text-slate-400">›</span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight tracking-tight">
+            Invest in property.<br/>
+            Start <span className="bg-[#e4ff6b] text-slate-900 px-3 py-0.5 rounded-sm inline-block">from just $100</span>
+          </h1>
+
+          {/* Subheading */}
+          <p className="text-base text-slate-500 leading-relaxed max-w-lg">
+            Property investing made simple, safe, and accessible to every Kiwi. Build equity, collect rent, and grow your wealth.
+          </p>
+
+          {/* Social proof reviews */}
+          <div className="flex items-center gap-3 pt-2">
+            <div className="flex -space-x-2">
+              <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-300 overflow-hidden flex items-center justify-center font-bold text-[10px]">JD</div>
+              <div className="w-8 h-8 rounded-full border-2 border-white bg-blue-300 overflow-hidden flex items-center justify-center font-bold text-[10px]">AC</div>
+              <div className="w-8 h-8 rounded-full border-2 border-white bg-amber-300 overflow-hidden flex items-center justify-center font-bold text-[10px]">SM</div>
+            </div>
+            <a href="#reviews" className="text-xs font-bold text-slate-700 underline hover:text-slate-900">See Expert Reviews</a>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3.5 pt-4">
+            <button
+              onClick={onEnterConsole}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer"
+            >
+              Get Early Access
+            </button>
+            <a
+              href="#how-it-works"
+              className="px-6 py-3 border border-blue-600 text-blue-600 font-bold rounded-full text-xs hover:bg-slate-100/50 bg-white transition-all text-center"
+            >
+              Watch How It Works
+            </a>
+          </div>
+        </div>
+
+        {/* Hero Visual Mockups Stack */}
+        <div className="lg:col-span-6 relative h-[420px] flex items-center justify-center mt-10 lg:mt-0 select-none">
+          {/* Mockup 3: Desktop Browser Card in background */}
+          <div className="w-[360px] sm:w-[460px] h-[260px] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-float-browser absolute left-4 z-10 opacity-90">
+            {/* Window bar */}
+            <div className="h-6 bg-slate-50 border-b border-gray-200 px-3 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-slate-350" />
+              <span className="w-2 h-2 rounded-full bg-slate-350" />
+              <span className="w-2 h-2 rounded-full bg-slate-350" />
+              <span className="text-[9px] text-slate-400 font-mono ml-4">homeshare.co.nz</span>
+            </div>
+            <div className="p-3 space-y-3">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <span className="text-[10px] font-bold text-slate-800">homeshare</span>
+                <div className="flex gap-2 text-[8px] text-slate-400 font-semibold">
+                  <span>Properties</span>
+                  <span>About Us</span>
+                  <span>First home buyers</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded bg-slate-100 h-28 border border-gray-250 flex items-center justify-center text-[10px] text-slate-400 overflow-hidden relative">
+                  <span className="absolute top-1 right-1 bg-rose-500 text-white text-[8px] px-1 rounded font-bold uppercase">Pre-Sale</span>
+                  🏡 Modern Townhouse
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-[11px] font-bold text-slate-850">178 Guildford Street</h4>
+                  <p className="text-[9px] text-slate-400">Leverage fractional real estate shares starting from just $100.</p>
+                  <div className="flex justify-between text-[9px] font-bold border-t border-gray-100 pt-1.5 text-slate-700">
+                    <span>Target Yield</span>
+                    <span className="text-emerald-600">+6.4%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mockup 1: Mobile Phone Card in foreground */}
+          <div className="w-[200px] h-[340px] bg-white border border-gray-200 rounded-[2rem] p-3.5 shadow-2xl animate-float-phone absolute right-16 z-20">
+            <div className="w-16 h-4 bg-slate-100 rounded-full mx-auto mb-3 border border-gray-200 flex items-center justify-center"><span className="w-2 h-2 rounded-full bg-slate-300" /></div>
+            <div className="space-y-3 font-sans">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-extrabold text-slate-850">Welcome back, Alex! 👋</span>
+                <span className="text-[10px]">⚙️</span>
+              </div>
+              <div className="bg-blue-600 text-white rounded p-2.5 shadow-sm space-y-0.5">
+                <p className="text-[8px] text-blue-200 font-medium uppercase tracking-wider">Portfolio Net Worth</p>
+                <p className="text-sm font-bold font-mono">$23,644</p>
+                <div className="flex justify-between text-[7px] text-blue-200 border-t border-blue-500/50 pt-1.5 mt-1.5">
+                  <span>Shares Owned</span>
+                  <span className="font-bold">284</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 text-[8px]">
+                <div className="bg-slate-50 border border-gray-200 rounded p-1.5">
+                  <p className="text-slate-400">Rental Income</p>
+                  <p className="font-bold font-mono text-slate-700">$1,026</p>
+                </div>
+                <div className="bg-slate-50 border border-gray-200 rounded p-1.5">
+                  <p className="text-slate-400">Net Return</p>
+                  <p className="font-bold font-mono text-emerald-600">+$704</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Your Top Properties</p>
+                <div className="space-y-1">
+                  {[
+                    { name: "13 Horsham Downs", val: "$12K" },
+                    { name: "5 Guillaume Street", val: "$2.1K" },
+                  ].map(p => (
+                    <div key={p.name} className="flex justify-between items-center text-[7px] border-b border-gray-50 pb-1">
+                      <span className="font-bold text-slate-750 truncate w-24">📍 {p.name}</span>
+                      <span className="font-mono text-slate-650">{p.val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mockup 2: Floating Small Card */}
+          <div className="bg-white border border-gray-150 rounded-lg p-2.5 shadow-xl animate-float-badge absolute top-12 right-2 z-35 flex items-center gap-2">
+            <span className="text-xs">🏡</span>
+            <div className="min-w-[90px]">
+              <p className="text-[8px] font-bold text-slate-900">13 Horsham Downs</p>
+              <p className="text-[7px] text-slate-400">Owned Shares: 148</p>
+            </div>
+            <span className="text-[9px] font-bold font-mono text-blue-650 bg-blue-50 border border-blue-105 px-1.5 py-0.5 rounded ml-2">
+              $12K
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 2. How Homeshare Works Section (Explainer) ── */}
+      <section id="how-it-works" className="bg-white border-y border-gray-200 py-16 lg:py-24 px-6 sm:px-12 select-none">
+        <div className="max-w-7xl mx-auto space-y-16">
+          {/* Centered Heading */}
+          <div className="text-center space-y-2">
+            <span className="text-[9px] font-bold text-blue-600 uppercase tracking-widest">✦ Explainer</span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">How Homeshare Works</h2>
+            <p className="text-xs text-slate-400">Understand the basics in 3 easy steps</p>
+          </div>
+
+          {/* Step 1 */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-5xl mx-auto border border-gray-200/80 rounded-2xl p-6 sm:p-10 bg-slate-50/50 shadow-sm relative">
+            <div className="lg:col-span-5 space-y-4">
+              <h3 className="text-xl font-bold text-slate-900 leading-snug">
+                Start owning real property, from just $100
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Explore hand-picked properties, each divided into <span className="bg-yellow-100 font-bold text-slate-800 px-1 rounded">10,000 shares</span> through a managed trust. Buy one or more shares online in seconds and instantly become a co-owner.
+              </p>
+              <p className="text-[48px] font-extrabold font-mono text-slate-200 mt-6 absolute bottom-2 left-6">01</p>
+            </div>
+            <div className="lg:col-span-7 flex justify-center">
+              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-md max-w-sm w-full space-y-3">
+                <div className="h-44 bg-slate-100 rounded-lg overflow-hidden border border-gray-150 flex items-center justify-center text-slate-400 relative">
+                  <span className="absolute top-2 left-2 bg-blue-600 text-white font-bold text-[9px] px-2 py-0.5 rounded shadow-sm">$650,000</span>
+                  🏡 14 Kowhai Crescent, Tauranga
+                </div>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-850">14 Kowhai Crescent</h4>
+                    <p className="text-[9px] text-slate-400">Parkvale, Tauranga 3118</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] text-slate-400">Yield</p>
+                    <p className="text-xs font-bold text-emerald-600">+6.8%</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[9px] border-t border-gray-100 pt-3">
+                  <div className="bg-slate-50 p-2 rounded">
+                    <p className="text-slate-400">Net Rental Income</p>
+                    <p className="font-bold text-slate-700">+$704 / mo</p>
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded">
+                    <p className="text-slate-400">Capital Gain</p>
+                    <p className="font-bold text-emerald-600">+5.0%</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-5xl mx-auto border border-gray-200/80 rounded-2xl p-6 sm:p-10 bg-slate-50/50 shadow-sm relative">
+            <div className="lg:col-span-5 lg:order-2 space-y-4">
+              <h3 className="text-xl font-bold text-slate-900 leading-snug">
+                Get your share of the rent, every month
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Your property shares earn monthly net rental income. Homeshare takes care of everything behind the scenes, you just <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 font-bold px-1.5 py-0.5 rounded text-[11px]">collect returns</span>.
+              </p>
+              <p className="text-[48px] font-extrabold font-mono text-slate-200 mt-6 absolute bottom-2 right-6">02</p>
+            </div>
+            <div className="lg:col-span-7 lg:order-1 flex justify-center">
+              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-md max-w-sm w-full space-y-4 relative overflow-hidden">
+                <div className="space-y-1 pb-3 border-b border-gray-100">
+                  <p className="text-[10px] text-slate-400">Logged in as</p>
+                  <h4 className="text-xs font-bold text-slate-800">Welcome back, Reggie! 👋</h4>
+                </div>
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex justify-between items-center shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-xs">💰</div>
+                    <div>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Net Rental Income</p>
+                      <p className="text-sm font-bold font-mono text-blue-700">+$1,026</p>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded">Paid</span>
+                </div>
+                {/* Floating alert card */}
+                <div className="bg-slate-900 text-white rounded p-3 border border-slate-800 flex justify-between items-center text-[10px]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-400 font-bold">+10%</span>
+                    <div>
+                      <p className="font-bold text-slate-100">Homeshare growth</p>
+                      <p className="text-[8px] text-slate-400">Your portfolio grew in value</p>
+                    </div>
+                  </div>
+                  <span className="text-[8px] bg-white/10 text-white px-2 py-0.5 rounded font-mono">12 months</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-5xl mx-auto border border-gray-200/80 rounded-2xl p-6 sm:p-10 bg-slate-50/50 shadow-sm relative">
+            <div className="lg:col-span-5 space-y-4">
+              <h3 className="text-xl font-bold text-slate-900 leading-snug">
+                Track your equity and exit with liquidity
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Watch your investment grow in value as property prices appreciate. List your shares on the internal marketplace to trade with other Kiwi co-owners whenever you want to cash out.
+              </p>
+              <p className="text-[48px] font-extrabold font-mono text-slate-200 mt-6 absolute bottom-2 left-6">03</p>
+            </div>
+            <div className="lg:col-span-7 flex justify-center">
+              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-md max-w-sm w-full space-y-3">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider pb-1 border-b border-gray-100">Secondary Market Trading</p>
+                <div className="h-28 bg-slate-50 border border-gray-150 rounded flex items-end p-2 gap-2 justify-between">
+                  <div className="bg-blue-100 h-10 w-6 rounded-sm flex items-center justify-center text-[8px] font-bold text-blue-600">Jan</div>
+                  <div className="bg-blue-200 h-16 w-6 rounded-sm flex items-center justify-center text-[8px] font-bold text-blue-600">Feb</div>
+                  <div className="bg-blue-300 h-20 w-6 rounded-sm flex items-center justify-center text-[8px] font-bold text-blue-600">Mar</div>
+                  <div className="bg-blue-600 h-24 w-6 rounded-sm flex items-center justify-center text-[8px] font-bold text-white shadow">Apr</div>
+                </div>
+                <div className="flex justify-between items-center text-[8px] text-slate-400 font-mono">
+                  <span>Equity Appreciation</span>
+                  <span className="font-bold text-emerald-600">+12.4% Overall</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3. Tailored Advantages Section ── */}
+      <section id="advantages" className="py-16 lg:py-24 px-6 sm:px-12 max-w-7xl mx-auto select-none">
+        <div className="space-y-12">
+          {/* Centered Heading */}
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Tailored Advantages for</h2>
+            {/* Nav pills */}
+            <div className="flex justify-center gap-1.5 flex-wrap pt-4">
+              {["First Home Buyers", "Aspiring Investors", "Experienced Investors"].map(tab => {
+                const id = tab.toLowerCase().split(" ")[0];
+                const isActive = advTab === id;
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setAdvTab(id)}
+                    className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider transition-all cursor-pointer ${
+                      isActive 
+                        ? "bg-blue-600 text-white shadow-sm" 
+                        : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-5xl mx-auto">
+            {/* Left Column Mockup */}
+            <div className="lg:col-span-5 flex justify-center relative h-[380px] items-center">
+              {/* Phone Armani */}
+              <div className="w-[200px] h-[340px] bg-white border border-gray-200 rounded-[2rem] p-3.5 shadow-2xl relative z-20">
+                <div className="w-16 h-4 bg-slate-100 rounded-full mx-auto mb-3 border border-gray-250 flex items-center justify-center"><span className="w-2 h-2 rounded-full bg-slate-300" /></div>
+                <div className="space-y-3 font-sans">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-extrabold text-slate-850">Welcome back, Armani! 👋</span>
+                    <span className="text-[10px]">⚙️</span>
+                  </div>
+                  <div className="bg-blue-600 text-white rounded p-2.5 shadow-sm space-y-0.5">
+                    <p className="text-[8px] text-blue-200 font-medium uppercase tracking-wider">Portfolio Net Worth</p>
+                    <p className="text-sm font-bold font-mono">$23,644</p>
+                    <div className="flex justify-between text-[7px] text-blue-200 border-t border-blue-500/50 pt-1.5 mt-1.5">
+                      <span>Shares Owned</span>
+                      <span className="font-bold">284</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 text-[8px]">
+                    <div className="bg-slate-50 border border-gray-200 rounded p-1.5">
+                      <p className="text-slate-400">Rental Income</p>
+                      <p className="font-bold font-mono text-slate-700">$1,026</p>
+                    </div>
+                    <div className="bg-slate-50 border border-gray-200 rounded p-1.5">
+                      <p className="text-slate-400">Net Return</p>
+                      <p className="font-bold font-mono text-emerald-600">+$704</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Your Top Properties</p>
+                    <div className="space-y-1">
+                      {[
+                        { name: "13 Horsham Downs", val: "$12K" },
+                        { name: "5 Guillaume Street", val: "$2.1K" },
+                      ].map(p => (
+                        <div key={p.name} className="flex justify-between items-center text-[7px] border-b border-gray-50 pb-1">
+                          <span className="font-bold text-slate-750 truncate w-24">📍 {p.name}</span>
+                          <span className="font-mono text-slate-650">{p.val}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating tax rate card */}
+              <div className="absolute top-10 right-2 z-30 bg-[#e4ff6b] border border-gray-300 rounded-xl p-3 shadow-lg flex flex-col justify-center items-center select-none w-28 h-28 transform rotate-[6deg]">
+                <p className="text-[28px] font-black text-slate-900 leading-none">28%</p>
+                <p className="text-[8px] font-bold text-slate-800 text-center mt-1.5 uppercase leading-snug">Tax on rental income earned</p>
+              </div>
+            </div>
+
+            {/* Right Column List */}
+            <div className="lg:col-span-7 space-y-6">
+              {[
+                { num: "01", title: "Strengthen Your Mix", desc: "Balance your portfolio with the long-term stability of real estate fractionals." },
+                { num: "02", title: "Tax & Structure Benefits", desc: "Access property's tax advantages without the complexity of direct building ownership." },
+                { num: "03", title: "Professional Oversight", desc: "Every property is vetted, fully managed, and maintained by trusted experts." }
+              ].map(adv => (
+                <div key={adv.num} className="flex gap-4 p-4 border border-gray-200 bg-white rounded-xl shadow-sm items-start hover:border-gray-300 transition-colors">
+                  <span className="text-xs font-bold font-mono bg-slate-100 text-slate-500 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">{adv.title}</h4>
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">{adv.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. Meet Homie Section (AI Copilot Showcase) ── */}
+      <section className="bg-slate-900 border-t border-slate-800 text-white py-16 lg:py-24 px-6 sm:px-12 select-none">
+        <div className="max-w-4xl mx-auto text-center space-y-8 relative">
+          
+          {/* Chat bubbles mockups stack above heading */}
+          <div className="flex flex-col gap-3 items-center max-w-lg mx-auto mb-10">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-[10px] text-slate-300 max-w-xs self-start text-left relative">
+              <span className="absolute -top-4 left-3 text-[9px] font-bold text-slate-500 uppercase tracking-wider">User Query</span>
+              Do I own the property if I buy shares?
+            </div>
+            <div className="bg-blue-600/90 text-white rounded-xl p-3 text-[10px] max-w-xs self-end text-left relative">
+              <span className="absolute -top-4 right-3 text-[9px] font-bold text-blue-300 uppercase tracking-wider">Homie response</span>
+              By owning shares you own legal units in the home trust that represent your share of the property...
+            </div>
+            <div className="hidden sm:block bg-slate-800 border border-slate-700 rounded-xl p-3 text-[10px] text-slate-300 max-w-xs self-start text-left">
+              How do I start earning rental income?
+            </div>
+          </div>
+
+          {/* Heading block */}
+          <div className="space-y-4">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white">Meet Homie, Your Property Co-Pilot</h2>
+            <p className="text-xs text-slate-400 max-w-lg mx-auto leading-relaxed">
+              Have a question about how Homeshare works? Homie is intelligently trained on everything from property terms to platform details, and is here 24/7 to guide you.
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-center gap-3.5 pt-4">
+            <button
+              onClick={onOpenChat}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer"
+            >
+              Chat with Homie
+            </button>
+            <a
+              href="#how-it-works"
+              className="px-6 py-3 border border-slate-700 text-slate-300 font-bold rounded-full text-xs hover:bg-slate-800 bg-slate-850/50 transition-all text-center"
+            >
+              Dig into the Details
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Landing Footer ── */}
+      <footer className="bg-slate-950 border-t border-slate-900 py-12 px-6 sm:px-12 text-center text-slate-500 space-y-6">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 border-b border-slate-900 pb-8">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-blue-650 flex items-center justify-center text-xs">🏠</div>
+            <span className="font-extrabold text-xs tracking-tight text-white uppercase">homeshare</span>
+          </div>
+          <p className="text-[10px] font-medium font-mono text-slate-600">© 2026 Homeshare Technologies. All rights reserved.</p>
+        </div>
+        <p className="text-[9px] text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          Disclaimer: Fractional property investing is subject to investment risks. Homeshare is registered in the FMA sandbox sandbox trial program. Past yields do not guarantee future performance. Ensure you consult financial professionals before co-owning.
+        </p>
+      </footer>
+    </div>
+  );
+}
 
 export default function App() {
+  const [showLanding, setShowLanding] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
   const [activeTab, setActiveTab]     = useState("dashboard");
   const [transitioning, setTransit]   = useState(false);
 
@@ -2073,8 +2716,24 @@ export default function App() {
 
   const currentNav = navItems.find(n => n.id === activeTab);
 
+  if (showLanding) {
+    return (
+      <>
+        <LandingPageView 
+          onEnterConsole={() => setShowLanding(false)} 
+          onOpenChat={() => setChatOpen(true)} 
+        />
+        <HomieChatWidget 
+          isOpen={chatOpen} 
+          onClose={() => setChatOpen(false)} 
+          onOpen={() => setChatOpen(true)} 
+        />
+      </>
+    );
+  }
+
   return (
-    <div className="h-screen flex bg-slate-50 text-slate-900 overflow-hidden" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+    <div className="h-screen flex bg-slate-50 text-slate-900 overflow-hidden relative font-sans">
       {/* ── Left Sidebar (Stripe/Datadog style) ── */}
       <aside className="w-56 h-screen bg-slate-900 border-r border-slate-800 flex flex-col justify-between flex-shrink-0 z-40 text-slate-300">
         <div className="flex flex-col w-full">
@@ -2124,8 +2783,15 @@ export default function App() {
         {/* Top Header Bar */}
         <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-30">
           {/* Breadcrumbs / Page Title */}
-          <div className="flex items-center gap-2 text-xs font-medium">
-            <span className="text-slate-400">Console</span>
+          <div className="flex items-center gap-4 text-xs font-medium">
+            <button 
+              onClick={() => setShowLanding(true)}
+              className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-gray-300 rounded font-semibold text-slate-700 transition-colors cursor-pointer text-[10px]"
+            >
+              ← Back to Homeshare Landing
+            </button>
+            <span className="text-slate-355">|</span>
+            <span className="text-slate-400 font-semibold">Console</span>
             <span className="text-slate-300">/</span>
             <span className="text-slate-800 font-bold capitalize">{activeTab}</span>
           </div>
@@ -2173,6 +2839,15 @@ export default function App() {
           </div>
         </main>
       </div>
+
+      {/* Floating Chatbot for support inside dashboard too */}
+      <HomieChatWidget 
+        isOpen={chatOpen} 
+        onClose={() => setChatOpen(false)} 
+        onOpen={() => setChatOpen(true)} 
+      />
     </div>
   );
 }
+
+
