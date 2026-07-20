@@ -264,7 +264,7 @@ const CUSTOMER_HISTORIES = {
     { date:"2024-11-05", type:"expansion",     title:"Submitted Roadmap Feedback",           detail:"Submitted 12 detailed feature requests via roadmap portal." },
     { date:"2024-10-20", type:"expansion",     title:"Expanded to 2 Additional Teams",      detail:"Finance and Operations teams onboarded. Seat count grew from 22 to 41." },
     { date:"2024-09-14", type:"milestone",     title:"Annual User Conference Attended",      detail:"CEO and 3 team leads attended. Spoke on retention ROI panel." },
-    { date:"2024-07-01", type:"nps",           title:"NPS Survey: 10/10",                     detail:"\"ChurnGuard has been transformative. We've cut churn by 38% year-over-year.\"" },
+    { date:"2024-07-01", type:"nps",           title:"NPS Survey: 10/10",                     detail:"\"Momentum has been transformative. We've cut churn by 38% year-over-year.\"" },
     { date:"2024-04-15", type:"expansion",     title:"$22k Expansion Revenue Locked In",    detail:"Advanced AI module purchased. Multi-year deal at preferred pricing." },
     { date:"2024-01-10", type:"communication", title:"Executive Sponsor Call Held",          detail:"VP of CS held C-level call. Roadmap alignment and expansion goals confirmed." },
     { date:"2023-06-01", type:"expansion",     title:"Upgraded to Enterprise",              detail:"Upgraded from Premium after 6 months. Full SSO and API integration live." },
@@ -2051,18 +2051,18 @@ const pageMeta = {
 // ─── GUARDY CHATBOT WIDGET ───────────────────────────────────────────────────
 
 const GUARDY_RESPONSES = {
-  "how is risk calculated?": "ChurnGuard calculates risk by combining usage consistency (sessions per week), support CSAT scores, open support tickets, and sentiment analysis from transcript text to generate a consolidated health index (0-100).",
+  "how is risk calculated?": "Momentum calculates risk by combining usage consistency (sessions per week), support CSAT scores, open support tickets, and sentiment analysis from transcript text to generate a consolidated health index (0-100).",
   "what playbooks are supported?": "We support pre-built playbooks including 'Soft Landing' downgrades/pauses, automated dunning retries, Spotify-style value recaps, and empathetic offboarding for business closures.",
-  "how do crm syncs work?": "ChurnGuard syncs natively with CRM and billing providers (Salesforce, HubSpot, Stripe) using secure APIs. We ingest billing statuses and usage data to flag account anomalies.",
-  "how is risk calculated": "ChurnGuard calculates risk by combining usage consistency (sessions per week), support CSAT scores, open support tickets, and sentiment analysis from transcript text to generate a consolidated health index (0-100).",
+  "how do crm syncs work?": "Momentum syncs natively with CRM and billing providers (Salesforce, HubSpot, Stripe) using secure APIs. We ingest billing statuses and usage data to flag account anomalies.",
+  "how is risk calculated": "Momentum calculates risk by combining usage consistency (sessions per week), support CSAT scores, open support tickets, and sentiment analysis from transcript text to generate a consolidated health index (0-100).",
   "what playbooks are available": "We support pre-built playbooks including 'Soft Landing' downgrades/pauses, automated dunning retries, Spotify-style value recap digests, and empathetic offboarding for business closures.",
-  "how do crm syncs work": "ChurnGuard syncs natively with CRM and billing providers (Salesforce, HubSpot, Stripe) using secure APIs. We ingest billing statuses and usage data to flag account anomalies.",
+  "how do crm syncs work": "Momentum syncs natively with CRM and billing providers (Salesforce, HubSpot, Stripe) using secure APIs. We ingest billing statuses and usage data to flag account anomalies.",
   "how do i prevent failed payments?": "Involuntary churn is intercepted by our Smart Dunning playbook, which triggers smart payment retries and coordinates profile updates before accounts are canceled."
 };
 
 function GuardyChatWidget({ isOpen, onClose, onOpen }) {
   const [messages, setMessages] = useState([
-    { sender: "guardy", text: "Hi! I'm Guardy, your customer success co-pilot. Ask me anything about ChurnGuard's health scoring, playbooks, or CRM integrations!" }
+    { sender: "guardy", text: "Hi! I'm Guardy, your customer success co-pilot. Ask me anything about Momentum's health scoring, playbooks, or CRM integrations!" }
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -2087,7 +2087,7 @@ function GuardyChatWidget({ isOpen, onClose, onOpen }) {
     setTimeout(() => {
       setIsTyping(false);
       const cleanText = text.toLowerCase().trim();
-      let reply = "That's a great question! ChurnGuard proactive command center aggregates customer health signals in real-time. This lets customer success managers execute targeted playbooks (like soft landings or value recaps) and simulate contraction impacts. Let me know if you would like me to explain further!";
+      let reply = "That's a great question! Momentum proactive command center aggregates customer health signals in real-time. This lets customer success managers execute targeted playbooks (like soft landings or value recaps) and simulate contraction impacts. Let me know if you would like me to explain further!";
       
       // Match keywords
       for (const [key, val] of Object.entries(GUARDY_RESPONSES)) {
@@ -2239,10 +2239,13 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
         <div className="flex items-center gap-8">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded bg-blue-600 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">🛡️</span>
-            </div>
-            <span className="font-extrabold text-sm tracking-tight text-slate-900 uppercase">ChurnGuard</span>
+            {/* Monochromatic solid black abstract M arrow + circle logo */}
+            <svg viewBox="0 0 120 70" className="w-10 h-6 text-black inline-block" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="75" cy="30" r="18" stroke="currentColor" strokeWidth="6.5" fill="none" />
+              <path d="M15,55 L35,22 L50,45 L62,25 L92,5" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M78,5 H92 V19" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="font-extrabold text-sm tracking-tight text-slate-900 uppercase">Momentum</span>
           </div>
 
           {/* Navigation Links */}
@@ -2320,12 +2323,12 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
               <span className="w-2 h-2 rounded-full bg-red-400" />
               <span className="w-2 h-2 rounded-full bg-amber-400" />
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-[9px] text-slate-400 font-mono ml-4">app.churnguard.io/dashboard</span>
+              <span className="text-[9px] text-slate-400 font-mono ml-4">app.momentum.io/dashboard</span>
             </div>
             {/* Window Content */}
             <div className="p-4 space-y-3">
               <div className="flex justify-between items-center pb-2 border-b border-gray-150">
-                <span className="text-[10px] font-extrabold text-slate-800 tracking-tight">ChurnGuard System Status</span>
+                <span className="text-[10px] font-extrabold text-slate-800 tracking-tight">Momentum System Status</span>
                 <div className="flex gap-2 text-[8px] text-slate-400 font-bold uppercase tracking-wider">
                   <span>Overview</span>
                   <span>Alerts</span>
@@ -2407,13 +2410,13 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
         </div>
       </section>
 
-      {/* ── 2. How ChurnGuard Works Section ── */}
+      {/* ── 2. How Momentum Works Section ── */}
       <section id="how-it-works" className="bg-slate-50 border-y border-gray-200 py-16 lg:py-24 px-6 sm:px-12 select-none">
         <div className="max-w-7xl mx-auto space-y-16">
           {/* Centered Heading */}
           <div className="text-center space-y-2">
             <span className="text-[9px] font-bold text-blue-600 uppercase tracking-widest">✦ Workflow</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">How ChurnGuard Works</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">How Momentum Works</h2>
             <p className="text-xs text-slate-400">Prevent customer churn in 3 easy steps</p>
           </div>
 
@@ -2424,7 +2427,7 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
                 Monitor product health & sentiment signals
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Track critical drop-offs in usage frequency, software integration errors, and negative sentiment. ChurnGuard aggregates these indicators into a unified real-time health score.
+                Track critical drop-offs in usage frequency, software integration errors, and negative sentiment. Momentum aggregates these indicators into a unified real-time health score.
               </p>
               <p className="text-[48px] font-extrabold font-mono text-slate-200 mt-6 absolute bottom-2 left-6">01</p>
             </div>
@@ -2668,7 +2671,7 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
                 <div className="space-y-1 self-start max-w-[85%] text-left">
                   <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block ml-1">User Query</span>
                   <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-2.5 text-[10px] text-slate-750 shadow-sm leading-relaxed">
-                    How does ChurnGuard calculate risk?
+                    How does Momentum calculate risk?
                   </div>
                 </div>
 
@@ -2702,7 +2705,7 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
           <div className="space-y-4">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">Meet Guardy, Your CS Co-Pilot</h2>
             <p className="text-xs text-slate-500 max-w-lg mx-auto leading-relaxed">
-              Have a question about how ChurnGuard works? Guardy is intelligently trained on customer retention strategy, CRM integrations, and is here 24/7 to guide you.
+              Have a question about how Momentum works? Guardy is intelligently trained on customer retention strategy, CRM integrations, and is here 24/7 to guide you.
             </p>
           </div>
 
@@ -2728,13 +2731,18 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
       <footer className="bg-slate-950 border-t border-slate-900 py-12 px-6 sm:px-12 text-center text-slate-500 space-y-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 border-b border-slate-900 pb-8">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-blue-650 flex items-center justify-center text-xs">🛡️</div>
-            <span className="font-extrabold text-xs tracking-tight text-white uppercase">ChurnGuard</span>
+            {/* White Monochromatic abstract M arrow + circle logo */}
+            <svg viewBox="0 0 120 70" className="w-7 h-5 text-white inline-block" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="75" cy="30" r="18" stroke="currentColor" strokeWidth="6.5" fill="none" />
+              <path d="M15,55 L35,22 L50,45 L62,25 L92,5" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M78,5 H92 V19" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="font-extrabold text-xs tracking-tight text-white uppercase">Momentum</span>
           </div>
-          <p className="text-[10px] font-medium font-mono text-slate-450">© 2026 ChurnGuard Technologies. All rights reserved.</p>
+          <p className="text-[10px] font-medium font-mono text-slate-450">© 2026 Momentum Technologies. All rights reserved.</p>
         </div>
         <p className="text-[9px] text-slate-500 max-w-2xl mx-auto leading-relaxed">
-          Disclaimer: ChurnGuard B2B customer analytics is built for enterprise portfolio monitoring. Health index estimations are based on simulated telemetry and CRM integration histories.
+          Disclaimer: Momentum B2B customer analytics is built for enterprise portfolio monitoring. Health index estimations are based on simulated telemetry and CRM integration histories.
         </p>
       </footer>
     </div>
@@ -2758,7 +2766,7 @@ function LoginPageView({ onLoginSuccess, onBackToLanding }) {
       <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden items-end p-12">
         <img 
           src="/login_cover.jpg" 
-          alt="ChurnGuard Business Cover" 
+          alt="Momentum Business Cover" 
           className="absolute inset-0 w-full h-full object-cover opacity-85"
         />
         {/* Dark overlay gradient */}
@@ -2767,8 +2775,13 @@ function LoginPageView({ onLoginSuccess, onBackToLanding }) {
         {/* Text content over overlay */}
         <div className="relative z-20 space-y-4 max-w-lg text-left">
           <div className="flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded bg-blue-650 flex items-center justify-center text-white text-base shadow-lg">🛡️</div>
-            <span className="font-extrabold text-sm tracking-tight text-white uppercase">ChurnGuard</span>
+            {/* White Monochromatic abstract M arrow + circle logo */}
+            <svg viewBox="0 0 120 70" className="w-8 h-6 text-white inline-block" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="75" cy="30" r="18" stroke="currentColor" strokeWidth="6.5" fill="none" />
+              <path d="M15,55 L35,22 L50,45 L62,25 L92,5" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M78,5 H92 V19" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="font-extrabold text-sm tracking-tight text-white uppercase">Momentum</span>
           </div>
           <h1 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight">
             Protect Your Revenue <br />with Confidence.
@@ -2792,9 +2805,14 @@ function LoginPageView({ onLoginSuccess, onBackToLanding }) {
         <div className="max-w-md w-full mx-auto space-y-6 text-center">
           {/* Logo & Header */}
           <div className="space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xl mx-auto shadow-md">🛡️</div>
+            {/* Black Monochromatic abstract M arrow + circle logo */}
+            <svg viewBox="0 0 120 70" className="w-10 h-6 text-black inline-block" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="75" cy="30" r="18" stroke="currentColor" strokeWidth="6.5" fill="none" />
+              <path d="M15,55 L35,22 L50,45 L62,25 L92,5" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M78,5 H92 V19" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
             <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Log in or Sign up</h2>
-            <p className="text-xs text-slate-450 font-medium">Welcome to ChurnGuard command center</p>
+            <p className="text-xs text-slate-450 font-medium">Welcome to Momentum command center</p>
           </div>
 
           {/* Social Logins */}
@@ -2956,10 +2974,13 @@ export default function App() {
         <div className="flex flex-col w-full">
           {/* Logo / Header */}
           <div className="h-14 border-b border-slate-800 flex items-center px-4 gap-2 text-white">
-            <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center">
-              <ShieldCheck size={14} className="text-white" />
-            </div>
-            <span className="font-bold text-sm tracking-tight">ChurnGuard</span>
+            {/* White Monochromatic abstract M arrow + circle logo */}
+            <svg viewBox="0 0 120 70" className="w-7 h-5 text-white inline-block" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="75" cy="30" r="18" stroke="currentColor" strokeWidth="6.5" fill="none" />
+              <path d="M15,55 L35,22 L50,45 L62,25 L92,5" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M78,5 H92 V19" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="font-bold text-sm tracking-tight">Momentum</span>
           </div>
 
           {/* Navigation Links */}
@@ -3014,7 +3035,7 @@ export default function App() {
               onClick={() => setAppState("landing")}
               className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-gray-300 rounded font-semibold text-slate-700 transition-colors cursor-pointer text-[10px]"
             >
-              ← Back to ChurnGuard Landing
+              ← Back to Momentum Landing
             </button>
             <span className="text-slate-355">|</span>
             <span className="text-slate-400 font-semibold">Console</span>
