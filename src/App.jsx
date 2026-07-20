@@ -9,7 +9,7 @@ import {
   Settings, ShieldCheck, ChevronRight, ChevronDown, ChevronUp,
   DollarSign, AlertTriangle, CheckCircle2, TrendingDown, Sparkles,
   ArrowUpRight, ArrowDownRight, Bell, Search, Play, Pause, Plus, Info, Target, Heart,
-  Clock, Zap, UserX, MessageSquare, X, Globe,
+  Clock, Zap, UserX, MessageSquare, X, Globe, LogOut,
 } from "lucide-react";
 
 // ─── FORMULAS & CONSTANTS ─────────────────────────────────────────────────────
@@ -2983,14 +2983,23 @@ export default function App() {
         </div>
 
         {/* Bottom User Profile */}
-        <div className="p-3 border-t border-slate-850 flex items-center gap-2.5 text-slate-300 select-none">
-          <div className="w-8 h-8 rounded bg-blue-650 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-            JD
+        <div className="p-3 border-t border-slate-850 flex items-center justify-between text-slate-300 select-none">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded bg-blue-650 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+              JD
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-slate-200 truncate">Jane Doe</p>
+              <p className="text-[9px] text-slate-500 font-semibold uppercase tracking-wider">CS Director</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-slate-200 truncate">Jane Doe</p>
-            <p className="text-[9px] text-slate-500 font-semibold uppercase tracking-wider">CS Director</p>
-          </div>
+          <button
+            onClick={() => setAppState("landing")}
+            title="Log out to Homepage"
+            className="w-8 h-8 rounded hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+          >
+            <LogOut size={14} />
+          </button>
         </div>
       </aside>
 
