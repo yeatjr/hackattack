@@ -2407,7 +2407,7 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
       </section>
 
       {/* ── 2. How ChurnGuard Works Section ── */}
-      <section id="how-it-works" className="bg-white border-y border-gray-200 py-16 lg:py-24 px-6 sm:px-12 select-none">
+      <section id="how-it-works" className="bg-slate-50 border-y border-gray-200 py-16 lg:py-24 px-6 sm:px-12 select-none">
         <div className="max-w-7xl mx-auto space-y-16">
           {/* Centered Heading */}
           <div className="text-center space-y-2">
@@ -2417,7 +2417,7 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
           </div>
 
           {/* Step 1 */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-5xl mx-auto border border-gray-200/80 rounded-2xl p-6 sm:p-10 bg-slate-50/50 shadow-sm relative">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-5xl mx-auto border border-gray-200 rounded-2xl p-6 sm:p-10 bg-white shadow-sm relative">
             <div className="lg:col-span-5 space-y-4">
               <h3 className="text-xl font-bold text-slate-900 leading-snug">
                 Monitor product health & sentiment signals
@@ -2428,14 +2428,14 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
               <p className="text-[48px] font-extrabold font-mono text-slate-200 mt-6 absolute bottom-2 left-6">01</p>
             </div>
             <div className="lg:col-span-7 flex justify-center">
-              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-md max-w-sm w-full space-y-3">
-                <div className="h-44 bg-slate-100 rounded-lg p-4 border border-gray-150 flex flex-col justify-between relative">
+              <div className="bg-slate-50 border border-gray-200 rounded-xl p-4 shadow-sm max-w-sm w-full space-y-3">
+                <div className="h-44 bg-white rounded-lg p-4 border border-gray-150 flex flex-col justify-between relative">
                   <span className="absolute top-2 left-2 bg-rose-500 text-white font-bold text-[9px] px-2 py-0.5 rounded shadow-sm">Sentiment Alert</span>
                   <div className="mt-8 space-y-1">
                     <h4 className="text-xs font-bold text-slate-850">Marcus Chen</h4>
                     <p className="text-[9px] text-slate-400">BlueSky Analytics · Enterprise</p>
                   </div>
-                  <div className="bg-slate-50 border border-gray-200 rounded p-2 text-[10px] text-slate-550 leading-relaxed italic">
+                  <div className="bg-slate-50 border border-gray-205 rounded p-2 text-[10px] text-slate-650 leading-relaxed italic">
                     "Considering cancelling our contract. Support feels completely reactive..."
                   </div>
                 </div>
@@ -2444,7 +2444,7 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
           </div>
 
           {/* Step 2 */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-5xl mx-auto border border-gray-200/80 rounded-2xl p-6 sm:p-10 bg-slate-50/50 shadow-sm relative">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-5xl mx-auto border border-gray-200 rounded-2xl p-6 sm:p-10 bg-white shadow-sm relative">
             <div className="lg:col-span-5 lg:order-2 space-y-4">
               <h3 className="text-xl font-bold text-slate-900 leading-snug">
                 Execute automated retention playbooks
@@ -2455,25 +2455,25 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
               <p className="text-[48px] font-extrabold font-mono text-slate-200 mt-6 absolute bottom-2 right-6">02</p>
             </div>
             <div className="lg:col-span-7 lg:order-1 flex justify-center">
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-md max-w-sm w-full space-y-4 relative overflow-hidden">
-                <div className="space-y-1 pb-3 border-b border-gray-100">
+              <div className="bg-slate-50 border border-gray-200 rounded-xl p-5 shadow-sm max-w-sm w-full space-y-4 relative overflow-hidden">
+                <div className="space-y-1 pb-3 border-b border-gray-150">
                   <p className="text-[10px] text-slate-400">Playbooks matrix</p>
                   <h4 className="text-xs font-bold text-slate-800">Retention Strategy Matrix</h4>
                 </div>
                 <div className="space-y-2 text-[9px]">
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-2.5 flex justify-between items-center shadow-sm">
+                  <div className="bg-white border border-gray-200 rounded-lg p-2.5 flex justify-between items-center shadow-sm">
                     <div>
                       <p className="text-slate-400 font-bold">Failed Payment</p>
                       <p className="font-bold text-blue-700">Trigger smart retry/dunning</p>
                     </div>
-                    <span className="text-[8px] font-bold text-blue-600 bg-white border border-blue-100 px-1.5 py-0.5 rounded">Active</span>
+                    <span className="text-[8px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded">Active</span>
                   </div>
-                  <div className="bg-slate-50 border border-gray-200 rounded-lg p-2.5 flex justify-between items-center">
+                  <div className="bg-white border border-gray-200 rounded-lg p-2.5 flex justify-between items-center">
                     <div>
                       <p className="text-slate-400 font-bold">Value Forgetting</p>
                       <p className="font-bold text-slate-700">Personalized 'Year-in-Review' Recap</p>
                     </div>
-                    <span className="text-[8px] font-bold text-slate-500 bg-white border border-gray-200 px-1.5 py-0.5 rounded">Queued</span>
+                    <span className="text-[8px] font-bold text-slate-500 bg-slate-50 border border-gray-205 px-1.5 py-0.5 rounded">Queued</span>
                   </div>
                 </div>
               </div>
@@ -2481,7 +2481,7 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
           </div>
 
           {/* Step 3 */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-5xl mx-auto border border-gray-200/80 rounded-2xl p-6 sm:p-10 bg-slate-50/50 shadow-sm relative">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-5xl mx-auto border border-gray-200 rounded-2xl p-6 sm:p-10 bg-white shadow-sm relative">
             <div className="lg:col-span-5 space-y-4">
               <h3 className="text-xl font-bold text-slate-900 leading-snug">
                 Simulate revenue outcomes & ROI
@@ -2492,9 +2492,9 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
               <p className="text-[48px] font-extrabold font-mono text-slate-200 mt-6 absolute bottom-2 left-6">03</p>
             </div>
             <div className="lg:col-span-7 flex justify-center">
-              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-md max-w-sm w-full space-y-3">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider pb-1 border-b border-gray-100">Contraction Simulator</p>
-                <div className="h-28 bg-slate-50 border border-gray-150 rounded flex items-end p-2 gap-2 justify-between">
+              <div className="bg-slate-50 border border-gray-200 rounded-xl p-4 shadow-sm max-w-sm w-full space-y-3">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider pb-1 border-b border-gray-150">Contraction Simulator</p>
+                <div className="h-28 bg-white border border-gray-155 rounded flex items-end p-2 gap-2 justify-between">
                   <div className="bg-blue-100 h-10 w-6 rounded-sm" />
                   <div className="bg-blue-200 h-16 w-6 rounded-sm" />
                   <div className="bg-blue-300 h-20 w-6 rounded-sm" />
@@ -2528,7 +2528,7 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
                     className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider transition-all cursor-pointer ${
                       isActive 
                         ? "bg-blue-600 text-white shadow-sm" 
-                        : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                        : "bg-slate-850 border border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white"
                     }`}
                   >
                     {tab}
@@ -2599,10 +2599,10 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
                 { num: "03", title: "Accelerated CS Onboarding", desc: "Recognize setup bottlenecks and time-to-first-value markers to guide clients gracefully." }
               ].map(adv => (
                 <div key={adv.num} className="flex gap-4 p-4 border border-slate-800 bg-slate-850 rounded-xl shadow-sm items-start hover:border-slate-700 transition-colors">
-                  <span className="text-xs font-bold font-mono bg-slate-800 text-slate-400 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
+                  <span className="text-xs font-bold font-mono bg-slate-800 text-blue-400 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
                   <div>
                     <h4 className="text-xs font-bold text-slate-100">{adv.title}</h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">{adv.desc}</p>
+                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">{adv.desc}</p>
                   </div>
                 </div>
               ))}
@@ -2612,10 +2612,10 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
                 { num: "03", title: "Renewal Risk Safeguards", desc: "Map executive sponsor departures and budget reviews early to protect recurring contract values." }
               ].map(adv => (
                 <div key={adv.num} className="flex gap-4 p-4 border border-slate-800 bg-slate-850 rounded-xl shadow-sm items-start hover:border-slate-700 transition-colors">
-                  <span className="text-xs font-bold font-mono bg-slate-800 text-slate-400 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
+                  <span className="text-xs font-bold font-mono bg-slate-800 text-blue-400 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
                   <div>
                     <h4 className="text-xs font-bold text-slate-100">{adv.title}</h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">{adv.desc}</p>
+                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">{adv.desc}</p>
                   </div>
                 </div>
               ))}
@@ -2625,10 +2625,10 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
                 { num: "03", title: "Customer 360 Accordion Tracking", desc: "Monitor onboarding, engagement, retention, and loyalty timeline steps on any individual client." }
               ].map(adv => (
                 <div key={adv.num} className="flex gap-4 p-4 border border-slate-800 bg-slate-850 rounded-xl shadow-sm items-start hover:border-slate-700 transition-colors">
-                  <span className="text-xs font-bold font-mono bg-slate-800 text-slate-400 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
+                  <span className="text-xs font-bold font-mono bg-slate-800 text-blue-400 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">{adv.num}</span>
                   <div>
                     <h4 className="text-xs font-bold text-slate-100">{adv.title}</h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">{adv.desc}</p>
+                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">{adv.desc}</p>
                   </div>
                 </div>
               ))}
@@ -2689,9 +2689,9 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
             <div className="w-6 h-6 rounded bg-blue-650 flex items-center justify-center text-xs">🛡️</div>
             <span className="font-extrabold text-xs tracking-tight text-white uppercase">ChurnGuard</span>
           </div>
-          <p className="text-[10px] font-medium font-mono text-slate-600">© 2026 ChurnGuard Technologies. All rights reserved.</p>
+          <p className="text-[10px] font-medium font-mono text-slate-450">© 2026 ChurnGuard Technologies. All rights reserved.</p>
         </div>
-        <p className="text-[9px] text-slate-600 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-[9px] text-slate-500 max-w-2xl mx-auto leading-relaxed">
           Disclaimer: ChurnGuard B2B customer analytics is built for enterprise portfolio monitoring. Health index estimations are based on simulated telemetry and CRM integration histories.
         </p>
       </footer>
