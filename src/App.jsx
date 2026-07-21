@@ -9,7 +9,7 @@ import {
   Settings, ShieldCheck, ChevronRight, ChevronDown, ChevronUp,
   DollarSign, AlertTriangle, CheckCircle2, TrendingDown, Sparkles,
   ArrowUpRight, ArrowDownRight, Bell, Search, Play, Pause, Plus, Info, Target, Heart,
-  Clock, Zap, UserX, MessageSquare, X, Globe, LogOut,
+  Clock, Zap, UserX, MessageSquare, X, Globe, LogOut, Brain, TrendingUp,
 } from "lucide-react";
 
 // ─── FORMULAS & CONSTANTS ─────────────────────────────────────────────────────
@@ -2419,6 +2419,82 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
             <span className="text-[9px] font-bold font-mono text-rose-600 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded ml-1">
               $116K
             </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Momentum AI Copilot Feature Section ── */}
+      <section className="px-6 sm:px-12 py-16 bg-white select-none">
+        <div className="max-w-7xl mx-auto border border-blue-200/60 rounded-3xl bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-purple-50/70 p-8 sm:p-12 shadow-sm text-center space-y-12">
+          {/* Header Area */}
+          <div className="flex flex-col items-center max-w-3xl mx-auto space-y-4">
+            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+              <Sparkles size={22} className="stroke-[2.5]" />
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Momentum <span className="bg-gradient-to-r from-blue-600 to-indigo-650 bg-clip-text text-transparent">AI Copilot</span>
+            </h2>
+            <p className="text-sm sm:text-base text-slate-505 leading-relaxed max-w-2xl font-medium">
+              Your intelligent retention assistant. Connect your teams, automate proactive interventions, and transform your customer success from reactive to revenue-driving.
+            </p>
+          </div>
+
+          {/* Feature Grid (3 Cards) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Card 1 */}
+            <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group flex flex-col justify-between text-left">
+              <div className="space-y-4">
+                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                  <Brain size={20} className="stroke-[2.5]" />
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900">Identify Risk Early</h3>
+                <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                  Monitor satisfaction and track usage drops from day one. Let ML models flag at-risk accounts before they escalate.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 2 */}
+            <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group flex flex-col justify-between text-left">
+              <div className="space-y-4">
+                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-650 group-hover:scale-110 transition-transform">
+                  <Zap size={20} className="stroke-[2.5]" />
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900">Trigger Smart Actions</h3>
+                <p className="text-xs text-slate-505 leading-relaxed font-medium">
+                  Give agents their time back. Automatically route retention tasks to Sales, CS, or Product based on specific churn drivers.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3 */}
+            <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group flex flex-col justify-between text-left">
+              <div className="space-y-4">
+                <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center text-purple-650 group-hover:scale-110 transition-transform">
+                  <TrendingUp size={20} className="stroke-[2.5]" />
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900">Model Financial Impact</h3>
+                <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                  Calculate exactly how much ARR is at risk if a specific segment churns, helping your team focus on high-value interactions.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Call to Action (Bottom) */}
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+            <button 
+              onClick={onEnterConsole}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-1.5 cursor-pointer animate-float-badge"
+            >
+              Explore AI Capabilities <ChevronRight size={14} className="stroke-[3]" />
+            </button>
+            <button 
+              onClick={onOpenChat}
+              className="px-6 py-3 border border-slate-300 text-slate-700 font-bold rounded-full text-xs hover:bg-slate-50 bg-white transition-all text-center cursor-pointer font-sans"
+            >
+              Talk to an AI Expert
+            </button>
           </div>
         </div>
       </section>
