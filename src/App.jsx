@@ -2816,12 +2816,13 @@ function LoginPageView({ onLoginSuccess, onBackToLanding }) {
           </div>
 
           {/* Social Logins */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <button className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-slate-50 py-2.5 rounded-lg text-[10px] font-bold text-slate-700 transition-all cursor-pointer bg-white shadow-sm">
-              <span className="text-xs">🍏</span> Use Apple
-            </button>
-            <button className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-slate-50 py-2.5 rounded-lg text-[10px] font-bold text-slate-700 transition-all cursor-pointer bg-white shadow-sm">
-              <span className="text-xs">🌐</span> Use Google
+          <div className="pt-2">
+            <button 
+              type="button"
+              onClick={onLoginSuccess}
+              className="w-full flex items-center justify-center gap-2 border border-gray-205 hover:bg-slate-50 py-2.5 rounded-lg text-[10.5px] font-bold text-slate-700 transition-all cursor-pointer bg-white shadow-sm"
+            >
+              <span className="text-xs">✉️</span> Log in with Gmail
             </button>
           </div>
 
