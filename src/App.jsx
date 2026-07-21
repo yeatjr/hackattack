@@ -2251,17 +2251,17 @@ function ActionsView() {
               </div>
             </div>
 
-            {/* Route to External System section */}
+            {/* Share Brief via... section */}
             <div className="bg-slate-900 border-t border-slate-750 p-5 space-y-3 text-left">
               <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-mono">
-                Route to External System
+                Share Brief via...
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { id: "jira", name: "Jira", desc: "Eng Queue", icon: <Settings size={16} />, color: "text-blue-400", bg: "bg-blue-950/40" },
-                  { id: "salesforce", name: "Salesforce", desc: "Sales Queue", icon: <Globe size={16} />, color: "text-sky-400", bg: "bg-sky-950/40" },
-                  { id: "slack", name: "Slack", desc: "CS Alert", icon: <MessageSquare size={16} />, color: "text-emerald-400", bg: "bg-emerald-950/40" },
-                  { id: "email", name: "Email", desc: "Exec Digest", icon: <Send size={16} />, color: "text-purple-400", bg: "bg-purple-950/40" },
+                  { id: "whatsapp", name: "WhatsApp", desc: "Eng Group Chat", icon: <MessageCircle size={16} />, color: "text-emerald-400", bg: "bg-emerald-950/40" },
+                  { id: "email", name: "Email", desc: "Sales Dept", icon: <Mail size={16} />, color: "text-blue-400", bg: "bg-blue-950/40" },
+                  { id: "telegram", name: "Telegram", desc: "CS Team", icon: <Send size={16} />, color: "text-sky-400", bg: "bg-sky-950/40" },
+                  { id: "slack", name: "Slack", desc: "Exec Board", icon: <MessageSquare size={16} />, color: "text-purple-400", bg: "bg-purple-950/40" },
                 ].map((app) => {
                   const isSelected = selectedIntegration === app.id;
                   return (
@@ -2271,14 +2271,14 @@ function ActionsView() {
                       className={`flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all cursor-pointer select-none ${
                         isSelected 
                           ? "border-blue-500 bg-blue-950/40 shadow-lg shadow-blue-500/10 scale-102" 
-                          : "border-slate-700 bg-slate-800/30 hover:border-slate-600 hover:bg-slate-800/60"
+                          : "border-slate-700 bg-slate-800/30 hover:border-slate-650 hover:bg-slate-800/60"
                       }`}
                     >
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 ${app.bg} ${app.color}`}>
                         {app.icon}
                       </div>
                       <span className="text-xs font-bold text-slate-200 leading-none">{app.name}</span>
-                      <span className="text-[9px] text-slate-450 mt-1 font-mono font-bold uppercase tracking-wider">{app.desc}</span>
+                      <span className="text-[9px] text-slate-455 mt-1 font-mono font-bold uppercase tracking-wider">{app.desc}</span>
                     </button>
                   );
                 })}
@@ -2298,10 +2298,10 @@ function ActionsView() {
                 disabled={!selectedIntegration}
                 onClick={() => {
                   const apps = {
-                    jira: { name: "Jira", desc: "Eng Queue" },
-                    salesforce: { name: "Salesforce", desc: "Sales Queue" },
-                    slack: { name: "Slack", desc: "CS Alert" },
-                    email: { name: "Email", desc: "Exec Digest" },
+                    whatsapp: { name: "WhatsApp", desc: "Eng Group Chat" },
+                    email: { name: "Email", desc: "Sales Dept" },
+                    telegram: { name: "Telegram", desc: "CS Team" },
+                    slack: { name: "Slack", desc: "Exec Board" },
                   };
                   const selected = apps[selectedIntegration];
                   if (selected) {
@@ -2314,7 +2314,7 @@ function ActionsView() {
                     : "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-50"
                 }`}
               >
-                Approve &amp; Route
+                Approve &amp; Send
               </button>
             </div>
           </div>
