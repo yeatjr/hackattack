@@ -1853,9 +1853,14 @@ function ReportsView() {
                         {item.trend === "up" ? "↗" : "↘"}
                         {item.trend === "up" ? "Increasing" : "Decreasing"}
                       </span>
-                      <button className="text-[9px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 border border-blue-100 px-2 py-0.5 rounded transition-all cursor-pointer font-semibold">
-                        Route
-                      </button>
+                      <div className="flex gap-2 items-center">
+                        <button className="text-[9px] font-bold text-slate-500 hover:text-slate-800 hover:underline transition-all cursor-pointer">
+                          Analyze Trend
+                        </button>
+                        <button className="text-[9px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded transition-all cursor-pointer font-semibold">
+                          Route
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1936,11 +1941,11 @@ function ActionsView() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleAction = (taskTitle, actionType) => {
+  const handleAction = (taskTitle, actionType, dest) => {
     if (actionType === "brief") {
       triggerToast(`📄 Department Brief generated for "${taskTitle}"`);
     } else if (actionType === "sync") {
-      triggerToast(`⚡ Synced "${taskTitle}" to Jira / Salesforce`);
+      triggerToast(`⚡ Synced "${taskTitle}" to ${dest}`);
     }
   };
 
@@ -1962,10 +1967,10 @@ function ActionsView() {
           <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 text-white shadow-inner">
             <Activity size={18} />
           </div>
-          <div>
+          <div className="text-left">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Action Routing Triage</p>
             <h3 className="text-lg font-bold text-white mb-1">
-              Cross-Functional Department Briefs
+              Action Routing &amp; Department Briefs
             </h3>
             <p className="text-xs text-slate-355 leading-relaxed max-w-2xl text-left">
               Route churn indicators directly to responsible departments. Track critical actions across Product, Sales, and Customer Success queues to resolve revenue risks before contraction.
@@ -1976,10 +1981,10 @@ function ActionsView() {
 
       {/* Kanban Board Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Column 1: Product & Engineering */}
+        {/* Column 1: Product & Engineering Queue */}
         <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
           <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-            <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Product &amp; Engineering</span>
+            <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Product &amp; Engineering Queue</span>
             <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.product.length} Tasks</span>
           </div>
           <div className="space-y-3">
@@ -1997,13 +2002,13 @@ function ActionsView() {
                     onClick={() => handleAction(item.title, "brief")}
                     className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
                   >
-                    Brief
+                    Generate Brief
                   </button>
                   <button 
-                    onClick={() => handleAction(item.title, "sync")}
+                    onClick={() => handleAction(item.title, "sync", "Jira")}
                     className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
                   >
-                    Sync Jira
+                    Send to Jira
                   </button>
                 </div>
               </div>
@@ -2011,10 +2016,10 @@ function ActionsView() {
           </div>
         </div>
 
-        {/* Column 2: Sales & Marketing */}
+        {/* Column 2: Sales & Marketing Queue */}
         <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
           <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-            <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Sales &amp; Marketing</span>
+            <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Sales &amp; Marketing Queue</span>
             <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.sales.length} Tasks</span>
           </div>
           <div className="space-y-3">
@@ -2032,13 +2037,13 @@ function ActionsView() {
                     onClick={() => handleAction(item.title, "brief")}
                     className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
                   >
-                    Brief
+                    Generate Brief
                   </button>
                   <button 
-                    onClick={() => handleAction(item.title, "sync")}
+                    onClick={() => handleAction(item.title, "sync", "Salesforce")}
                     className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
                   >
-                    Sync Salesforce
+                    Send to Salesforce
                   </button>
                 </div>
               </div>
@@ -2046,10 +2051,10 @@ function ActionsView() {
           </div>
         </div>
 
-        {/* Column 3: Customer Success */}
+        {/* Column 3: Customer Success Queue */}
         <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
           <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-            <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Customer Success</span>
+            <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Customer Success Queue</span>
             <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.cs.length} Tasks</span>
           </div>
           <div className="space-y-3">
@@ -2067,13 +2072,13 @@ function ActionsView() {
                     onClick={() => handleAction(item.title, "brief")}
                     className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
                   >
-                    Brief
+                    Generate Brief
                   </button>
                   <button 
-                    onClick={() => handleAction(item.title, "sync")}
+                    onClick={() => handleAction(item.title, "sync", "Customer Success")}
                     className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
                   >
-                    Sync CS
+                    Send to CS
                   </button>
                 </div>
               </div>
