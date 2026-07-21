@@ -2815,24 +2815,6 @@ function LoginPageView({ onLoginSuccess, onBackToLanding }) {
             <p className="text-xs text-slate-450 font-medium">Welcome to Momentum command center</p>
           </div>
 
-          {/* Social Logins */}
-          <div className="pt-2">
-            <button 
-              type="button"
-              onClick={onLoginSuccess}
-              className="w-full flex items-center justify-center gap-2 border border-gray-205 hover:bg-slate-50 py-2.5 rounded-lg text-[10.5px] font-bold text-slate-700 transition-all cursor-pointer bg-white shadow-sm"
-            >
-              <span className="text-xs">✉️</span> Log in with Gmail
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 py-1.5">
-            <div className="flex-1 h-[1px] bg-gray-150" />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">or</span>
-            <div className="flex-1 h-[1px] bg-gray-150" />
-          </div>
-
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4 text-left">
             {/* Email Field */}
