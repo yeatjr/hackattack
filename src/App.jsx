@@ -2270,11 +2270,6 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
       <section className="px-6 sm:px-12 py-12 lg:py-20 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center bg-white">
         {/* Left Column (Copy & CTAs) */}
         <div className="lg:col-span-6 space-y-6 text-left">
-          {/* Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-slate-600 shadow-sm select-none">
-            <span className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center text-[8px] text-white">✓</span>
-            Part of the CS Innovations Sandbox 2025 &gt;
-          </div>
 
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight tracking-tight">
