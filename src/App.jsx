@@ -1225,93 +1225,106 @@ const ChartTooltip = ({ active, payload, label }) => {
 // ─── INSIGHTS VIEW ────────────────────────────────────────────────────────────
 
 function InsightsView() {
+  const cohortRiskData = [
+    { name: "Europe Enterprise Tier", accounts: 12, probability: 25, loss: 150000, color: "#3b82f6" },
+    { name: "Basic Plan Users", accounts: 142, probability: 48, loss: 116400, color: "#a855f7" },
+    { name: "Stuck in Onboarding", accounts: 89, probability: 65, loss: 92860, color: "#f43f5e" },
+    { name: "High Ticket Inquiries", accounts: 18, probability: 30, loss: 78500, color: "#10b981" },
+    { name: "Inactive Integrations", accounts: 42, probability: 75, loss: 54200, color: "#f59e0b" },
+  ];
+
+  const totalLoss = cohortRiskData.reduce((acc, curr) => acc + curr.loss, 0);
+
   return (
     <div className="space-y-6">
-      <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-md p-5 text-white shadow-sm">
+      {/* Top Card: Summary */}
+      <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-5 text-white shadow-md">
         <div className="absolute -right-10 -top-10 w-52 h-52 rounded-full bg-white/5" />
         <div className="absolute -right-4 -bottom-8 w-36 h-36 rounded-full bg-white/5" />
         <div className="relative flex items-start gap-4">
-          <div className="w-9 h-9 bg-white/10 rounded flex items-center justify-center flex-shrink-0">
-            <Sparkles size={16} />
+          <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 text-white shadow-inner">
+            <Sparkles size={18} />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">AI Summary · Plain-Language Insight</p>
-            <p className="text-sm font-medium leading-relaxed max-w-2xl text-slate-200">
-              <strong>40% of Premium users</strong> are exhibiting <em className="text-blue-300">'Feature-Level Usage Gaps'</em> —
-              paying for Premium but only using Basic features. Targeted training could recover up to <strong className="text-yellow-400">$92K</strong> ARR.
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Momentum Macro Forecast</p>
+            <h3 className="text-lg font-bold text-white mb-1">
+              Total Segment Revenue At-Risk: <span className="text-yellow-300 font-mono">${totalLoss.toLocaleString()}</span> ARR
+            </h3>
+            <p className="text-xs text-slate-350 leading-relaxed max-w-2xl">
+              Cohort-level analysis flags <strong>Europe Enterprise Tier</strong> and <strong>Basic Plan Users</strong> as our highest financial risks. Standardized playbooks could salvage up to 60% of this exposure.
             </p>
-            <div className="flex flex-wrap gap-2 mt-4">
-              {["⚠ 12 customers affected","📉 Avg. 3.2 features unused","🎯 Intervention ROI: 4.8×","⏱ Avg. tenure: 14 months"].map(t => (
-                <span key={t} className="bg-slate-800 border border-slate-700/60 text-slate-350 text-[10px] px-2.5 py-1 rounded font-semibold">{t}</span>
-              ))}
-            </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-md border border-gray-200 p-4">
-          <h3 className="text-xs font-bold text-slate-850 uppercase tracking-wider">Sentiment Trend</h3>
-          <p className="text-[10px] text-gray-450 mt-0.5 mb-4">Support ticket sentiment over time</p>
-          <ResponsiveContainer width="100%" height={175}>
-            <LineChart data={sentimentData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="month" tick={{ fontSize: 9, fill: "#94a3b8" }} />
-              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} />
-              <Tooltip content={<ChartTooltip />} />
-              <Line type="monotone" dataKey="positive" stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-              <Line type="monotone" dataKey="negative" stroke="#f43f5e"  strokeWidth={2} dot={false} activeDot={{ r: 4 }} strokeDasharray="5 3" />
-            </LineChart>
-          </ResponsiveContainer>
-          <div className="flex gap-4 mt-2">
-            <span className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold"><span className="w-3 h-0.5 bg-emerald-500 inline-block rounded" /> Positive</span>
-            <span className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold"><span className="w-3 h-0.5 bg-rose-500 inline-block rounded" /> Negative</span>
+      {/* Cohort Risk Analysis Table */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-gray-200 bg-slate-50/50 flex justify-between items-center">
+          <div>
+            <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Cohort Risk Analysis</h3>
+            <p className="text-[10px] text-slate-400 mt-0.5">Macro segmentation metrics and risk classification</p>
           </div>
+          <span className="text-[10px] font-bold text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded font-mono">5 Active Cohorts</span>
         </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-slate-50 border-b border-gray-200 text-slate-400">
+                <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-left">Cohort Name</th>
+                <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-center">Total Accounts</th>
+                <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-center">Churn Probability</th>
+                <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-right">Forecasted Revenue Loss (ARR)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-150">
+              {cohortRiskData.map((row) => (
+                <tr key={row.name} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-5 py-3.5 font-bold text-slate-800 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: row.color }} />
+                    {row.name}
+                  </td>
+                  <td className="px-5 py-3.5 text-center font-semibold text-slate-600 font-mono">{row.accounts}</td>
+                  <td className="px-5 py-3.5 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-slate-700 font-bold font-mono">{row.probability}%</span>
+                      <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden hidden sm:block">
+                        <div className="h-full rounded-full" style={{ width: `${row.probability}%`, backgroundColor: row.color }} />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3.5 text-right font-extrabold text-slate-900 text-sm font-mono">
+                    ${row.loss.toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-        <div className="bg-white rounded-md border border-gray-200 p-4">
-          <h3 className="text-xs font-bold text-slate-850 uppercase tracking-wider">Feature Adoption by Tier</h3>
-          <p className="text-[10px] text-gray-450 mt-0.5 mb-4">% of features actively used per plan</p>
-          <ResponsiveContainer width="100%" height={175}>
-            <BarChart data={featureAdoptionData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }} barSize={6}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="feature" tick={{ fontSize: 9, fill: "#94a3b8" }} />
-              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} domain={[0, 100]} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="basic"      fill="#cbd5e1" radius={[1, 1, 0, 0]} />
-              <Bar dataKey="premium"    fill="#a855f7" radius={[1, 1, 0, 0]} />
-              <Bar dataKey="enterprise" fill="#3b82f6" radius={[1, 1, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-          <div className="flex gap-3 mt-2">
-            {[["Basic","#cbd5e1"],["Premium","#a855f7"],["Enterprise","#3b82f6"]].map(([l,c]) => (
-              <span key={l} className="flex items-center gap-1 text-xs text-slate-500 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: c }} /> {l}
-              </span>
-            ))}
-          </div>
+      {/* Visual Chart Section */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div>
+          <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-0.5">Revenue Impact chart</h3>
+          <p className="text-[10px] text-slate-400 mb-6">Visual comparison of forecasted ARR loss per cohort segment</p>
         </div>
-
-        <div className="bg-white rounded-md border border-gray-200 p-4">
-          <h3 className="text-xs font-bold text-slate-850 uppercase tracking-wider">Customer Segments</h3>
-          <p className="text-[10px] text-gray-400 mt-0.5 mb-4">Behavioral cluster distribution</p>
-          <ResponsiveContainer width="100%" height={175}>
-            <PieChart>
-              <Pie data={clusterData} cx="50%" cy="50%" innerRadius={48} outerRadius={72} paddingAngle={3} dataKey="value">
-                {clusterData.map(e => <Cell key={e.name} fill={e.color} stroke="none" />)}
-              </Pie>
-              <Tooltip content={<ChartTooltip />} formatter={(v, n) => [`${v}%`, n]} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="grid grid-cols-2 gap-1.5 mt-2">
-            {clusterData.map(d => (
-              <span key={d.name} className="flex items-center gap-1.5 text-xs text-slate-505 font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: d.color }} />
-                {d.name} <span className="ml-auto font-bold text-slate-650">{d.value}%</span>
-              </span>
-            ))}
-          </div>
-        </div>
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={cohortRiskData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }} barSize={32}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#64748b", fontWeight: 600 }} stroke="#e2e8f0" />
+            <YAxis tickFormatter={(v) => `$${v/1000}k`} tick={{ fontSize: 10, fill: "#64748b" }} stroke="#e2e8f0" />
+            <Tooltip 
+              formatter={(value) => [`$${value.toLocaleString()}`, "Forecasted ARR Loss"]}
+              labelStyle={{ fontWeight: "bold", color: "#0f172a" }}
+              contentStyle={{ border: "1px solid #e2e8f0", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+            />
+            <Bar dataKey="loss">
+              {cohortRiskData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} radius={[4, 4, 0, 0]} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
@@ -1722,291 +1735,297 @@ function RetentionStrategyMatrix() {
   );
 }
 
-// ─── REGIONAL ISSUES DATA ────────────────────────────────────────────────────
-
-const REGIONAL_ISSUES = {
-  "silicon-valley": {
-    city: "San Francisco",
-    region: "North America (West)",
-    issue: "API Timeout Errors",
-    volume: 12,
-    severity: "Critical",
-    severityCls: "text-rose-700 bg-rose-50 border-rose-100",
-    affectedUsers: ["Sarah Jenkins", "Oliver Vance"],
-    nlpQuotes: [
-      "\"Salesforce sync fails silently. API returns 504 Gateway Timeout during batch imports.\"",
-      "\"API calls are taking upwards of 12 seconds since the v2.4 patch release.\""
-    ],
-    distribution: [
-      { name: "API Issues", value: 60 },
-      { name: "SSO Config", value: 25 },
-      { name: "Data Import", value: 15 }
-    ]
-  },
-  "new-york": {
-    city: "New York",
-    region: "North America (East)",
-    issue: "Billing & Failed Payments",
-    volume: 8,
-    severity: "High",
-    severityCls: "text-amber-700 bg-amber-50 border-amber-100",
-    affectedUsers: ["David Miller", "Lucas Vance"],
-    nlpQuotes: [
-      "\"Auto-renewal failed twice even though the card has sufficient credit. No warning sent.\"",
-      "\"Dunning emails are sending to expired admins instead of our accounting inbox.\""
-    ],
-    distribution: [
-      { name: "Failed Card", value: 50 },
-      { name: "Invoice Setup", value: 30 },
-      { name: "Dunning Loop", value: 20 }
-    ]
-  },
-  "london": {
-    city: "London",
-    region: "Europe (UK)",
-    issue: "Onboarding Stalls",
-    volume: 5,
-    severity: "Medium",
-    severityCls: "text-blue-700 bg-blue-50 border-blue-100",
-    affectedUsers: ["Oliver Vance"],
-    nlpQuotes: [
-      "\"Team invitation links expire too fast (24h). Admins have to keep re-sending them.\"",
-      "\"Setup checklist is confusing. Users get stuck at step 4 (integration keys) and leave.\""
-    ],
-    distribution: [
-      { name: "Invite Expiry", value: 45 },
-      { name: "Step Guide", value: 35 },
-      { name: "Team Setup", value: 20 }
-    ]
-  },
-  "tokyo": {
-    city: "Tokyo",
-    region: "Asia Pacific (JP)",
-    issue: "UI & Workflow Friction",
-    volume: 4,
-    severity: "Low",
-    severityCls: "text-slate-600 bg-slate-100 border-slate-200",
-    affectedUsers: ["Sophia Martinez"],
-    nlpQuotes: [
-      "\"Dashboard filters reset whenever we change tabs, forcing us to rebuild reports.\"",
-      "\"Navigation layout is confusing for our frontline support agents.\""
-    ],
-    distribution: [
-      { name: "Tab State", value: 55 },
-      { name: "Mobile View", value: 30 },
-      { name: "Colors", value: 15 }
-    ]
-  },
-  "sydney": {
-    city: "Sydney",
-    region: "Asia Pacific (AU)",
-    issue: "Value Forgetting",
-    volume: 2,
-    severity: "Low",
-    severityCls: "text-slate-600 bg-slate-100 border-slate-200",
-    affectedUsers: ["Jonathan Reynolds", "Emma Harrison"],
-    nlpQuotes: [
-      "\"Platform works well but we forget to check the dashboard unless there is an alert.\"",
-      "\"We need a weekly summary email to keep stakeholders aligned on value.\""
-    ],
-    distribution: [
-      { name: "Report Email", value: 70 },
-      { name: "CSM Touchpoint", value: 20 },
-      { name: "Alert Settings", value: 10 }
-    ]
-  }
-};
+// ─── REPORTS VIEW ────────────────────────────────────────────────────────────
 
 function ReportsView() {
-  const [selectedHotspot, setSelectedHotspot] = useState("silicon-valley");
-  const data = REGIONAL_ISSUES[selectedHotspot];
+  const complaints = [
+    { text: "API Timeout Errors", mentions: 142, trend: "up", severity: "Critical" },
+    { text: "Confusing UI Update", mentions: 89, trend: "up", severity: "Medium" },
+    { text: "Billing & Payment Friction", mentions: 68, trend: "down", severity: "High" },
+    { text: "SSO Login Loop Bugs", mentions: 45, trend: "up", severity: "Critical" },
+    { text: "Missing Report CSV Export", mentions: 24, trend: "down", severity: "Low" },
+  ];
+
+  const competitors = [
+    { name: "RivalTech", mentions: 78, percent: 78, color: "bg-blue-600" },
+    { name: "OmniSync", mentions: 42, percent: 42, color: "bg-indigo-500" },
+    { name: "ChurnFree", mentions: 29, percent: 29, color: "bg-purple-500" },
+    { name: "RetainIQ", mentions: 15, percent: 15, color: "bg-slate-400" },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Header banner */}
-      <div className="bg-slate-900 border border-slate-800 rounded-md p-4 text-white flex items-center gap-4 shadow-sm font-sans">
-        <div className="w-8 h-8 bg-white/10 rounded flex items-center justify-center flex-shrink-0">
-          <Globe size={15} />
-        </div>
-        <div>
-          <h2 className="text-xs font-bold uppercase tracking-wider">User Issues Regional Map</h2>
-          <p className="text-[11px] text-slate-400 mt-0.5">Interactive geographical analysis of customer support friction points. Click on hotspots to view detail reports.</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Interactive map box */}
-        <div className="lg:col-span-3 bg-white rounded-md border border-gray-200 p-4 flex flex-col justify-between">
+      {/* Top Banner */}
+      <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-5 text-white shadow-md">
+        <div className="absolute -right-10 -top-10 w-52 h-52 rounded-full bg-white/5" />
+        <div className="absolute -right-4 -bottom-8 w-36 h-36 rounded-full bg-white/5" />
+        <div className="relative flex items-start gap-4">
+          <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 text-white shadow-inner">
+            <Sparkles size={18} />
+          </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-0.5">Issue Distribution Map</h3>
-            <p className="text-[10px] text-gray-405 mt-0.5 mb-4">Select a regional hub to load support logs and at-risk revenue metrics</p>
-          </div>
-
-          {/* SVG Map Container */}
-          <div className="relative w-full h-[280px] bg-slate-50 border border-slate-100 rounded flex items-center justify-center overflow-hidden select-none">
-            <svg viewBox="0 0 800 400" className="w-full h-full text-slate-300">
-              {/* Continental shapes simplified coordinates */}
-              {/* North America */}
-              <path d="M 80 80 L 250 80 L 220 180 L 150 200 L 100 150 Z M 160 200 L 180 250 L 160 270" fill="#f8fafc" stroke="#cbd5e1" strokeWidth={1} />
-              {/* South America */}
-              <path d="M 200 260 L 250 280 L 230 380 L 190 350 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth={1} />
-              {/* Europe */}
-              <path d="M 370 70 L 480 70 L 450 170 L 390 170 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth={1} />
-              {/* Africa */}
-              <path d="M 390 190 L 460 190 L 440 320 L 370 230 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth={1} />
-              {/* Asia */}
-              <path d="M 480 60 L 720 70 L 680 220 L 520 220 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth={1} />
-              {/* Australia */}
-              <path d="M 640 280 L 730 290 L 700 350 L 620 330 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth={1} />
-
-              {/* Grid Lines for tech aesthetic */}
-              <g stroke="#f1f5f9" strokeDasharray="3 3" strokeWidth={0.5}>
-                <line x1={0} y1={100} x2={800} y2={100} />
-                <line x1={0} y1={200} x2={800} y2={200} />
-                <line x1={0} y1={300} x2={800} y2={300} />
-                <line x1={200} y1={0} x2={200} y2={400} />
-                <line x1={400} y1={0} x2={400} y2={400} />
-                <line x1={600} y1={0} x2={600} y2={400} />
-              </g>
-
-              {/* Hotspots */}
-              {Object.entries(REGIONAL_ISSUES).map(([id, info]) => {
-                const coords = {
-                  "silicon-valley": { x: 120, y: 110 },
-                  "new-york":       { x: 210, y: 120 },
-                  "london":         { x: 410, y: 95  },
-                  "tokyo":          { x: 670, y: 115 },
-                  "sydney":         { x: 690, y: 310 }
-                }[id];
-
-                if (!coords) return null;
-
-                const isSelected = selectedHotspot === id;
-                const markerColor = info.severity === "Critical" ? "fill-rose-500 stroke-rose-600" :
-                                    info.severity === "High" ? "fill-amber-500 stroke-amber-600" :
-                                    "fill-blue-500 stroke-blue-600";
-
-                return (
-                  <g key={id} className="cursor-pointer" onClick={() => setSelectedHotspot(id)}>
-                    {/* Pulsing Outer Circle */}
-                    <circle cx={coords.x} cy={coords.y} r={isSelected ? 16 : 10} className={`${markerColor} opacity-20`} />
-                    {/* Inner Core Circle */}
-                    <circle cx={coords.x} cy={coords.y} r={6} className={`${markerColor} transition-all`} />
-                    {/* City Label */}
-                    <text x={coords.x} y={coords.y - 12} textAnchor="middle" className="text-[10px] font-bold fill-slate-700" style={{ fontFamily: "monospace" }}>
-                      {info.city}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-
-          <div className="mt-4 flex justify-between items-center text-[10px] text-slate-400 font-mono">
-            <span>Geographic Distribution Overlay</span>
-            <div className="flex gap-3">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" /> Critical</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> High</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Med/Low</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Detailed logs box */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-md border border-gray-200 p-4 h-full flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider font-mono">{data.region}</span>
-                <span className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase ${data.severityCls}`}>{data.severity} Priority</span>
-              </div>
-              <h3 className="text-sm font-bold text-slate-900">{data.city}: {data.issue}</h3>
-              <p className="text-[10px] text-slate-405 mt-0.5">{data.volume} accounts reporting this week</p>
-
-              {/* Bar Chart representing sub issues */}
-              <div className="mt-4 pb-4 border-b border-gray-100">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Issue Breakdown</p>
-                <div className="space-y-2">
-                  {data.distribution.map(d => (
-                    <div key={d.name}>
-                      <div className="flex justify-between text-[10px] font-semibold text-slate-650 mb-0.5">
-                        <span>{d.name}</span>
-                        <span>{d.value}%</span>
-                      </div>
-                      <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                        <div className="bg-blue-650 h-1.5 rounded-full" style={{ width: `${d.value}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Affected users */}
-              <div className="mt-4 pb-4 border-b border-gray-100">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Affected Accounts</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {data.affectedUsers.map(user => (
-                    <span key={user} className="bg-slate-100 border border-gray-200 text-slate-700 text-[10px] px-2 py-0.5 rounded font-semibold font-mono">
-                      👤 {user}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* User transcript quotes */}
-              <div className="mt-4">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">NLP Support Transcripts</p>
-                <div className="space-y-2.5 max-h-[140px] overflow-y-auto">
-                  {data.nlpQuotes.map((quote, idx) => (
-                    <div key={idx} className="bg-slate-50 border border-gray-200 rounded p-2.5 text-xs text-slate-600 leading-relaxed italic relative">
-                      {quote}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Voice of Customer NLP Parser</p>
+            <h3 className="text-lg font-bold text-white mb-1">
+              Top Customer Mentions & Competitor Signals
+            </h3>
+            <p className="text-xs text-slate-355 leading-relaxed max-w-2xl text-left">
+              NLP-driven analysis highlights critical support frustrations and competitive threats extracted from chat tickets, email logs, and cancellation reviews.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Global Issues list */}
-      <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
-        <div className="px-4 py-2.5 bg-slate-50 border-b border-gray-200">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Issue Playbook Leaderboard</h3>
+      {/* Main Two Column Split Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column: Complaint Tracker */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-200 bg-slate-50/50 flex justify-between items-center">
+            <div>
+              <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Complaint Tracker</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">Top negative trends and friction points</p>
+            </div>
+            <span className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-100 px-2.5 py-0.5 rounded-full font-mono">Real-time Feed</span>
+          </div>
+
+          <div className="p-5 divide-y divide-gray-100 text-left">
+            {complaints.map((item, idx) => (
+              <div key={idx} className="py-3.5 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-slate-805 flex items-center gap-2">
+                    {item.text}
+                    <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded uppercase ${
+                      item.severity === "Critical" ? "bg-rose-100 text-rose-700" :
+                      item.severity === "High" ? "bg-amber-100 text-amber-700" :
+                      item.severity === "Medium" ? "bg-blue-100 text-blue-700" :
+                      "bg-slate-100 text-slate-600"
+                    }`}>
+                      {item.severity}
+                    </span>
+                  </p>
+                  <p className="text-[10px] text-slate-405 font-medium">
+                    Mentions: <span className="font-bold text-slate-600 font-mono">{item.mentions}</span> tickets this month
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 flex-shrink-0 text-right">
+                  <span className={`text-[10px] font-extrabold font-mono flex items-center gap-0.5 ${
+                    item.trend === "up" ? "text-rose-650" : "text-emerald-650"
+                  }`}>
+                    {item.trend === "up" ? "↗" : "↘"}
+                    {item.trend === "up" ? "Increasing" : "Decreasing"}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-slate-50/50 border-b border-gray-200">
-                {["Issue Focus", "Severity", "Total Reports", "Revenue at Risk", "Active Playbook"].map(h => (
-                  <th key={h} className="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-left">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {[
-                { issue: "API Timeout Errors", severity: "Critical", count: 12, rar: 122080, playbook: "Deploy smart API retry sequence & alert dev team" },
-                { issue: "Billing & Failed Payments", severity: "High", count: 8, rar: 29740, playbook: "Initiate smart dunning process and payment page pop-ups" },
-                { issue: "Onboarding Stalls", severity: "Medium", count: 5, rar: 5640, playbook: "Auto-trigger walkthrough tours and client callback call" },
-                { issue: "UI & Workflow Friction", severity: "Low", count: 4, rar: 14820, playbook: "Send VIP reward survey & queue usability feedback" },
-                { issue: "Value Forgetting", severity: "Low", count: 2, rar: 22200, playbook: "Trigger personalized value recap digest" }
-              ].map(row => (
-                <tr key={row.issue} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-4 py-2.5 font-bold text-slate-800">{row.issue}</td>
-                  <td className="px-4 py-2.5">
-                    <span className={`px-2 py-0.5 rounded font-bold text-[9px] uppercase ${
-                      row.severity === "Critical" ? "bg-rose-100 text-rose-700" :
-                      row.severity === "High" ? "bg-amber-100 text-amber-700" :
-                      "bg-blue-100 text-blue-700"
-                    }`}>{row.severity}</span>
-                  </td>
-                  <td className="px-4 py-2.5 font-mono text-slate-600">{row.count} accounts</td>
-                  <td className="px-4 py-2.5 font-mono font-bold text-rose-600">${row.rar.toLocaleString()}</td>
-                  <td className="px-4 py-2.5 text-slate-650">{row.playbook}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+        {/* Right Column: Competitor Radar (Threat Matrix) */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-200 bg-slate-50/50 flex justify-between items-center">
+            <div>
+              <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Competitor Radar (Threat Matrix)</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">Competitors mentioned in cancellation communications</p>
+            </div>
+            <span className="text-[10px] font-bold text-slate-500 bg-slate-200/60 px-2.5 py-0.5 rounded font-mono">30-day Window</span>
+          </div>
+
+          <div className="p-5 space-y-5 text-left">
+            {competitors.map((item, idx) => (
+              <div key={idx} className="space-y-2">
+                <div className="flex justify-between items-end text-xs">
+                  <span className="font-bold text-slate-805">{item.name}</span>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    Mentions: <span className="font-bold text-slate-700 font-mono">{item.mentions}</span>
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden flex shadow-inner">
+                  <div className={`h-full rounded-full transition-all duration-500 ${item.color}`} style={{ width: `${item.percent}%` }} />
+                </div>
+              </div>
+            ))}
+
+            {/* AI Callout note */}
+            <div className="bg-blue-55/40 border border-blue-100 rounded-lg p-3.5 text-[10px] text-slate-650 leading-relaxed text-left flex items-start gap-2.5">
+              <span className="text-blue-500 font-bold">💡</span>
+              <p>
+                <strong>Competitive Threat Alert:</strong> Mentions of <strong className="text-slate-800">RivalTech</strong> have increased by 22% compared to last month. Most users indicate RivalTech's custom pricing campaigns as their primary migration driver.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ACTIONS VIEW ────────────────────────────────────────────────────────────
+
+function ActionsView() {
+  const [boardData, setBoardData] = useState({
+    product: [
+      { id: "p1", title: "Fix API timeout bug affecting 12 accounts", priority: "Critical", impact: "High", rar: 122000 },
+      { id: "p2", title: "Resolve SSO login loop for Enterprise clients", priority: "High", impact: "Medium", rar: 85000 },
+    ],
+    sales: [
+      { id: "s1", title: "Generate counter-offer campaign for RivalTech move", priority: "High", impact: "High", rar: 69000 },
+      { id: "s2", title: "Setup onboarding pricing revisions", priority: "Medium", impact: "Low", rar: 29000 },
+    ],
+    cs: [
+      { id: "c1", title: "Schedule manual check-ins with top 5 Enterprise", priority: "Critical", impact: "High", rar: 150000 },
+      { id: "c2", title: "Conduct QBR for Emma Harrison's team", priority: "Medium", impact: "Medium", rar: 41000 },
+    ],
+  });
+
+  const [toast, setToast] = useState(null);
+
+  const triggerToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleAction = (taskTitle, actionType) => {
+    if (actionType === "brief") {
+      triggerToast(`📄 Department Brief generated for "${taskTitle}"`);
+    } else if (actionType === "sync") {
+      triggerToast(`⚡ Synced "${taskTitle}" to Jira / Salesforce`);
+    }
+  };
+
+  return (
+    <div className="space-y-6 relative">
+      {/* Toast Notice */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-slate-800 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-2.5 animate-bounce text-xs font-semibold select-none">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+          {toast}
+        </div>
+      )}
+
+      {/* Top Header Card */}
+      <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-5 text-white shadow-md">
+        <div className="absolute -right-10 -top-10 w-52 h-52 rounded-full bg-white/5" />
+        <div className="absolute -right-4 -bottom-8 w-36 h-36 rounded-full bg-white/5" />
+        <div className="relative flex items-start gap-4">
+          <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 text-white shadow-inner">
+            <Activity size={18} />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Action Routing Triage</p>
+            <h3 className="text-lg font-bold text-white mb-1">
+              Cross-Functional Department Briefs
+            </h3>
+            <p className="text-xs text-slate-355 leading-relaxed max-w-2xl text-left">
+              Route churn indicators directly to responsible departments. Track critical actions across Product, Sales, and Customer Success queues to resolve revenue risks before contraction.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Kanban Board Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Column 1: Product & Engineering */}
+        <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+            <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Product &amp; Engineering</span>
+            <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.product.length} Tasks</span>
+          </div>
+          <div className="space-y-3">
+            {boardData.product.map((item) => (
+              <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 hover:border-blue-500/50 transition-colors text-left">
+                <div className="flex justify-between items-start gap-2">
+                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                    item.priority === "Critical" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"
+                  }`}>{item.priority}</span>
+                  <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
+                </div>
+                <p className="text-xs font-bold text-slate-800 leading-snug">{item.title}</p>
+                <div className="flex gap-2 pt-2 border-t border-gray-150">
+                  <button 
+                    onClick={() => handleAction(item.title, "brief")}
+                    className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Brief
+                  </button>
+                  <button 
+                    onClick={() => handleAction(item.title, "sync")}
+                    className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Sync Jira
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Column 2: Sales & Marketing */}
+        <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+            <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Sales &amp; Marketing</span>
+            <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.sales.length} Tasks</span>
+          </div>
+          <div className="space-y-3">
+            {boardData.sales.map((item) => (
+              <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 hover:border-blue-500/50 transition-colors text-left">
+                <div className="flex justify-between items-start gap-2">
+                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                    item.priority === "High" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+                  }`}>{item.priority}</span>
+                  <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
+                </div>
+                <p className="text-xs font-bold text-slate-805 leading-snug">{item.title}</p>
+                <div className="flex gap-2 pt-2 border-t border-gray-150">
+                  <button 
+                    onClick={() => handleAction(item.title, "brief")}
+                    className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Brief
+                  </button>
+                  <button 
+                    onClick={() => handleAction(item.title, "sync")}
+                    className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Sync Salesforce
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Column 3: Customer Success */}
+        <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+            <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Customer Success</span>
+            <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.cs.length} Tasks</span>
+          </div>
+          <div className="space-y-3">
+            {boardData.cs.map((item) => (
+              <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 hover:border-blue-500/50 transition-colors text-left">
+                <div className="flex justify-between items-start gap-2">
+                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                    item.priority === "Critical" ? "bg-rose-100 text-rose-700" : "bg-blue-100 text-blue-700"
+                  }`}>{item.priority}</span>
+                  <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
+                </div>
+                <p className="text-xs font-bold text-slate-805 leading-snug">{item.title}</p>
+                <div className="flex gap-2 pt-2 border-t border-gray-150">
+                  <button 
+                    onClick={() => handleAction(item.title, "brief")}
+                    className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Brief
+                  </button>
+                  <button 
+                    onClick={() => handleAction(item.title, "sync")}
+                    className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Sync CS
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -2035,17 +2054,16 @@ const navItems = [
   { id: "dashboard",  label: "Dashboard",    icon: LayoutDashboard },
   { id: "customers",  label: "Customer 360", icon: Users           },
   { id: "insights",   label: "Insights",     icon: Lightbulb       },
-  { id: "simulator",  label: "Simulator",    icon: Activity        },
   { id: "reports",    label: "Reports",      icon: FileBarChart2   },
+  { id: "actions",    label: "Actions",      icon: Activity        },
 ];
 
 const pageMeta = {
-  dashboard:  { subtitle: "Real-time churn risk command center with formula-backed KPIs" },
-  customers:  { subtitle: "360° lifecycle tracking for every customer account" },
-  insights:   { subtitle: "AI-powered behavioral insights across your customer base" },
-  simulator:  { subtitle: "Interactive Metrics & Retention Simulator — adjust inputs, see exact formula outputs" },
-  reports:    { subtitle: "Scheduled and ad-hoc reports across your portfolio" },
-  settings:   { subtitle: "Platform configuration and integrations" },
+  dashboard:  { title: "Command Center Dashboard", subtitle: "Real-time churn risk command center with formula-backed KPIs" },
+  customers:  { title: "Customer 360° Profile",    subtitle: "360° lifecycle tracking for every customer account" },
+  insights:   { title: "Segment Insights & Revenue Impact", subtitle: "Cohort Analysis & Segmented Revenue-at-Risk forecasting" },
+  reports:    { title: "Voice of Customer & Market Threats", subtitle: "Voice of Customer, NLP complaints tracker, and Competitor threats matrix" },
+  actions:    { title: "Action Routing & Department Briefs", subtitle: "Cross-functional routing triage queue and department briefs execution" },
 };
 
 // ─── GUARDY CHATBOT WIDGET ───────────────────────────────────────────────────
@@ -2912,7 +2930,7 @@ export default function App() {
       case "dashboard":  return <DashboardView />;
       case "customers":  return <Customer360View />;
       case "insights":   return <InsightsView />;
-      case "simulator":  return <SimulatorView />;
+      case "actions":    return <ActionsView />;
       case "reports":    return <ReportsView />;
       default: return null;
     }
@@ -3048,7 +3066,7 @@ export default function App() {
           {/* Header Row */}
           <div className="flex items-start justify-between gap-4 flex-wrap pb-4 border-b border-gray-200">
             <div>
-              <h2 className="text-lg font-bold text-slate-900 capitalize">{activeTab}</h2>
+              <h2 className="text-lg font-bold text-slate-900">{pageMeta[activeTab]?.title || activeTab}</h2>
               <p className="text-xs text-slate-500 mt-0.5">{pageMeta[activeTab]?.subtitle}</p>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-slate-400 flex-shrink-0">
