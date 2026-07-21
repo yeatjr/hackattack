@@ -1936,19 +1936,11 @@ function ActionsView() {
 
   const [toast, setToast] = useState(null);
   const [selectedBriefTask, setSelectedBriefTask] = useState(null);
-  const [sendApp, setSendApp] = useState("Jira");
-  const [sendTo, setSendTo] = useState("");
+  const [selectedIntegration, setSelectedIntegration] = useState(null);
 
   useEffect(() => {
     if (selectedBriefTask) {
-      setSendApp(selectedBriefTask.system);
-      if (selectedBriefTask.dept.includes("Product")) {
-        setSendTo("Engineering Queue");
-      } else if (selectedBriefTask.dept.includes("Sales")) {
-        setSendTo("Sales Team");
-      } else {
-        setSendTo("CS Operations");
-      }
+      setSelectedIntegration(null);
     }
   }, [selectedBriefTask]);
 
@@ -2259,53 +2251,71 @@ function ActionsView() {
               </div>
             </div>
 
+            {/* Route to External System section */}
+            <div className="bg-slate-900 border-t border-slate-750 p-5 space-y-3 text-left">
+              <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+                Route to External System
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { id: "jira", name: "Jira", desc: "Eng Queue", icon: <Settings size={16} />, color: "text-blue-400", bg: "bg-blue-950/40" },
+                  { id: "salesforce", name: "Salesforce", desc: "Sales Queue", icon: <Globe size={16} />, color: "text-sky-400", bg: "bg-sky-950/40" },
+                  { id: "slack", name: "Slack", desc: "CS Alert", icon: <MessageSquare size={16} />, color: "text-emerald-400", bg: "bg-emerald-950/40" },
+                  { id: "email", name: "Email", desc: "Exec Digest", icon: <Send size={16} />, color: "text-purple-400", bg: "bg-purple-950/40" },
+                ].map((app) => {
+                  const isSelected = selectedIntegration === app.id;
+                  return (
+                    <button
+                      key={app.id}
+                      onClick={() => setSelectedIntegration(app.id)}
+                      className={`flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all cursor-pointer select-none ${
+                        isSelected 
+                          ? "border-blue-500 bg-blue-950/40 shadow-lg shadow-blue-500/10 scale-102" 
+                          : "border-slate-700 bg-slate-800/30 hover:border-slate-600 hover:bg-slate-800/60"
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 ${app.bg} ${app.color}`}>
+                        {app.icon}
+                      </div>
+                      <span className="text-xs font-bold text-slate-200 leading-none">{app.name}</span>
+                      <span className="text-[9px] text-slate-450 mt-1 font-mono font-bold uppercase tracking-wider">{app.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Modal Actions Footer */}
-            <div className="bg-slate-900 border-t border-slate-700 px-6 py-4 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+            <div className="bg-slate-900 border-t border-slate-700 px-6 py-4 flex justify-between items-center">
               <button 
                 onClick={() => setSelectedBriefTask(null)}
-                className="px-4 py-2 border border-slate-600 hover:border-slate-500 hover:bg-slate-800 text-slate-300 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer flex-shrink-0"
+                className="px-4 py-2 border border-slate-700 hover:border-slate-650 hover:bg-slate-800 text-slate-300 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer"
               >
                 Cancel
               </button>
 
-              <div className="flex flex-wrap items-center gap-4 flex-1 justify-end">
-                {/* App Select */}
-                <div className="text-left">
-                  <label className="block text-[8px] font-extrabold text-slate-400 uppercase tracking-widest mb-1 font-mono">App / Channel</label>
-                  <select
-                    value={sendApp}
-                    onChange={(e) => setSendApp(e.target.value)}
-                    className="bg-slate-950/70 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer w-32 font-sans"
-                  >
-                    <option value="Jira" className="bg-slate-800">Jira</option>
-                    <option value="Salesforce" className="bg-slate-800">Salesforce</option>
-                    <option value="Slack" className="bg-slate-800">Slack</option>
-                    <option value="Email" className="bg-slate-800">Email</option>
-                    <option value="MS Teams" className="bg-slate-800">MS Teams</option>
-                    <option value="Customer Success" className="bg-slate-800">Customer Success</option>
-                  </select>
-                </div>
-
-                {/* Recipient Input */}
-                <div className="text-left">
-                  <label className="block text-[8px] font-extrabold text-slate-400 uppercase tracking-widest mb-1 font-mono">Send To (Recipient)</label>
-                  <input
-                    type="text"
-                    value={sendTo}
-                    onChange={(e) => setSendTo(e.target.value)}
-                    className="bg-slate-950/70 border border-slate-700 rounded-lg px-3 py-1 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold w-40 font-sans"
-                    placeholder="Enter team or channel"
-                  />
-                </div>
-
-                {/* Send Button */}
-                <button 
-                  onClick={() => handleAction(selectedBriefTask.title, sendApp, sendTo)}
-                  className="px-6 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md self-end mt-4 sm:mt-0 font-semibold"
-                >
-                  Send
-                </button>
-              </div>
+              <button 
+                disabled={!selectedIntegration}
+                onClick={() => {
+                  const apps = {
+                    jira: { name: "Jira", desc: "Eng Queue" },
+                    salesforce: { name: "Salesforce", desc: "Sales Queue" },
+                    slack: { name: "Slack", desc: "CS Alert" },
+                    email: { name: "Email", desc: "Exec Digest" },
+                  };
+                  const selected = apps[selectedIntegration];
+                  if (selected) {
+                    handleAction(selectedBriefTask.title, selected.name, selected.desc);
+                  }
+                }}
+                className={`px-6 py-2 font-bold rounded-lg text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 font-semibold ${
+                  selectedIntegration
+                    ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                    : "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-50"
+                }`}
+              >
+                Approve &amp; Route
+              </button>
             </div>
           </div>
         </div>
