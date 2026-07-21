@@ -1934,6 +1934,12 @@ function ActionsView() {
     ],
   });
 
+  const [pics, setPics] = useState({
+    product: { name: "Alex Chen (Eng Lead)", contact: "+1 (555) 0192" },
+    sales: { name: "Sarah Jenkins (Sales Ops)", contact: "sarah.j@company.com" },
+    cs: { name: "Marcus Vance (CS Lead)", contact: "+1 (555) 0722" }
+  });
+
   const [toast, setToast] = useState(null);
   const [selectedBriefTask, setSelectedBriefTask] = useState(null);
   const [selectedIntegration, setSelectedIntegration] = useState(null);
@@ -1944,13 +1950,22 @@ function ActionsView() {
     }
   }, [selectedBriefTask]);
 
+  const getActivePic = () => {
+    if (!selectedBriefTask) return { name: "", contact: "" };
+    if (selectedBriefTask.dept.includes("Product")) return pics.product;
+    if (selectedBriefTask.dept.includes("Sales")) return pics.sales;
+    return pics.cs;
+  };
+
+  const currentPic = getActivePic();
+
   const triggerToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleAction = (taskTitle, destSystem, recipient) => {
-    triggerToast(`⚡ Synced and routed "${taskTitle}" to ${destSystem} (${recipient})`);
+  const handleAction = (taskTitle, destSystem, recipientName, recipientContact) => {
+    triggerToast(`⚡ Shared brief via ${destSystem} to PIC: ${recipientName} (${recipientContact})`);
     setSelectedBriefTask(null);
   };
 
@@ -2044,9 +2059,34 @@ function ActionsView() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Column 1: Product & Engineering Queue */}
         <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
-          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-            <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Product &amp; Engineering Queue</span>
-            <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.product.length} Tasks</span>
+          <div className="space-y-2 pb-2 border-b border-gray-200 text-left">
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Product &amp; Engineering Queue</span>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.product.length} Tasks</span>
+            </div>
+            {/* PIC details configuration block */}
+            <div className="bg-white border border-gray-200/60 rounded-lg p-2.5 space-y-1.5 shadow-sm">
+              <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+                <span>Department PIC details</span>
+                <span className="text-[7px] text-blue-500 font-bold uppercase select-none tracking-wider">Configure Contact</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={pics.product.name}
+                  onChange={(e) => setPics({ ...pics, product: { ...pics.product, name: e.target.value } })}
+                  placeholder="PIC Name"
+                  className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-semibold text-slate-700 font-sans"
+                />
+                <input
+                  type="text"
+                  value={pics.product.contact}
+                  onChange={(e) => setPics({ ...pics, product: { ...pics.product, contact: e.target.value } })}
+                  placeholder="Contact Info"
+                  className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-medium text-slate-650 font-sans"
+                />
+              </div>
+            </div>
           </div>
           <div className="space-y-3">
             {boardData.product.map((item) => (
@@ -2076,9 +2116,34 @@ function ActionsView() {
 
         {/* Column 2: Sales & Marketing Queue */}
         <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
-          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-            <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Sales &amp; Marketing Queue</span>
-            <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.sales.length} Tasks</span>
+          <div className="space-y-2 pb-2 border-b border-gray-200 text-left">
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Sales &amp; Marketing Queue</span>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.sales.length} Tasks</span>
+            </div>
+            {/* PIC details configuration block */}
+            <div className="bg-white border border-gray-200/60 rounded-lg p-2.5 space-y-1.5 shadow-sm">
+              <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+                <span>Department PIC details</span>
+                <span className="text-[7px] text-blue-500 font-bold uppercase select-none tracking-wider">Configure Contact</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={pics.sales.name}
+                  onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, name: e.target.value } })}
+                  placeholder="PIC Name"
+                  className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-semibold text-slate-700 font-sans"
+                />
+                <input
+                  type="text"
+                  value={pics.sales.contact}
+                  onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, contact: e.target.value } })}
+                  placeholder="Contact Info"
+                  className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-medium text-slate-650 font-sans"
+                />
+              </div>
+            </div>
           </div>
           <div className="space-y-3">
             {boardData.sales.map((item) => (
@@ -2108,9 +2173,34 @@ function ActionsView() {
 
         {/* Column 3: Customer Success Queue */}
         <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
-          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-            <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Customer Success Queue</span>
-            <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.cs.length} Tasks</span>
+          <div className="space-y-2 pb-2 border-b border-gray-200 text-left">
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Customer Success Queue</span>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.cs.length} Tasks</span>
+            </div>
+            {/* PIC details configuration block */}
+            <div className="bg-white border border-gray-200/60 rounded-lg p-2.5 space-y-1.5 shadow-sm">
+              <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+                <span>Department PIC details</span>
+                <span className="text-[7px] text-blue-500 font-bold uppercase select-none tracking-wider">Configure Contact</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={pics.cs.name}
+                  onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, name: e.target.value } })}
+                  placeholder="PIC Name"
+                  className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-semibold text-slate-700 font-sans"
+                />
+                <input
+                  type="text"
+                  value={pics.cs.contact}
+                  onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, contact: e.target.value } })}
+                  placeholder="Contact Info"
+                  className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-medium text-slate-650 font-sans"
+                />
+              </div>
+            </div>
           </div>
           <div className="space-y-3">
             {boardData.cs.map((item) => (
@@ -2252,33 +2342,36 @@ function ActionsView() {
             </div>
 
             {/* Share Brief via... section */}
-            <div className="bg-slate-900 border-t border-slate-750 p-5 space-y-3 text-left">
-              <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-mono">
-                Share Brief via...
-              </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-slate-900 border-t border-slate-750 p-5 space-y-4 text-left">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+                  Share Brief via...
+                </h4>
+                <div className="text-[10px] text-slate-300 font-medium font-sans">
+                  Target Recipient: <strong className="text-blue-400 font-semibold">{currentPic.name} ({currentPic.contact})</strong>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-center gap-6 py-2">
                 {[
-                  { id: "whatsapp", name: "WhatsApp", desc: "Eng Group Chat", icon: <MessageCircle size={16} />, color: "text-emerald-400", bg: "bg-emerald-950/40" },
-                  { id: "email", name: "Email", desc: "Sales Dept", icon: <Mail size={16} />, color: "text-blue-400", bg: "bg-blue-950/40" },
-                  { id: "telegram", name: "Telegram", desc: "CS Team", icon: <Send size={16} />, color: "text-sky-400", bg: "bg-sky-950/40" },
-                  { id: "slack", name: "Slack", desc: "Exec Board", icon: <MessageSquare size={16} />, color: "text-purple-400", bg: "bg-purple-950/40" },
+                  { id: "whatsapp", name: "WhatsApp", icon: <MessageCircle size={20} />, color: "text-emerald-400 hover:text-emerald-300 border-emerald-500/30 hover:border-emerald-400 bg-emerald-950/20" },
+                  { id: "email", name: "Email", icon: <Mail size={20} />, color: "text-blue-400 hover:text-blue-300 border-blue-500/30 hover:border-blue-400 bg-blue-950/20" },
+                  { id: "telegram", name: "Telegram", icon: <Send size={20} />, color: "text-sky-400 hover:text-sky-300 border-sky-500/30 hover:border-sky-400 bg-sky-950/20" },
+                  { id: "slack", name: "Slack", icon: <MessageSquare size={20} />, color: "text-purple-400 hover:text-purple-300 border-purple-500/30 hover:border-purple-400 bg-purple-950/20" },
                 ].map((app) => {
                   const isSelected = selectedIntegration === app.id;
                   return (
                     <button
                       key={app.id}
                       onClick={() => setSelectedIntegration(app.id)}
-                      className={`flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all cursor-pointer select-none ${
+                      title={`Share via ${app.name}`}
+                      className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all cursor-pointer shadow-md ${
                         isSelected 
-                          ? "border-blue-500 bg-blue-950/40 shadow-lg shadow-blue-500/10 scale-102" 
-                          : "border-slate-700 bg-slate-800/30 hover:border-slate-650 hover:bg-slate-800/60"
+                          ? "border-blue-500 bg-blue-950 text-blue-450 scale-110 ring-4 ring-blue-500/20 shadow-blue-500/10" 
+                          : app.color
                       }`}
                     >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 ${app.bg} ${app.color}`}>
-                        {app.icon}
-                      </div>
-                      <span className="text-xs font-bold text-slate-200 leading-none">{app.name}</span>
-                      <span className="text-[9px] text-slate-455 mt-1 font-mono font-bold uppercase tracking-wider">{app.desc}</span>
+                      {app.icon}
                     </button>
                   );
                 })}
@@ -2298,14 +2391,14 @@ function ActionsView() {
                 disabled={!selectedIntegration}
                 onClick={() => {
                   const apps = {
-                    whatsapp: { name: "WhatsApp", desc: "Eng Group Chat" },
-                    email: { name: "Email", desc: "Sales Dept" },
-                    telegram: { name: "Telegram", desc: "CS Team" },
-                    slack: { name: "Slack", desc: "Exec Board" },
+                    whatsapp: "WhatsApp",
+                    email: "Email",
+                    telegram: "Telegram",
+                    slack: "Slack",
                   };
-                  const selected = apps[selectedIntegration];
-                  if (selected) {
-                    handleAction(selectedBriefTask.title, selected.name, selected.desc);
+                  const selectedApp = apps[selectedIntegration];
+                  if (selectedApp) {
+                    handleAction(selectedBriefTask.title, selectedApp, currentPic.name, currentPic.contact);
                   }
                 }}
                 className={`px-6 py-2 font-bold rounded-lg text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 font-semibold ${
