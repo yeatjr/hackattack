@@ -9,7 +9,7 @@ import {
   Settings, ShieldCheck, ChevronRight, ChevronDown, ChevronUp,
   DollarSign, AlertTriangle, CheckCircle2, TrendingDown, Sparkles,
   ArrowUpRight, ArrowDownRight, Bell, Search, Play, Pause, Plus, Info, Target, Heart,
-  Clock, Zap, UserX, MessageSquare, X, Globe, LogOut, Brain, TrendingUp, Send, FileText,
+  Clock, Zap, UserX, MessageSquare, X, Globe, LogOut, Brain, TrendingUp, Send, FileText, Mail, MessageCircle,
 } from "lucide-react";
 
 // ─── FORMULAS & CONSTANTS ─────────────────────────────────────────────────────
@@ -2289,7 +2289,7 @@ function ActionsView() {
             <div className="bg-slate-900 border-t border-slate-700 px-6 py-4 flex justify-between items-center">
               <button 
                 onClick={() => setSelectedBriefTask(null)}
-                className="px-4 py-2 border border-slate-700 hover:border-slate-650 hover:bg-slate-800 text-slate-300 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                className="px-4 py-2 border border-slate-700 hover:border-slate-655 hover:bg-slate-800 text-slate-300 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer"
               >
                 Cancel
               </button>
