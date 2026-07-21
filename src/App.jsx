@@ -9,7 +9,7 @@ import {
   Settings, ShieldCheck, ChevronRight, ChevronDown, ChevronUp,
   DollarSign, AlertTriangle, CheckCircle2, TrendingDown, Sparkles,
   ArrowUpRight, ArrowDownRight, Bell, Search, Play, Pause, Plus, Info, Target, Heart,
-  Clock, Zap, UserX, MessageSquare, X, Globe, LogOut, Brain, TrendingUp,
+  Clock, Zap, UserX, MessageSquare, X, Globe, LogOut, Brain, TrendingUp, Send,
 } from "lucide-react";
 
 // ─── FORMULAS & CONSTANTS ─────────────────────────────────────────────────────
@@ -2066,9 +2066,12 @@ const pageMeta = {
   actions:    { title: "Action Routing & Department Briefs", subtitle: "Cross-functional routing triage queue and department briefs execution" },
 };
 
-// ─── GUARDY CHATBOT WIDGET ───────────────────────────────────────────────────
+// ─── COPILOT CHATBOT WIDGET ───────────────────────────────────────────────────
 
-const GUARDY_RESPONSES = {
+const COPILOT_RESPONSES = {
+  "forecast revenue risk": "I've analyzed the EU segment drop. Churning these 12 accounts would result in $150K ARR contraction. Would you like me to queue the soft-landing playbook to mitigate this?",
+  "analyze support sentiment": "Support ticket sentiment analysis reveals high friction under 'API timeout latency' (68% of detractors). Recommend product routing.",
+  "draft playbook": "Generated re-engagement sequence containing customized Year-in-Review value recap and meeting scheduling links for EU customers.",
   "how is risk calculated?": "Momentum calculates risk by combining usage consistency (sessions per week), support CSAT scores, open support tickets, and sentiment analysis from transcript text to generate a consolidated health index (0-100).",
   "what playbooks are supported?": "We support pre-built playbooks including 'Soft Landing' downgrades/pauses, automated dunning retries, Spotify-style value recaps, and empathetic offboarding for business closures.",
   "how do crm syncs work?": "Momentum syncs natively with CRM and billing providers (Salesforce, HubSpot, Stripe) using secure APIs. We ingest billing statuses and usage data to flag account anomalies.",
@@ -2080,7 +2083,10 @@ const GUARDY_RESPONSES = {
 
 function GuardyChatWidget({ isOpen, onClose, onOpen }) {
   const [messages, setMessages] = useState([
-    { sender: "guardy", text: "Hi! I'm Guardy, your customer success co-pilot. Ask me anything about Momentum's health scoring, playbooks, or CRM integrations!" }
+    { 
+      sender: "copilot", 
+      text: "I've detected a 14% drop in login frequency among Enterprise users in the EU this week. Would you like me to draft a re-engagement sequence or forecast the ARR impact?" 
+    }
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -2105,16 +2111,16 @@ function GuardyChatWidget({ isOpen, onClose, onOpen }) {
     setTimeout(() => {
       setIsTyping(false);
       const cleanText = text.toLowerCase().trim();
-      let reply = "That's a great question! Momentum proactive command center aggregates customer health signals in real-time. This lets customer success managers execute targeted playbooks (like soft landings or value recaps) and simulate contraction impacts. Let me know if you would like me to explain further!";
+      let reply = "I can assist with that. Momentum's AI engine helps you analyze revenue risk, evaluate support sentiment, and draft proactive client playbook alerts. Let me know if you would like me to trigger a specific operation!";
       
       // Match keywords
-      for (const [key, val] of Object.entries(GUARDY_RESPONSES)) {
+      for (const [key, val] of Object.entries(COPILOT_RESPONSES)) {
         if (cleanText.includes(key) || key.includes(cleanText)) {
           reply = val;
           break;
         }
       }
-      setMessages(prev => [...prev, { sender: "guardy", text: reply }]);
+      setMessages(prev => [...prev, { sender: "copilot", text: reply }]);
     }, 1000);
   };
 
@@ -2137,14 +2143,14 @@ function GuardyChatWidget({ isOpen, onClose, onOpen }) {
       {/* Header */}
       <div className="bg-slate-900 p-3.5 text-white flex items-center justify-between border-b border-slate-800">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-xs font-bold text-white shadow-sm">
-            🛡️
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-xs font-bold text-white shadow-inner">
+            <Sparkles size={16} className="stroke-[2.5]" />
           </div>
-          <div>
-            <h4 className="text-xs font-bold tracking-tight">Guardy</h4>
-            <p className="text-[9px] text-emerald-400 font-medium flex items-center gap-1">
+          <div className="text-left">
+            <h4 className="text-xs font-extrabold tracking-tight">Momentum AI Copilot</h4>
+            <p className="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
-              CS Co-Pilot · Online
+              Online
             </p>
           </div>
         </div>
@@ -2157,10 +2163,10 @@ function GuardyChatWidget({ isOpen, onClose, onOpen }) {
       <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/50">
         {messages.map((m, idx) => (
           <div key={idx} className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[85%] rounded-lg p-3 text-xs leading-relaxed ${
+            <div className={`max-w-[85%] rounded-lg p-3 text-xs leading-relaxed text-left ${
               m.sender === "user" 
                 ? "bg-blue-600 text-white font-medium" 
-                : "bg-white border border-gray-200 text-slate-800 shadow-sm"
+                : "bg-white border border-gray-200 text-slate-850 shadow-sm"
             }`}>
               {m.text}
             </div>
@@ -2169,22 +2175,22 @@ function GuardyChatWidget({ isOpen, onClose, onOpen }) {
         {isTyping && (
           <div className="flex justify-start">
             <div className="bg-white border border-gray-200 rounded-lg p-3 text-slate-400 text-xs shadow-sm flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-slate-450 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <span className="w-1.5 h-1.5 bg-slate-450 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <span className="w-1.5 h-1.5 bg-slate-450 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Suggestions */}
-      <div className="px-3 py-2 border-t border-gray-100 bg-white flex gap-1.5 overflow-x-auto whitespace-nowrap scrollbar-none">
-        {["How is risk calculated?", "What playbooks are supported?", "How do CRM syncs work?"].map(q => (
+      {/* Suggested Prompts */}
+      <div className="px-3 py-2 border-t border-gray-105 bg-white flex gap-1.5 overflow-x-auto whitespace-nowrap scrollbar-none">
+        {["Forecast Revenue Risk", "Analyze Support Sentiment", "Draft Playbook"].map(q => (
           <button
             key={q}
             onClick={() => handleSend(q)}
-            className="text-[10px] bg-slate-100 hover:bg-slate-200 border border-gray-200 text-slate-700 px-2.5 py-1 rounded-full font-semibold transition-colors cursor-pointer"
+            className="text-[10px] bg-white hover:bg-slate-50 border border-slate-250 text-slate-700 px-2.5 py-1 rounded-full font-bold transition-all cursor-pointer"
           >
             {q}
           </button>
@@ -2200,14 +2206,14 @@ function GuardyChatWidget({ isOpen, onClose, onOpen }) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask Guardy a question..."
-          className="flex-1 border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-blue-500 font-sans"
+          placeholder="Ask Momentum AI..."
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500 font-sans"
         />
         <button
           type="submit"
-          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded cursor-pointer transition-colors"
+          className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-colors flex items-center justify-center"
         >
-          Send
+          <Send size={14} className="stroke-[2.5]" />
         </button>
       </form>
     </div>
@@ -2485,7 +2491,7 @@ function LandingPageView({ onEnterConsole, onOpenChat }) {
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             <button 
               onClick={onEnterConsole}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-1.5 cursor-pointer animate-float-badge"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 flex items-center gap-1.5 cursor-pointer"
             >
               Explore AI Capabilities <ChevronRight size={14} className="stroke-[3]" />
             </button>
