@@ -1936,14 +1936,29 @@ function ActionsView() {
 
   const [toast, setToast] = useState(null);
   const [selectedBriefTask, setSelectedBriefTask] = useState(null);
+  const [sendApp, setSendApp] = useState("Jira");
+  const [sendTo, setSendTo] = useState("");
+
+  useEffect(() => {
+    if (selectedBriefTask) {
+      setSendApp(selectedBriefTask.system);
+      if (selectedBriefTask.dept.includes("Product")) {
+        setSendTo("Engineering Queue");
+      } else if (selectedBriefTask.dept.includes("Sales")) {
+        setSendTo("Sales Team");
+      } else {
+        setSendTo("CS Operations");
+      }
+    }
+  }, [selectedBriefTask]);
 
   const triggerToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleAction = (taskTitle, destSystem) => {
-    triggerToast(`⚡ Synced and routed "${taskTitle}" to ${destSystem}`);
+  const handleAction = (taskTitle, destSystem, recipient) => {
+    triggerToast(`⚡ Synced and routed "${taskTitle}" to ${destSystem} (${recipient})`);
     setSelectedBriefTask(null);
   };
 
@@ -2245,19 +2260,52 @@ function ActionsView() {
             </div>
 
             {/* Modal Actions Footer */}
-            <div className="bg-slate-900 border-t border-slate-700 px-6 py-4 flex justify-between items-center">
+            <div className="bg-slate-900 border-t border-slate-700 px-6 py-4 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
               <button 
                 onClick={() => setSelectedBriefTask(null)}
-                className="px-4 py-2 border border-slate-600 hover:border-slate-500 hover:bg-slate-800 text-slate-300 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                className="px-4 py-2 border border-slate-600 hover:border-slate-500 hover:bg-slate-800 text-slate-300 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer flex-shrink-0"
               >
                 Cancel
               </button>
-              <button 
-                onClick={() => handleAction(selectedBriefTask.title, selectedBriefTask.system)}
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md flex items-center gap-1.5 font-semibold"
-              >
-                Approve &amp; Send to {selectedBriefTask.system}
-              </button>
+
+              <div className="flex flex-wrap items-center gap-4 flex-1 justify-end">
+                {/* App Select */}
+                <div className="text-left">
+                  <label className="block text-[8px] font-extrabold text-slate-400 uppercase tracking-widest mb-1 font-mono">App / Channel</label>
+                  <select
+                    value={sendApp}
+                    onChange={(e) => setSendApp(e.target.value)}
+                    className="bg-slate-950/70 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer w-32 font-sans"
+                  >
+                    <option value="Jira" className="bg-slate-800">Jira</option>
+                    <option value="Salesforce" className="bg-slate-800">Salesforce</option>
+                    <option value="Slack" className="bg-slate-800">Slack</option>
+                    <option value="Email" className="bg-slate-800">Email</option>
+                    <option value="MS Teams" className="bg-slate-800">MS Teams</option>
+                    <option value="Customer Success" className="bg-slate-800">Customer Success</option>
+                  </select>
+                </div>
+
+                {/* Recipient Input */}
+                <div className="text-left">
+                  <label className="block text-[8px] font-extrabold text-slate-400 uppercase tracking-widest mb-1 font-mono">Send To (Recipient)</label>
+                  <input
+                    type="text"
+                    value={sendTo}
+                    onChange={(e) => setSendTo(e.target.value)}
+                    className="bg-slate-950/70 border border-slate-700 rounded-lg px-3 py-1 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold w-40 font-sans"
+                    placeholder="Enter team or channel"
+                  />
+                </div>
+
+                {/* Send Button */}
+                <button 
+                  onClick={() => handleAction(selectedBriefTask.title, sendApp, sendTo)}
+                  className="px-6 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md self-end mt-4 sm:mt-0 font-semibold"
+                >
+                  Send
+                </button>
+              </div>
             </div>
           </div>
         </div>
