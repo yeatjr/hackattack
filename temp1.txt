@@ -1,0 +1,71 @@
+function ProactiveHealthCenter() {
+  const [alerts, setAlerts] = useState([
+    { id: 1, name: "Sarah Jenkins",      category: "Sentiment Escalation",   rar: 116440, risk: "Critical", badgeCls: "text-rose-700 bg-rose-50 border border-rose-100", actionLabel: "Assign CSM" },
+    { id: 2, name: "Marcus Chen",        category: "Sentiment Escalation",   rar: 69580,  risk: "Critical", badgeCls: "text-rose-700 bg-rose-50 border border-rose-100", actionLabel: "Assign CSM" },
+    { id: 3, name: "Elena Rostova",      category: "Predictive Friction",    rar: 35100,  risk: "At Risk",  badgeCls: "text-amber-700 bg-amber-50 border border-amber-100", actionLabel: "Outreach" },
+    { id: 4, name: "Oliver Vance",       category: "Onboarding Bottleneck",  rar: 5640,   risk: "At Risk",  badgeCls: "text-amber-700 bg-amber-50 border border-amber-100", actionLabel: "Send Nudge" },
+    { id: 5, name: "Emma Harrison",      category: "Orphaned Account",       rar: 21120,  risk: "At Risk",  badgeCls: "text-amber-700 bg-amber-50 border border-amber-100", actionLabel: "Schedule QBR" },
+  ]);
+
+  const handleAction = (id) => {
+    setAlerts(prev => prev.filter(a => a.id !== id));
+  };
+
+  if (alerts.length === 0) return null;
+
+  return (
+    <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
+      <div className="bg-slate-50 border-b border-gray-200 px-4 py-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
+          </span>
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Proactive Health Alerts</h3>
+          <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-semibold ml-1">
+            {alerts.length} action items
+          </span>
+        </div>
+        <p className="text-[10px] text-slate-400">Updates live</p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="bg-slate-50/50 text-slate-500 border-b border-gray-200 uppercase font-semibold text-[10px]">
+              <th className="px-4 py-2 text-left">Customer Name</th>
+              <th className="px-4 py-2 text-left">Risk Category</th>
+              <th className="px-4 py-2 text-right">Revenue-at-Risk</th>
+              <th className="px-4 py-2 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {alerts.map((row) => (
+              <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
+                <td className="px-4 py-2 font-bold text-slate-900">{row.name}</td>
+                <td className="px-4 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${row.badgeCls}`}>
+                      {row.risk}
+                    </span>
+                    <span className="text-[11px] text-slate-600">{row.category}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-2 text-right font-mono font-bold text-slate-950">
+                  {fmtFull(row.rar)}
+                </td>
+                <td className="px-4 py-2 text-center">
+                  <button
+                    onClick={() => handleAction(row.id)}
+                    className="px-2.5 py-1 text-[10px] font-bold bg-white border border-gray-300 text-slate-700 hover:bg-slate-50 active:bg-slate-100 rounded transition-colors shadow-sm cursor-pointer"
+                  >
+                    {row.actionLabel}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
