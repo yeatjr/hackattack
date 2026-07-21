@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from "react"
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  AreaChart, Area,
+  AreaChart, Area, Legend,
 } from "recharts";
 import {
   LayoutDashboard, Users, Lightbulb, Activity, FileBarChart2,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { useCustomers } from "./useCustomers";
+import { useEvents } from "./useEvents";
 import { normalizeRow, applyMapping, getCanonicalForRawKey, CANONICAL_FIELDS } from "./normalizeCustomer";
 
 // ─── FORMULAS & CONSTANTS ─────────────────────────────────────────────────────
@@ -446,13 +447,13 @@ const TREND_DATA = [
 
 function DashboardView({ customers = [] }) {
   const S = customers.length || 1;
-  const churned = customers.filter(c => parseFloat(c.churnProbability) > 80).length;
+  const churned = customers.filter(c => (c.churnProbability || 10) > 80).length;
   const ARPU = customers.reduce((sum, c) => sum + (parseFloat(c.packagePrice) || 0), 0) / S || 0;
   
-  const retentionRate = ((S - churned) / S) * 100;
-  const churnRate = (churned / S) * 100;
-  const clv = churnRate > 0 ? ARPU / (churnRate / 100) : ARPU * 12;
-  const nps = 45; // static placeholder for NPS since it's survey-based
+  const avgHealth = customers.reduce((sum, c) => sum + (c.healthScore || 100), 0) / S;
+  const avgChurn = customers.reduce((sum, c) => sum + (c.churnProbability || 10), 0) / S;
+  const totalRAR = customers.reduce((sum, c) => sum + (c.revenueAtRisk || 0), 0);
+  const avgExpansion = customers.reduce((sum, c) => sum + (c.expansionScore || 0), 0) / S;
 
   const sortedCustomers = [...customers].sort((a, b) => (parseFloat(b.churnProbability) || 0) - (parseFloat(a.churnProbability) || 0)).slice(0, 10);
   
@@ -463,10 +464,10 @@ function DashboardView({ customers = [] }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard icon={ShieldCheck} label="Retention Rate" formulaKey="retention" value={`${retentionRate.toFixed(1)}%`} formulaHint={`(Active ÷ Total) × 100`} color="bg-gradient-to-br from-blue-600 to-indigo-600" />
-        <KpiCard icon={TrendingDown} label="Churn Rate" formulaKey="churn" value={`${churnRate.toFixed(1)}%`} formulaHint={`(Churned ÷ Total) × 100`} color="bg-gradient-to-br from-rose-500 to-rose-600" />
-        <KpiCard icon={DollarSign} label="Avg CLV" formulaKey="clv" value={fmt(clv)} formulaHint={`ARPU ÷ Churn Rate`} color="bg-gradient-to-br from-emerald-500 to-teal-600" />
-        <KpiCard icon={Heart} label="Avg Usage Score" formulaKey="nps" value={`${(customers.reduce((a,c) => a+(parseFloat(c.usageScore)||0),0)/S || 0).toFixed(0)}/100`} formulaHint={`Platform Engagement`} color="bg-gradient-to-br from-purple-500 to-violet-600" />
+        <KpiCard icon={Heart} label="Avg Platform Health" value={`${avgHealth.toFixed(0)}/100`} formulaHint={`Based on usage & NPS`} color="bg-gradient-to-br from-blue-600 to-indigo-600" />
+        <KpiCard icon={AlertTriangle} label="Avg Churn Probability" value={`${avgChurn.toFixed(1)}%`} formulaHint={`Based on engagement drop-off`} color="bg-gradient-to-br from-rose-500 to-rose-600" />
+        <KpiCard icon={TrendingDown} label="Total Revenue at Risk" value={fmt(totalRAR)} formulaHint={`Sum of (MRR * Churn Risk)`} color="bg-gradient-to-br from-amber-500 to-orange-600" />
+        <KpiCard icon={Zap} label="Avg Expansion Score" value={`${avgExpansion.toFixed(0)}/100`} formulaHint={`Upsell readiness`} color="bg-gradient-to-br from-emerald-500 to-teal-600" />
       </div>
 
       <ProactiveHealthCenter customers={customers} />
@@ -636,12 +637,53 @@ function StageMetricsPanel({ customer }) {
   );
 }
 
-function Customer360View({ customers = [], addCustomers, updateCustomer }) {
-  const [file, setFile] = useState(null);
-  const [mapperData, setMapperData] = useState(null); // { parsedRows, canonicalCols, otherCols, mapping }
-  const [selectedId, setSelectedId] = useState(customers.length > 0 ? customers[0].firestoreId : null);
-  
-  const customer = customers.find(c => c.firestoreId === selectedId) || customers[0];
+function Customer360View({ customers = [], addCustomers, updateCustomer, clearAllCustomers }) {
+  const [mapperData, setMapperData] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [flippedId, setFlippedId] = useState(null);
+  const [activeTab, setActiveTab] = useState("all");
+
+  const formatDateTime = (val) => {
+    if (!val) return "—";
+    const str = String(val).trim();
+    if (str.includes(":") || str.includes("T")) {
+      const d = new Date(str.replace(" ", "T"));
+      if (!isNaN(d.getTime())) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        const secs = String(d.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${mins}:${secs}`;
+      }
+      return str;
+    }
+    if (str.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return `${str} 09:30:00`;
+    }
+    return str;
+  };
+
+  const getCustomerSparkline = (c) => {
+    const sessions = parseFloat(c.sessionsPerWeek) || 0;
+    const churn = c.churnProbability || 0;
+    const health = c.healthScore ?? 100;
+    const isDeclining = churn > 50;
+    const isGrowing = (c.expansionScore || 0) > 50 || health > 80;
+
+    const weights = isDeclining 
+      ? [2.5, 2.0, 1.4, 0.8, 0.3, 0.05] 
+      : isGrowing 
+        ? [0.4, 0.55, 0.7, 0.82, 0.92, 1.0] 
+        : [0.75, 0.8, 0.85, 0.82, 0.9, 1.0];
+
+    return ["W1", "W2", "W3", "W4", "W5", "W6"].map((wk, i) => ({
+      week: wk,
+      activity: Math.max(0, Math.round(sessions * weights[i])),
+      score: Math.min(100, Math.max(10, Math.round(health * (0.5 + weights[i] * 0.5))))
+    }));
+  };
 
   const handleFileUpload = (e) => {
     const uploadedFile = e.target.files[0];
@@ -653,24 +695,13 @@ function Customer360View({ customers = [], addCustomers, updateCustomer }) {
       const wsname = wb.SheetNames[0];
       const ws = wb.Sheets[wsname];
       const rawData = XLSX.utils.sheet_to_json(ws);
-      
       if (rawData.length === 0) return;
-      
       const parsedRows = rawData.map(row => normalizeRow(row));
-      
-      // Analyze unmapped keys across all rows
       const allOthers = new Set();
       parsedRows.forEach(pr => pr.unmappedKeys.forEach(k => allOthers.add(k)));
-      
       if (allOthers.size > 0) {
-        // Show mapping UI
-        setMapperData({
-          parsedRows,
-          otherCols: Array.from(allOthers),
-          mapping: {}
-        });
+        setMapperData({ parsedRows, otherCols: Array.from(allOthers), mapping: {} });
       } else {
-        // Direct save if clean
         addCustomers(parsedRows.map(pr => pr.canonical));
       }
     };
@@ -684,29 +715,45 @@ function Customer360View({ customers = [], addCustomers, updateCustomer }) {
     setMapperData(null);
   };
 
+  const getInitials = (name = "") => {
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.substring(0, 2).toUpperCase() || "CU";
+  };
+
+  const filteredCustomers = useMemo(() => {
+    return customers.filter(c => {
+      const matchesSearch =
+        !searchQuery ||
+        (c.name && c.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (c.company && c.company.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (c.email && c.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (c.package && c.package.toLowerCase().includes(searchQuery.toLowerCase()));
+      if (!matchesSearch) return false;
+      if (activeTab === "active") return c.isPremiumActive;
+      if (activeTab === "risk") return (c.churnProbability || 0) > 50;
+      if (activeTab === "upsell") return (c.expansionScore || 0) > 60;
+      return true;
+    });
+  }, [customers, searchQuery, activeTab]);
+
   if (mapperData) {
     return (
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
+      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <h2 className="text-lg font-bold text-slate-800 mb-2">Map Unrecognized Columns</h2>
-        <p className="text-xs text-slate-500 mb-6">We found columns that don't match our standard format. Please map them below or leave them as 'Others'.</p>
-        
+        <p className="text-xs text-slate-500 mb-6">We found columns that don't match our standard format. Map them below or leave as 'Others'.</p>
         <div className="space-y-4 mb-6">
           {mapperData.otherCols.map(col => (
             <div key={col} className="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200 rounded">
               <span className="w-1/3 text-sm font-semibold text-slate-700 bg-white px-2 py-1 border rounded">{col}</span>
               <span>→</span>
-              <select 
-                className="flex-1 p-2 border rounded text-sm bg-white"
-                value={mapperData.mapping[col] || "__others__"}
-                onChange={(e) => setMapperData(prev => ({...prev, mapping: {...prev.mapping, [col]: e.target.value}}))}
-              >
+              <select className="flex-1 p-2 border rounded text-sm bg-white" value={mapperData.mapping[col] || "__others__"} onChange={(e) => setMapperData(prev => ({...prev, mapping: {...prev.mapping, [col]: e.target.value}}))}>
                 <option value="__others__">Keep in 'Others'</option>
                 {CANONICAL_FIELDS.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
             </div>
           ))}
         </div>
-        
         <div className="flex justify-end gap-3">
           <button onClick={() => setMapperData(null)} className="px-4 py-2 border rounded text-sm text-slate-600">Cancel</button>
           <button onClick={confirmMapping} className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-bold shadow-sm">Save to Firebase</button>
@@ -716,117 +763,276 @@ function Customer360View({ customers = [], addCustomers, updateCustomer }) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Analytics Summary Bar */}
-      <div className="grid grid-cols-4 gap-4">
-         <div className="bg-slate-900 text-white p-4 rounded-md shadow-sm">
-           <p className="text-[10px] uppercase font-bold text-slate-400">Total Customers</p>
-           <p className="text-2xl font-bold mt-1">{customers.length}</p>
-         </div>
-         <div className="bg-white border border-gray-200 p-4 rounded-md shadow-sm">
-           <p className="text-[10px] uppercase font-bold text-slate-500">Active Premium %</p>
-           <p className="text-2xl font-bold mt-1 text-emerald-600">
-             {customers.length ? ((customers.filter(c => c.isPremiumActive).length / customers.length) * 100).toFixed(1) : 0}%
-           </p>
-         </div>
-      </div>
+    <div className="space-y-5 pb-12">
+      {/* Flip card CSS injected inline */}
+      <style>{`
+        .flip-card { perspective: 1200px; }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4,0.2,0.2,1); transform-style: preserve-3d; position: relative; width: 100%; height: 100%; }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back { backface-visibility: hidden; -webkit-backface-visibility: hidden; position: absolute; inset: 0; border-radius: 14px; overflow: hidden; }
+        .flip-card-back { transform: rotateY(180deg); overflow-y: auto; }
+      `}</style>
 
-      {/* Header Actions */}
-      <div className="flex items-center justify-between bg-white p-4 rounded border border-gray-200">
-        <div className="relative">
-          <input type="text" placeholder="Search customers..." className="pl-8 pr-4 py-1.5 text-sm border rounded bg-slate-50 focus:bg-white transition-colors" />
-          <Search size={14} className="absolute left-2.5 top-2 text-slate-400" />
+      {/* Top Header & Search Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/70 backdrop-blur-md p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative w-72">
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by name, company, email, plan..." className="w-full pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+            <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
+          </div>
+          <div className="flex items-center gap-1.5">
+            {[
+              { id: "all", label: `All (${customers.length})` },
+              { id: "active", label: "Active" },
+              { id: "risk", label: "High Risk" },
+              { id: "upsell", label: "Upsell Ready" },
+            ].map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${activeTab === tab.id ? "bg-slate-900 text-white" : "bg-slate-100/80 text-slate-600 hover:bg-slate-200/70"}`}>
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold cursor-pointer transition-colors">
-            <Upload size={14} /> Import CSV/Excel
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {customers.length > 0 && (
+            <button onClick={async () => { if (window.confirm(`Delete ALL ${customers.length} records?`)) { if (clearAllCustomers) await clearAllCustomers(customers); setFlippedId(null); } }} className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all cursor-pointer">
+              <Trash2 size={13} /> Clear All
+            </button>
+          )}
+          <label className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-sm">
+            <Upload size={13} /> Import CSV/Excel
             <input type="file" accept=".csv, .xlsx" className="hidden" onChange={handleFileUpload} />
           </label>
         </div>
       </div>
 
-      {/* Main Split View */}
-      <div className="flex gap-6 h-[600px]">
-        {/* Table List */}
-        <div className="flex-1 bg-white border border-gray-200 rounded-md overflow-hidden flex flex-col">
-          <div className="overflow-y-auto flex-1">
-            <table className="w-full text-xs text-left">
-              <thead className="sticky top-0 bg-slate-50 border-b border-gray-200 shadow-sm z-10">
-                <tr className="uppercase font-semibold text-[10px] text-slate-500">
-                  <th className="px-4 py-3">Customer</th>
-                  <th className="px-4 py-3">Package</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">LTV</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {customers.map(c => (
-                  <tr key={c.firestoreId} onClick={() => setSelectedId(c.firestoreId)} className={`cursor-pointer hover:bg-blue-50 transition-colors ${selectedId === c.firestoreId ? 'bg-blue-50/50' : ''}`}>
-                    <td className="px-4 py-3">
-                      <p className="font-bold text-slate-900">{c.name}</p>
-                      <p className="text-[10px] text-slate-500">{c.email}</p>
-                    </td>
-                    <td className="px-4 py-3"><span className="px-2 py-0.5 bg-slate-100 rounded font-semibold text-[10px] text-slate-700">{c.package || "N/A"}</span></td>
-                    <td className="px-4 py-3">
-                      {c.isPremiumActive 
-                        ? <span className="flex items-center gap-1 text-emerald-600 font-bold"><CheckCircle2 size={12}/> Active</span>
-                        : <span className="flex items-center gap-1 text-amber-600 font-bold"><AlertTriangle size={12}/> Inactive</span>}
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono font-bold">${c.totalPaid || 0}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      {/* Customer Card Grid */}
+      {filteredCustomers.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredCustomers.map((c) => {
+            const cardId = c.firestoreId || c.customerId || c.email;
+            const isFlipped = flippedId === cardId;
+            const churnRisk = c.churnProbability || 0;
+            const statusLabel = churnRisk > 50 ? "Review due" : c.isPremiumActive ? "Active" : "Onboarding";
+            const statusDotColor = churnRisk > 50 ? "bg-rose-500" : c.isPremiumActive ? "bg-emerald-500" : "bg-blue-500";
+            const statusTextColor = churnRisk > 50 ? "text-rose-700 bg-rose-50 border-rose-200" : c.isPremiumActive ? "text-emerald-700 bg-emerald-50 border-emerald-200" : "text-blue-700 bg-blue-50 border-blue-200";
+            const sparklineData = getCustomerSparkline(c);
+            const chartColor = churnRisk > 50 ? "#f43f5e" : c.isPremiumActive ? "#10b981" : "#3b82f6";
 
-        {/* Details Panel */}
-        {customer && (
-          <div className="w-96 bg-white border border-gray-200 rounded-md overflow-y-auto p-5 shadow-sm">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">{customer.name}</h2>
-                <p className="text-xs text-slate-500">{customer.company} · {customer.country}</p>
-              </div>
-              <span className={`px-2 py-1 rounded text-xs font-bold ${customer.isPremiumActive ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-                {customer.isPremiumActive ? "Premium Active" : "Inactive"}
-              </span>
-            </div>
-            
-            <div className="space-y-5">
-              <div>
-                <h3 className="text-[10px] uppercase font-bold text-slate-400 mb-2 border-b pb-1">Usage Data</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-slate-50 p-2 rounded">
-                    <p className="text-[9px] uppercase text-slate-500 font-semibold">Last Login</p>
-                    <p className="text-xs font-bold mt-0.5">{customer.lastLoginDate || "Never"}</p>
-                  </div>
-                  <div className="bg-slate-50 p-2 rounded">
-                    <p className="text-[9px] uppercase text-slate-500 font-semibold">Features Used</p>
-                    <p className="text-xs font-bold mt-0.5">{customer.premiumFeaturesUsed || 0}</p>
-                  </div>
-                </div>
-              </div>
-
-              {customer.others && Object.keys(customer.others).length > 0 && (
-                <div>
-                  <h3 className="text-[10px] uppercase font-bold text-slate-400 mb-2 border-b pb-1 flex items-center gap-1">
-                    <Info size={10} /> Other Data Fields
-                  </h3>
-                  <div className="bg-orange-50 border border-orange-100 rounded p-3 space-y-1.5">
-                    {Object.entries(customer.others).map(([k, v]) => (
-                      <div key={k} className="flex justify-between text-xs">
-                        <span className="font-semibold text-orange-800">{k}:</span>
-                        <span className="text-orange-900">{v}</span>
+            return (
+              <div 
+                key={cardId} 
+                className={`h-[390px] rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-md ${
+                  isFlipped 
+                    ? "bg-slate-900 border-slate-700 text-white" 
+                    : "bg-white/95 backdrop-blur-md border-slate-200/80 text-slate-900"
+                }`}
+              >
+                {!isFlipped ? (
+                  /* ── FRONT: AI Analysis Page (Fixed 390px Height) ── */
+                  <div className="p-3.5 flex flex-col justify-between h-full">
+                    <div>
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 text-white font-bold text-[10px] flex items-center justify-center flex-shrink-0 shadow-xs">
+                            {getInitials(c.name)}
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="text-xs font-bold text-slate-900 truncate">{c.name || c.email}</h3>
+                            <p className="text-[9px] text-slate-400 font-medium truncate">{c.jobTitle ? `${c.jobTitle} · ` : ''}{c.company || 'Customer'}</p>
+                          </div>
+                        </div>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold border flex-shrink-0 ${statusTextColor}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${statusDotColor}`} />
+                          {statusLabel}
+                        </span>
                       </div>
-                    ))}
+
+                      {/* AI Metrics Display */}
+                      <div className="space-y-1.5 my-2 bg-slate-50/90 rounded-xl p-2 border border-slate-100">
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-[9px] uppercase font-bold text-slate-400">Health Score</span>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" style={{ width: `${c.healthScore ?? 100}%` }} />
+                            </div>
+                            <span className="font-extrabold text-slate-800">{c.healthScore ?? 100}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-[9px] uppercase font-bold text-slate-400">Churn Risk</span>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${churnRisk}%`, background: churnRisk > 50 ? '#f43f5e' : '#10b981' }} />
+                            </div>
+                            <span className={`font-extrabold ${churnRisk > 50 ? 'text-rose-600' : 'text-emerald-600'}`}>{churnRisk}%</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-[9px] uppercase font-bold text-slate-400">Revenue at Risk</span>
+                          <span className="font-extrabold text-amber-700">RM{Number(c.revenueAtRisk ?? 0).toFixed(2)}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-[9px] uppercase font-bold text-slate-400">Expansion Score</span>
+                          <span className="font-extrabold text-indigo-700">{c.expansionScore ?? 0}/100</span>
+                        </div>
+                      </div>
+
+                      {/* Mini AI Activity Trend Chart */}
+                      <div className="bg-slate-50/80 rounded-xl p-2 border border-slate-100 my-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[8px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                            <TrendingUp size={10} style={{ color: chartColor }} /> 6-Wk Usage Trajectory
+                          </span>
+                          <span className="text-[8px] font-bold text-slate-500">{c.sessionsPerWeek || 0} sess/wk</span>
+                        </div>
+                        <div className="h-14 w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={sparklineData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+                              <defs>
+                                <linearGradient id={`grad-${cardId}`} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor={chartColor} stopOpacity={0.4}/>
+                                  <stop offset="95%" stopColor={chartColor} stopOpacity={0.0}/>
+                                </linearGradient>
+                              </defs>
+                              <Area type="monotone" dataKey="score" stroke={chartColor} strokeWidth={2} fillOpacity={1} fill={`url(#grad-${cardId})`} />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
+                      {/* AI Strategy */}
+                      <div className="bg-indigo-50/70 border border-indigo-100 rounded-lg p-1.5">
+                        <p className="text-[8px] uppercase font-bold text-indigo-500">AI Strategy</p>
+                        <p className="text-[9px] font-bold text-indigo-900 leading-snug truncate mt-0.5">{c.aiRecommendation || "Monitor Account"}</p>
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Footer */}
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-2 mt-1">
+                      <span className="text-[9px] font-semibold text-slate-400">{c.package || "Level 1"}</span>
+                      <button
+                        onClick={() => setFlippedId(cardId)}
+                        className="flex items-center gap-1 px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer shadow-2xs"
+                      >
+                        Details <ChevronRight size={12} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+                ) : (
+                  /* ── BACK: Customer Information Page (Fixed 390px Height) ── */
+                  <div className="p-3.5 flex flex-col h-full">
+                    {/* Back Header */}
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-700/80 flex-shrink-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-white/10 text-white font-bold text-[9px] flex items-center justify-center border border-white/20">
+                          {getInitials(c.name)}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="text-xs font-bold text-white truncate">{c.name}</h3>
+                          <p className="text-[9px] text-slate-400 truncate">{c.company || c.email}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setFlippedId(null)}
+                        className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+
+                    {/* Scrollable Information Body */}
+                    <div className="flex-1 overflow-y-auto py-2 space-y-2.5 text-[9px] pr-1">
+                      {/* Financials Summary */}
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-1.5">
+                          <span className="text-[8px] text-emerald-400 font-bold uppercase block">MRR</span>
+                          <span className="text-xs font-extrabold text-emerald-300">RM{Number(c.packagePrice || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-1.5">
+                          <span className="text-[8px] text-blue-400 font-bold uppercase block">Total Paid (LTV)</span>
+                          <span className="text-xs font-extrabold text-blue-300">RM{Number(c.totalPaid || 0).toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      {/* 1. Basic Info */}
+                      <div>
+                        <p className="text-[8px] uppercase font-bold text-slate-400 mb-1 tracking-wider border-b border-slate-800 pb-0.5">1. Basic Info</p>
+                        <div className="space-y-0.5">
+                          <div className="flex justify-between"><span className="text-slate-400">Email:</span><span className="text-slate-200 font-medium truncate max-w-[60%]">{c.email || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Phone:</span><span className="text-slate-200 font-medium">{c.phone || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Role:</span><span className="text-slate-200 font-medium">{c.jobTitle || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Industry:</span><span className="text-slate-200 font-medium">{c.industry || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Company Size:</span><span className="text-slate-200 font-medium">{c.companySize || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Country/TZ:</span><span className="text-slate-200 font-medium">{c.country || "-"} {c.timezone ? `(${c.timezone})` : ''}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Join Date:</span><span className="text-slate-200 font-medium">{c.joinDate || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Source:</span><span className="text-slate-200 font-medium">{c.signupSource || "-"}</span></div>
+                        </div>
+                      </div>
+
+                      {/* 2. Package & Financials */}
+                      <div>
+                        <p className="text-[8px] uppercase font-bold text-slate-400 mb-1 tracking-wider border-b border-slate-800 pb-0.5">2. Package & Financials</p>
+                        <div className="space-y-0.5">
+                          <div className="flex justify-between"><span className="text-slate-400">Package Tier:</span><span className="text-slate-200 font-medium">{c.package || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Billing Cycle:</span><span className="text-slate-200 font-medium">{c.billingCycle || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Payment Status:</span><span className={`font-bold ${c.paymentStatus === 'Overdue' ? 'text-rose-400' : 'text-emerald-400'}`}>{c.paymentStatus || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Last Payment:</span><span className="text-slate-200 font-medium">{c.lastPaymentDate || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Payment Method:</span><span className="text-slate-200 font-medium">{c.paymentMethod || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Discount:</span><span className="text-slate-200 font-medium">{c.discountApplied || "None"}</span></div>
+                        </div>
+                      </div>
+
+                      {/* 3. Product Usage & Activity */}
+                      <div>
+                        <p className="text-[8px] uppercase font-bold text-slate-400 mb-1 tracking-wider border-b border-slate-800 pb-0.5">3. Product Usage</p>
+                        <div className="space-y-0.5">
+                          <div className="flex justify-between"><span className="text-slate-400">Last Login Date:</span><span className="text-slate-200 font-semibold">{formatDateTime(c.lastLoginDate)}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Login Frequency:</span><span className="text-slate-200 font-medium">{c.loginFrequency || 0}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Sessions / Wk:</span><span className="text-slate-200 font-medium">{c.sessionsPerWeek || 0}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Core Adoption:</span><span className="text-slate-200 font-medium">{c.coreFeatureAdoption ? `${c.coreFeatureAdoption}%` : "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Seats (Active/Total):</span><span className="text-slate-200 font-medium">{c.seatsActive || 0} / {c.seatsLicensed || 0}</span></div>
+                        </div>
+                      </div>
+
+                      {/* 4. Product Feedback */}
+                      <div>
+                        <p className="text-[8px] uppercase font-bold text-slate-400 mb-1 tracking-wider border-b border-slate-800 pb-0.5">4. Product Feedback</p>
+                        <div className="space-y-0.5">
+                          <div className="flex justify-between"><span className="text-slate-400">Feature Requests:</span><span className="text-slate-200 font-medium">{c.customFeatureRequests || "None"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Bugs Submitted:</span><span className="text-slate-200 font-medium">{c.bugReportsSubmitted || 0}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Beta Program:</span><span className="text-slate-200 font-medium">{c.betaProgramParticipant ? "Yes" : "No"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Survey Response:</span><span className="text-slate-200 font-medium">{c.surveyResponses || "-"}</span></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Back Footer */}
+                    <div className="pt-2 border-t border-slate-700/80 flex-shrink-0">
+                      <button 
+                        onClick={() => setFlippedId(null)}
+                        className="w-full py-1 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg text-[9px] transition-colors cursor-pointer flex items-center justify-center gap-1"
+                      >
+                        ← Back to AI Analysis
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="bg-white/80 backdrop-blur-md border border-slate-200/80 rounded-2xl p-12 text-center shadow-xs">
+          <Users size={40} className="mx-auto text-slate-300 mb-3" />
+          <h3 className="text-sm font-bold text-slate-700">No customer profiles found</h3>
+          <p className="text-xs text-slate-400 mt-1">Try adjusting your search filter or import an Excel/CSV dataset above.</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -850,34 +1056,836 @@ const ChartTooltip = ({ active, payload, label }) => {
 // ─── INSIGHTS VIEW ────────────────────────────────────────────────────────────
 
 function InsightsView({ customers = [] }) {
-  const activeCount = customers.filter(c => c.isPremiumActive).length;
-  const inactiveCount = customers.length - activeCount;
+  const [activeSection, setActiveSection] = useState("segmentation");
 
-  const clusterData = [
-    { name: "Active Premium", value: customers.length ? Math.round((activeCount / customers.length)*100) : 0, color: "#10b981" },
-    { name: "Quiet Payer", value: customers.length ? Math.round((inactiveCount / customers.length)*100) : 0, color: "#f59e0b" },
+  const n = customers.length || 1;
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+  const pct = (v, total) => total > 0 ? ((v / total) * 100).toFixed(1) : "0.0";
+  const avg = (arr, key) => arr.length ? arr.reduce((s,c)=>s+(parseFloat(c[key])||0),0)/arr.length : 0;
+  const fRM = v => `RM${Number(v).toFixed(2)}`;
+  const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
+
+  // ── 1. Customer Segmentation ─────────────────────────────────────────────────
+  const segments = useMemo(() => {
+    return customers.map(c => {
+      const pkg = (c.package || "").toLowerCase();
+      const size = (c.companySize || "").toLowerCase();
+      const sessions = parseFloat(c.sessionsPerWeek) || 0;
+      const adoption = parseFloat(c.coreFeatureAdoption) || 0;
+      const churn = c.churnProbability || 0;
+      const nps = parseFloat(c.surveyResponses) || 0;
+      if (pkg.includes("4") && (size.includes("500") || size.includes("201"))) return { ...c, segment: "Enterprise" };
+      if (churn > 50 || adoption < 30) return { ...c, segment: "At-Risk" };
+      if ((c.expansionScore||0) > 60 || adoption > 80) return { ...c, segment: "Champion" };
+      if (pkg.includes("2") || pkg.includes("3")) return { ...c, segment: "Growth" };
+      return { ...c, segment: "SMB" };
+    });
+  }, [customers]);
+
+  const segCounts = ["Enterprise","Champion","Growth","SMB","At-Risk"].map(s => ({
+    name: s, count: segments.filter(c=>c.segment===s).length,
+    revenue: segments.filter(c=>c.segment===s).reduce((a,c)=>a+(parseFloat(c.packagePrice)||0),0),
+    color: {Enterprise:"#3b82f6",Champion:"#10b981",Growth:"#8b5cf6",SMB:"#f59e0b","At-Risk":"#f43f5e"}[s]
+  }));
+  const totalRevenue = segCounts.reduce((a,s)=>a+s.revenue,0);
+
+  const industryRevenue = Object.entries(customers.reduce((acc,c)=>{
+    const k = c.industry||"Unknown";
+    acc[k]=(acc[k]||0)+(parseFloat(c.totalPaid)||0);
+    return acc;
+  },{})).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([name,value])=>({name,value}));
+
+  // ── 2. Churn Analysis ────────────────────────────────────────────────────────
+  const churnTable = [...customers]
+    .map(c => ({
+      ...c,
+      churnScore: c.churnProbability||0,
+      revenueRisk: ((c.churnProbability||0)/100)*(parseFloat(c.packagePrice)||0)
+    }))
+    .sort((a,b)=>b.churnScore-a.churnScore)
+    .slice(0,8);
+
+  const churnByPayment = customers.reduce((acc,c)=>{
+    const k = c.paymentStatus||"Unknown";
+    acc[k]=(acc[k]||0)+1;
+    return acc;
+  },{});
+
+  // ── 3. CLV Analysis ──────────────────────────────────────────────────────────
+  const clvData = [...customers].map(c => {
+    const totalPaid = parseFloat(c.totalPaid)||0;
+    const price = parseFloat(c.packagePrice)||0;
+    const joinDate = c.joinDate ? new Date(String(c.joinDate).replace(/(\d{4})(\d{2})(\d{2})/,"$1-$2-$3")) : null;
+    const monthsActive = joinDate ? Math.max(1,Math.round((Date.now()-joinDate.getTime())/(1000*60*60*24*30))) : 12;
+    const predictedCLV = price * Math.max(12, monthsActive * 1.2);
+    return { ...c, totalPaid, predictedCLV, monthsActive };
+  }).sort((a,b)=>b.totalPaid-a.totalPaid);
+
+  // ── 4. Product Adoption ──────────────────────────────────────────────────────
+  const featureCount = customers.reduce((acc,c)=>{
+    const f = c.lastFeatureUsed||"Other";
+    acc[f]=(acc[f]||0)+1;
+    return acc;
+  },{});
+  const featureData = Object.entries(featureCount).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([name,count])=>({name,count,pct:pct(count,n)}));
+
+  const adoptionGroups = [
+    { label:">80% Adoption", count: customers.filter(c=>parseFloat(c.coreFeatureAdoption)>80).length, color:"#10b981" },
+    { label:"50–80%", count: customers.filter(c=>{const a=parseFloat(c.coreFeatureAdoption);return a>=50&&a<=80;}).length, color:"#3b82f6" },
+    { label:"<50% Adoption", count: customers.filter(c=>parseFloat(c.coreFeatureAdoption)<50).length, color:"#f43f5e" },
   ];
 
+  // ── 5. Engagement Score ──────────────────────────────────────────────────────
+  const engagementData = [...customers].map(c => {
+    const freq = clamp(parseFloat(c.loginFrequency)||0,0,30)/30*100;
+    const dur = clamp(parseFloat(c.avgSessionDuration)||0,0,60)/60*100;
+    const adopt = parseFloat(c.coreFeatureAdoption)||0;
+    const seatsRatio = (parseFloat(c.seatsLicensed)||0)>0
+      ? clamp(((parseFloat(c.seatsActive)||0)/(parseFloat(c.seatsLicensed)||1))*100,0,100) : 0;
+    const score = Math.round(0.3*freq + 0.3*dur + 0.2*adopt + 0.2*seatsRatio);
+    return { ...c, engagementScore: score };
+  }).sort((a,b)=>b.engagementScore-a.engagementScore);
+
+  // ── 6. Seat Utilization ──────────────────────────────────────────────────────
+  const seatData = [...customers].map(c => {
+    const licensed = parseFloat(c.seatsLicensed)||0;
+    const active = parseFloat(c.seatsActive)||0;
+    const util = licensed>0 ? Math.round((active/licensed)*100) : 0;
+    return { ...c, seatsLicensed:licensed, seatsActive:active, seatUtil:util };
+  }).filter(c=>c.seatsLicensed>0).sort((a,b)=>b.seatUtil-a.seatUtil);
+
+  // ── 7. Upsell Opportunities ──────────────────────────────────────────────────
+  const upsellData = [...customers]
+    .map(c=>({ ...c, expansionScore: c.expansionScore||0 }))
+    .filter(c=>c.expansionScore>50)
+    .sort((a,b)=>b.expansionScore-a.expansionScore)
+    .slice(0,8);
+
+  // ── 8. NPS / Satisfaction ────────────────────────────────────────────────────
+  const promoters = customers.filter(c=>parseFloat(c.surveyResponses||0)>=80).length;
+  const passives  = customers.filter(c=>{const s=parseFloat(c.surveyResponses||0);return s>=60&&s<80;}).length;
+  const detractors = customers.filter(c=>parseFloat(c.surveyResponses||0)<60).length;
+  const npsScore = Math.round((promoters-detractors)/n*100);
+  const npsData = [
+    { name:"Promoters (≥80)", value:promoters, color:"#10b981" },
+    { name:"Passives (60–79)", value:passives, color:"#f59e0b" },
+    { name:"Detractors (<60)", value:detractors, color:"#f43f5e" },
+  ];
+
+  // ── 9. Payment Behavior ──────────────────────────────────────────────────────
+  const billingData = [
+    { name:"Monthly", count: customers.filter(c=>(c.billingCycle||"").toLowerCase().includes("month")).length },
+    { name:"Annual",  count: customers.filter(c=>(c.billingCycle||"").toLowerCase().includes("ann")).length },
+  ];
+  const payMethodData = Object.entries(customers.reduce((acc,c)=>{
+    const k=c.paymentMethod||"Unknown"; acc[k]=(acc[k]||0)+1; return acc;
+  },{})).map(([name,count])=>({name,count}));
+  const overdueByMethod = customers.reduce((acc,c)=>{
+    if((c.paymentStatus||"").toLowerCase()==="overdue"){
+      const k=c.paymentMethod||"Unknown"; acc[k]=(acc[k]||0)+1;
+    }
+    return acc;
+  },{});
+
+  // ── 10. Marketing Channel ────────────────────────────────────────────────────
+  const channelData = Object.entries(customers.reduce((acc,c)=>{
+    const k=c.signupSource||"Unknown";
+    if(!acc[k]) acc[k]={count:0,revenue:0};
+    acc[k].count++;
+    acc[k].revenue+=(parseFloat(c.totalPaid)||0);
+    return acc;
+  },{})).map(([name,v])=>({name,...v,avgLTV:v.count?v.revenue/v.count:0})).sort((a,b)=>b.avgLTV-a.avgLTV);
+
+  // ── 11. Health Score ─────────────────────────────────────────────────────────
+  const healthBreakdown = [...customers].map(c => {
+    const usage     = clamp(((parseFloat(c.sessionsPerWeek)||0)/10)*100,0,100);
+    const payment   = (c.paymentStatus||"").toLowerCase()==="active"?100:(c.paymentStatus||"").toLowerCase()==="overdue"?40:0;
+    const adoption  = clamp(parseFloat(c.coreFeatureAdoption)||0,0,100);
+    const satisfaction = clamp((parseFloat(c.surveyResponses)||0),0,100);
+    const support   = clamp(100-(parseFloat(c.bugReportsSubmitted)||0)*10,0,100);
+    const overall   = Math.round(0.30*usage+0.20*payment+0.20*adoption+0.20*satisfaction+0.10*support);
+    return { ...c, hUsage:Math.round(usage), hPayment:Math.round(payment), hAdoption:Math.round(adoption), hSatisfaction:Math.round(satisfaction), hSupport:Math.round(support), overallHealth:overall };
+  }).sort((a,b)=>b.overallHealth-a.overallHealth);
+
+  // ── Section meta ─────────────────────────────────────────────────────────────
+  const sections = [
+    { id:"segmentation", label:"Segmentation" },
+    { id:"churn",        label:"Churn" },
+    { id:"clv",          label:"CLV" },
+    { id:"adoption",     label:"Adoption" },
+    { id:"engagement",   label:"Engagement" },
+    { id:"seats",        label:"Seat Util." },
+    { id:"upsell",       label:"Upsell" },
+    { id:"nps",          label:"NPS" },
+    { id:"payment",      label:"Payment" },
+    { id:"channel",      label:"Channel" },
+    { id:"health",       label:"Health" },
+  ];
+
+  const COLORS = ["#3b82f6","#10b981","#8b5cf6","#f59e0b","#f43f5e","#06b6d4","#ec4899","#84cc16"];
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-200 rounded-md p-4">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4">Customer Segment Distribution</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={clusterData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={3} dataKey="value">
-                  {clusterData.map(e => <Cell key={e.name} fill={e.color} stroke="none" />)}
-                </Pie>
-                <Tooltip content={<ChartTooltip />} formatter={(v, n) => [`${v}%`, n]} />
-              </PieChart>
-            </ResponsiveContainer>
+    <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50">
+      {/* ── Top Nav Header Bar ── */}
+      <div className="bg-white border-b border-slate-200 p-2 flex-shrink-0 flex items-center justify-between gap-1.5 w-full shadow-xs">
+        {sections.map(s=>(
+          <button key={s.id} onClick={()=>setActiveSection(s.id)}
+            className={`flex-1 text-center px-1.5 py-1.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer truncate ${activeSection===s.id?"bg-indigo-600 text-white shadow-xs font-bold border border-indigo-600":"bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/60"}`}
+            title={s.label}>
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Main Panel ── */}
+      <div className="flex-1 overflow-y-auto p-5 space-y-5">
+
+        {/* ════ 1. CUSTOMER SEGMENTATION ════ */}
+        {activeSection==="segmentation" && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">Customer Segmentation Analysis</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Understand different types of customers and their behavior.</p>
+            </div>
+
+            {/* Segment Cards */}
+            <div className="grid grid-cols-5 gap-3">
+              {segCounts.map(s=>(
+                <div key={s.name} className="bg-white rounded-xl border border-slate-200 p-3 shadow-xs text-center">
+                  <p className="text-[9px] uppercase font-bold text-slate-400 mb-1">{s.name}</p>
+                  <p className="text-2xl font-extrabold" style={{color:s.color}}>{s.count}</p>
+                  <p className="text-[9px] text-slate-500 mt-0.5">RM{Math.round(s.revenue).toLocaleString()}/mo</p>
+                  <p className="text-[9px] font-bold text-slate-400">{pct(s.revenue,totalRevenue)}% of MRR</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Revenue by Package & Industry Charts */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-700 mb-3">Revenue by Package Tier</h3>
+                <div className="h-52">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                      <Pie data={Object.entries(customers.reduce((a,c)=>{const k=c.package||"?";a[k]=(a[k]||0)+(parseFloat(c.packagePrice)||0);return a},{})).map(([name,value])=>({name,value}))}
+                        cx="35%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={3} dataKey="value" label={false}>
+                        {["Level 1","Level 2","Level 3","Level 4"].map((k,i)=><Cell key={k} fill={COLORS[i]} stroke="none"/>)}
+                      </Pie>
+                      <Tooltip formatter={v=>[`RM${v.toLocaleString()}`,"MRR"]} contentStyle={{fontSize:"10px",borderRadius:"6px"}}/>
+                      <Legend layout="vertical" align="right" verticalAlign="middle" iconType="circle" wrapperStyle={{fontSize:"11px",paddingLeft:"10px"}} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-700 mb-3">Revenue by Industry (Total Paid)</h3>
+                <div className="h-52">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={industryRevenue} layout="vertical" margin={{left:8}}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3}/>
+                      <XAxis type="number" tick={{fontSize:9}} tickFormatter={v=>`RM${(v/1000).toFixed(0)}K`}/>
+                      <YAxis type="category" dataKey="name" tick={{fontSize:9}} width={80}/>
+                      <Tooltip formatter={v=>[`RM${v.toLocaleString()}`,"Total Paid"]} contentStyle={{fontSize:"10px",borderRadius:"6px"}}/>
+                      <Bar dataKey="value" radius={[0,4,4,0]}>
+                        {industryRevenue.map((e,i)=><Cell key={e.name} fill={COLORS[i%COLORS.length]}/>)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            {/* Segment Table */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="p-3 bg-slate-50 border-b"><h3 className="text-xs font-bold text-slate-700">Customer Segment Directory</h3></div>
+              <div className="overflow-x-auto max-h-64">
+                <table className="w-full text-[10px]">
+                  <thead className="bg-slate-50 sticky top-0"><tr>{["Customer","Company","Segment","Package","Health","Churn","MRR"].map(h=><th key={h} className="px-3 py-2 text-left font-bold text-slate-500 uppercase text-[9px]">{h}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {segments.map(c=>(
+                      <tr key={c.customerId||c.email} className="hover:bg-slate-50">
+                        <td className="px-3 py-2 font-bold text-slate-900">{c.name}</td>
+                        <td className="px-3 py-2 text-slate-500">{c.company}</td>
+                        <td className="px-3 py-2"><span className="px-1.5 py-0.5 rounded-full text-white text-[9px] font-bold" style={{background:{Enterprise:"#3b82f6",Champion:"#10b981",Growth:"#8b5cf6",SMB:"#f59e0b","At-Risk":"#f43f5e"}[c.segment]}}>{c.segment}</span></td>
+                        <td className="px-3 py-2">{c.package}</td>
+                        <td className="px-3 py-2 font-mono">{c.healthScore}</td>
+                        <td className="px-3 py-2"><span className={`font-bold ${(c.churnProbability||0)>50?"text-rose-600":"text-emerald-600"}`}>{c.churnProbability}%</span></td>
+                        <td className="px-3 py-2 font-mono">RM{parseFloat(c.packagePrice||0).toFixed(0)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* ════ 2. CHURN ANALYSIS ════ */}
+        {activeSection==="churn" && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">Customer Churn Analysis</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Identify customers likely to leave and quantify revenue at risk.</p>
+            </div>
+
+            {/* Summary KPIs */}
+            <div className="grid grid-cols-4 gap-3">
+              {[
+                { label:"High Churn Risk (>70%)", value: customers.filter(c=>(c.churnProbability||0)>70).length, color:"text-rose-600", bg:"bg-rose-50" },
+                { label:"Medium Risk (40–70%)", value: customers.filter(c=>{const r=c.churnProbability||0;return r>=40&&r<=70;}).length, color:"text-amber-600", bg:"bg-amber-50" },
+                { label:"Total Revenue at Risk", value:`RM${customers.reduce((a,c)=>a+(c.revenueAtRisk||0),0).toFixed(0)}`, color:"text-rose-700", bg:"bg-rose-50" },
+                { label:"Overdue Payments", value: customers.filter(c=>(c.paymentStatus||"").toLowerCase()==="overdue").length, color:"text-orange-600", bg:"bg-orange-50" },
+              ].map(k=>(
+                <div key={k.label} className={`rounded-xl border border-slate-200 p-3 shadow-xs ${k.bg}`}>
+                  <p className="text-[9px] uppercase font-bold text-slate-500">{k.label}</p>
+                  <p className={`text-2xl font-extrabold mt-1 ${k.color}`}>{k.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Churn Table */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="p-3 bg-slate-50 border-b"><h3 className="text-xs font-bold text-slate-700">Top Churn Risk — Revenue Impact Priority</h3></div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[10px]">
+                  <thead className="bg-slate-50 sticky top-0"><tr>{["Customer","Package","MRR","Churn %","Revenue at Risk","Last Login","Payment"].map(h=><th key={h} className="px-3 py-2 text-left font-bold text-slate-500 uppercase text-[9px]">{h}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {churnTable.map(c=>(
+                      <tr key={c.customerId||c.email} className="hover:bg-slate-50">
+                        <td className="px-3 py-2"><p className="font-bold text-slate-900">{c.name}</p><p className="text-slate-400">{c.company}</p></td>
+                        <td className="px-3 py-2">{c.package}</td>
+                        <td className="px-3 py-2 font-mono">RM{parseFloat(c.packagePrice||0).toFixed(0)}</td>
+                        <td className="px-3 py-2"><span className={`px-2 py-0.5 rounded-full font-bold text-[9px] ${(c.churnProbability||0)>70?"bg-rose-100 text-rose-700":"bg-amber-100 text-amber-700"}`}>{c.churnProbability}%</span></td>
+                        <td className="px-3 py-2 font-mono font-bold text-rose-600">RM{(c.revenueRisk||0).toFixed(2)}</td>
+                        <td className="px-3 py-2 text-slate-500">{(c.lastLoginDate||"—").toString().slice(0,10)}</td>
+                        <td className="px-3 py-2"><span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${(c.paymentStatus||"").toLowerCase()==="overdue"?"bg-rose-100 text-rose-700":"bg-emerald-100 text-emerald-700"}`}>{c.paymentStatus||"—"}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Churn Risk Distribution Chart */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+              <h3 className="text-xs font-bold text-slate-700 mb-3">Churn Risk Distribution by Average Score (Company Size)</h3>
+              <div className="h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={Object.entries(customers.reduce((acc,c)=>{const k=c.companySize||"?";if(!acc[k])acc[k]={total:0,count:0};acc[k].total+=(c.churnProbability||0);acc[k].count++;return acc},{})).map(([name,v])=>({name,avgChurn:Math.round(v.total/v.count)})).sort((a,b)=>b.avgChurn-a.avgChurn)} margin={{left:0}}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.4}/>
+                    <XAxis dataKey="name" tick={{fontSize:9}}/>
+                    <YAxis domain={[0,100]} tick={{fontSize:9}} tickFormatter={v=>`${v}%`}/>
+                    <Tooltip formatter={v=>[`${v}%`,"Avg Churn Risk"]} contentStyle={{fontSize:"10px",borderRadius:"6px"}}/>
+                    <Bar dataKey="avgChurn" fill="#f43f5e" radius={[4,4,0,0]}>
+                      {customers.map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════ 3. CLV ANALYSIS ════ */}
+        {activeSection==="clv" && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900">💰 Customer Lifetime Value (CLV)</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Find the most valuable customers. CLV = Avg Revenue × Expected Customer Lifetime.</p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label:"Total Revenue (All Time)", value:`RM${clvData.reduce((a,c)=>a+c.totalPaid,0).toLocaleString(undefined,{minimumFractionDigits:0})}` },
+                { label:"Avg CLV per Customer", value:`RM${Math.round(clvData.reduce((a,c)=>a+c.totalPaid,0)/n).toLocaleString()}` },
+                { label:"Avg MRR per Customer", value:`RM${Math.round(customers.reduce((a,c)=>a+(parseFloat(c.packagePrice)||0),0)/n).toLocaleString()}` },
+              ].map(k=>(
+                <div key={k.label} className="bg-white rounded-xl border border-slate-200 p-3 shadow-xs">
+                  <p className="text-[9px] uppercase font-bold text-slate-400">{k.label}</p>
+                  <p className="text-xl font-extrabold text-slate-900 mt-1">{k.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="p-3 bg-slate-50 border-b"><h3 className="text-xs font-bold text-slate-700">CLV Ranking — Most Valuable Customers</h3></div>
+              <div className="overflow-x-auto max-h-96">
+                <table className="w-full text-[10px]">
+                  <thead className="bg-slate-50 sticky top-0"><tr>{["Rank","Customer","Industry","Package","Total Paid","MRR","Months Active","Value Tier"].map(h=><th key={h} className="px-3 py-2 text-left font-bold text-slate-500 uppercase text-[9px]">{h}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {clvData.map((c,i)=>{
+                      const tier = c.totalPaid>80000?"Very High":c.totalPaid>30000?"High":c.totalPaid>10000?"Medium":"Low";
+                      const tc = {VeryHigh:"text-emerald-700 bg-emerald-50",High:"text-blue-700 bg-blue-50",Medium:"text-amber-700 bg-amber-50",Low:"text-slate-600 bg-slate-100"}[tier.replace(" ","")]||"bg-slate-100 text-slate-600";
+                      return (
+                        <tr key={c.customerId||c.email} className="hover:bg-slate-50">
+                          <td className="px-3 py-2 font-bold text-slate-400">#{i+1}</td>
+                          <td className="px-3 py-2"><p className="font-bold text-slate-900">{c.name}</p><p className="text-slate-400">{c.company}</p></td>
+                          <td className="px-3 py-2 text-slate-500">{c.industry}</td>
+                          <td className="px-3 py-2">{c.package}</td>
+                          <td className="px-3 py-2 font-mono font-bold text-emerald-700">RM{c.totalPaid.toLocaleString()}</td>
+                          <td className="px-3 py-2 font-mono">RM{(parseFloat(c.packagePrice)||0).toFixed(0)}</td>
+                          <td className="px-3 py-2">{c.monthsActive}mo</td>
+                          <td className="px-3 py-2"><span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${tc}`}>{tier}</span></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════ 4. PRODUCT ADOPTION ════ */}
+        {activeSection==="adoption" && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900">📊 Product Adoption Analysis</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Understand whether customers actually use the product and which features drive retention.</p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {adoptionGroups.map(g=>(
+                <div key={g.label} className="bg-white rounded-xl border border-slate-200 p-3 shadow-xs text-center">
+                  <p className="text-[9px] uppercase font-bold text-slate-400">{g.label}</p>
+                  <p className="text-2xl font-extrabold mt-1" style={{color:g.color}}>{g.count}</p>
+                  <p className="text-[9px] text-slate-400">{pct(g.count,n)}% of customers</p>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-700 mb-3">Most Used Features (by last feature used)</h3>
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={featureData} layout="vertical" margin={{left:4}}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3}/>
+                      <XAxis type="number" tick={{fontSize:9}}/>
+                      <YAxis type="category" dataKey="name" tick={{fontSize:9}} width={90}/>
+                      <Tooltip formatter={v=>[v,"Customers"]} contentStyle={{fontSize:"10px",borderRadius:"6px"}}/>
+                      <Bar dataKey="count" radius={[0,4,4,0]}>
+                        {featureData.map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-700 mb-3">Core Feature Adoption vs Churn Risk</h3>
+                <div className="h-56 overflow-y-auto space-y-2">
+                  {[...customers].sort((a,b)=>(parseFloat(b.coreFeatureAdoption)||0)-(parseFloat(a.coreFeatureAdoption)||0)).slice(0,10).map(c=>{
+                    const adopt = parseFloat(c.coreFeatureAdoption)||0;
+                    return (
+                      <div key={c.customerId||c.email} className="flex items-center gap-2">
+                        <span className="text-[9px] text-slate-500 w-20 shrink-0 truncate">{c.name}</span>
+                        <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full" style={{width:`${adopt}%`,background:adopt>70?"#10b981":adopt>40?"#f59e0b":"#f43f5e"}}/>
+                        </div>
+                        <span className="text-[9px] font-bold w-8 text-right">{adopt}%</span>
+                        <span className={`text-[8px] font-bold w-6 ${(c.churnProbability||0)>50?"text-rose-500":"text-emerald-500"}`}>{c.churnProbability}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            {/* Key Insight */}
+            <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+              <p className="text-xs font-bold text-indigo-800">💡 Key Insight</p>
+              <p className="text-xs text-indigo-700 mt-1">
+                Customers with &gt;70% core feature adoption have an average churn risk of <strong>{Math.round(avg(customers.filter(c=>parseFloat(c.coreFeatureAdoption)>70),"churnProbability"))}%</strong>, 
+                vs <strong>{Math.round(avg(customers.filter(c=>parseFloat(c.coreFeatureAdoption)<=50),"churnProbability"))}%</strong> for those with &lt;50% adoption.
+                Feature adoption is the single strongest predictor of retention.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ════ 5. ENGAGEMENT SCORE ════ */}
+        {activeSection==="engagement" && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900">⚡ Customer Engagement Analysis</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Engagement Score = 0.3×Login Freq + 0.3×Session Duration + 0.2×Feature Adoption + 0.2×Active Seats Ratio</p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label:"Highly Engaged (≥70)", value:engagementData.filter(c=>c.engagementScore>=70).length, color:"text-emerald-600" },
+                { label:"Moderate (40–69)", value:engagementData.filter(c=>c.engagementScore>=40&&c.engagementScore<70).length, color:"text-amber-600" },
+                { label:"Inactive (<40)", value:engagementData.filter(c=>c.engagementScore<40).length, color:"text-rose-600" },
+              ].map(k=>(
+                <div key={k.label} className="bg-white rounded-xl border border-slate-200 p-3 shadow-xs text-center">
+                  <p className="text-[9px] uppercase font-bold text-slate-400">{k.label}</p>
+                  <p className={`text-2xl font-extrabold mt-1 ${k.color}`}>{k.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="p-3 bg-slate-50 border-b"><h3 className="text-xs font-bold text-slate-700">Engagement Ranking</h3></div>
+              <div className="overflow-y-auto max-h-96 divide-y divide-slate-100">
+                {engagementData.map((c,i)=>(
+                  <div key={c.customerId||c.email} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                    <span className="text-[9px] font-bold text-slate-400 w-5">#{i+1}</span>
+                    <div className="w-24 shrink-0">
+                      <p className="text-[10px] font-bold text-slate-900 truncate">{c.name}</p>
+                      <p className="text-[9px] text-slate-400 truncate">{c.company}</p>
+                    </div>
+                    <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{width:`${c.engagementScore}%`,background:c.engagementScore>=70?"#10b981":c.engagementScore>=40?"#f59e0b":"#f43f5e"}}/>
+                    </div>
+                    <span className="text-[10px] font-extrabold w-10 text-right" style={{color:c.engagementScore>=70?"#10b981":c.engagementScore>=40?"#f59e0b":"#f43f5e"}}>{c.engagementScore}</span>
+                    <span className="text-[9px] text-slate-400 w-12 text-right">{c.sessionsPerWeek||0} sess/wk</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════ 6. SEAT UTILIZATION ════ */}
+        {activeSection==="seats" && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900">💺 Seat Utilization Analysis</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Seat Utilization % = (Active Seats / Licensed Seats) × 100. Drives upsell & training decisions.</p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label:"Full (≥90%)", value:seatData.filter(c=>c.seatUtil>=90).length, color:"text-emerald-600", action:"→ Upsell more seats" },
+                { label:"Moderate (50–89%)", value:seatData.filter(c=>c.seatUtil>=50&&c.seatUtil<90).length, color:"text-blue-600", action:"→ Encourage adoption" },
+                { label:"Low (<50%)", value:seatData.filter(c=>c.seatUtil<50).length, color:"text-rose-600", action:"→ Training campaign" },
+              ].map(k=>(
+                <div key={k.label} className="bg-white rounded-xl border border-slate-200 p-3 shadow-xs">
+                  <p className="text-[9px] uppercase font-bold text-slate-400">{k.label}</p>
+                  <p className={`text-2xl font-extrabold mt-1 ${k.color}`}>{k.value}</p>
+                  <p className="text-[9px] text-slate-500 mt-1 font-semibold">{k.action}</p>
+                </div>
+              ))}
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="p-3 bg-slate-50 border-b"><h3 className="text-xs font-bold text-slate-700">Seat Utilization by Customer</h3></div>
+              <div className="overflow-y-auto max-h-96 divide-y divide-slate-100">
+                {seatData.map(c=>(
+                  <div key={c.customerId||c.email} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                    <div className="w-28 shrink-0">
+                      <p className="text-[10px] font-bold text-slate-900 truncate">{c.name}</p>
+                      <p className="text-[9px] text-slate-400">{c.seatsActive}/{c.seatsLicensed} seats</p>
+                    </div>
+                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full" style={{width:`${c.seatUtil}%`,background:c.seatUtil>=90?"#10b981":c.seatUtil>=50?"#3b82f6":"#f43f5e"}}/>
+                    </div>
+                    <span className="text-[10px] font-extrabold w-10 text-right">{c.seatUtil}%</span>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded w-24 text-center ${c.seatUtil>=90?"bg-emerald-100 text-emerald-700":c.seatUtil>=50?"bg-blue-100 text-blue-700":"bg-rose-100 text-rose-700"}`}>
+                      {c.seatUtil>=90?"Upsell Ready":c.seatUtil>=50?"Healthy":"Needs Training"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════ 7. UPSELL OPPORTUNITIES ════ */}
+        {activeSection==="upsell" && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900">🚀 Upsell Opportunity Analysis</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Expansion Score = Usage + Satisfaction + Company Size + Seat Utilization. High scores = upgrade candidates.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                <p className="text-[9px] uppercase font-bold text-emerald-600">Upsell Candidates (&gt;50 Expansion)</p>
+                <p className="text-3xl font-extrabold text-emerald-700">{upsellData.length}</p>
+                <p className="text-xs text-emerald-600 mt-1">Est. additional MRR if upgraded: RM{(upsellData.reduce((a,c)=>a+(parseFloat(c.packagePrice)||0)*0.5,0)).toFixed(0)}</p>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-[9px] uppercase font-bold text-blue-600">Full Seat Utilization (≥90%)</p>
+                <p className="text-3xl font-extrabold text-blue-700">{seatData.filter(c=>c.seatUtil>=90).length}</p>
+                <p className="text-xs text-blue-600 mt-1">Recommend expanded seat packages</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="p-3 bg-slate-50 border-b"><h3 className="text-xs font-bold text-slate-700">Top Upsell Targets</h3></div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[10px]">
+                  <thead className="bg-slate-50 sticky top-0"><tr>{["Customer","Company","Package","Expansion Score","Health","Seats Util","Recommendation"].map(h=><th key={h} className="px-3 py-2 text-left font-bold text-slate-500 uppercase text-[9px]">{h}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {upsellData.map(c=>{
+                      const seatUtil = (parseFloat(c.seatsLicensed)||0)>0?Math.round(((parseFloat(c.seatsActive)||0)/(parseFloat(c.seatsLicensed)||1))*100):0;
+                      return (
+                        <tr key={c.customerId||c.email} className="hover:bg-slate-50">
+                          <td className="px-3 py-2 font-bold text-slate-900">{c.name}</td>
+                          <td className="px-3 py-2 text-slate-500">{c.company}</td>
+                          <td className="px-3 py-2">{c.package}</td>
+                          <td className="px-3 py-2"><span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-bold text-[9px]">{c.expansionScore}/100</span></td>
+                          <td className="px-3 py-2 font-mono">{c.healthScore}</td>
+                          <td className="px-3 py-2 font-mono">{seatUtil}%</td>
+                          <td className="px-3 py-2 text-indigo-700 font-semibold">{c.aiRecommendation}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════ 8. NPS / SATISFACTION ════ */}
+        {activeSection==="nps" && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900">⭐ Customer Satisfaction & NPS Analysis</h2>
+              <p className="text-xs text-slate-500 mt-0.5">NPS = %Promoters (≥80) − %Detractors (&lt;60). Survey Response Score used as NPS proxy.</p>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+                <p className="text-[9px] uppercase font-bold text-emerald-600">Promoters (≥80)</p>
+                <p className="text-2xl font-extrabold text-emerald-700">{promoters}</p>
+                <p className="text-[9px] text-emerald-600">{pct(promoters,n)}%</p>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+                <p className="text-[9px] uppercase font-bold text-amber-600">Passives (60–79)</p>
+                <p className="text-2xl font-extrabold text-amber-700">{passives}</p>
+                <p className="text-[9px] text-amber-600">{pct(passives,n)}%</p>
+              </div>
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-center">
+                <p className="text-[9px] uppercase font-bold text-rose-600">Detractors (&lt;60)</p>
+                <p className="text-2xl font-extrabold text-rose-700">{detractors}</p>
+                <p className="text-[9px] text-rose-600">{pct(detractors,n)}%</p>
+              </div>
+              <div className={`${npsScore>=50?"bg-emerald-50 border-emerald-300":npsScore>=0?"bg-amber-50 border-amber-300":"bg-rose-50 border-rose-300"} border rounded-xl p-3 text-center`}>
+                <p className="text-[9px] uppercase font-bold text-slate-500">NPS Score</p>
+                <p className={`text-2xl font-extrabold ${npsScore>=50?"text-emerald-700":npsScore>=0?"text-amber-700":"text-rose-700"}`}>{npsScore}</p>
+                <p className="text-[9px] font-bold text-slate-500">{npsScore>=50?"Excellent":npsScore>=0?"Good":"Needs Attention"}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-700 mb-3">NPS Breakdown</h3>
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                      <Pie data={npsData} cx="35%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={3} dataKey="value" label={false}>
+                        {npsData.map((e,i)=><Cell key={e.name} fill={e.color} stroke="none"/>)}
+                      </Pie>
+                      <Tooltip contentStyle={{fontSize:"10px",borderRadius:"6px"}}/>
+                      <Legend layout="vertical" align="right" verticalAlign="middle" iconType="circle" wrapperStyle={{fontSize:"11px",paddingLeft:"10px"}} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-700 mb-3">Survey Score Distribution</h3>
+                <div className="h-48 overflow-y-auto space-y-1.5">
+                  {[...customers].sort((a,b)=>(parseFloat(b.surveyResponses)||0)-(parseFloat(a.surveyResponses)||0)).map(c=>{
+                    const s = parseFloat(c.surveyResponses)||0;
+                    return (
+                      <div key={c.customerId||c.email} className="flex items-center gap-2">
+                        <span className="text-[9px] w-24 truncate text-slate-600">{c.name}</span>
+                        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full" style={{width:`${s}%`,background:s>=80?"#10b981":s>=60?"#f59e0b":"#f43f5e"}}/>
+                        </div>
+                        <span className="text-[9px] font-bold w-6 text-right">{s}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════ 9. PAYMENT BEHAVIOR ════ */}
+        {activeSection==="payment" && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900">💳 Payment Behavior Analysis</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Analyze payment status, methods, and billing cycle behavior.</p>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              {[
+                { label:"Active Payments", value:customers.filter(c=>(c.paymentStatus||"").toLowerCase()==="active").length, color:"text-emerald-600" },
+                { label:"Overdue", value:customers.filter(c=>(c.paymentStatus||"").toLowerCase()==="overdue").length, color:"text-rose-600" },
+                { label:"Cancelled", value:customers.filter(c=>(c.paymentStatus||"").toLowerCase()==="cancelled").length, color:"text-slate-500" },
+                { label:"Annual Billing", value:customers.filter(c=>(c.billingCycle||"").toLowerCase().includes("ann")).length, color:"text-blue-600" },
+              ].map(k=>(
+                <div key={k.label} className="bg-white rounded-xl border border-slate-200 p-3 text-center shadow-xs">
+                  <p className="text-[9px] uppercase font-bold text-slate-400">{k.label}</p>
+                  <p className={`text-2xl font-extrabold mt-1 ${k.color}`}>{k.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-700 mb-3">Payment Method Distribution</h3>
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                      <Pie data={payMethodData} cx="35%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={3} dataKey="count" label={false}>
+                        {payMethodData.map((e,i)=><Cell key={e.name} fill={COLORS[i%COLORS.length]} stroke="none"/>)}
+                      </Pie>
+                      <Tooltip contentStyle={{fontSize:"10px",borderRadius:"6px"}}/>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-700 mb-3">Annual vs Monthly Comparison</h3>
+                <div className="space-y-3 mt-4">
+                  {billingData.map(b=>(
+                    <div key={b.name}>
+                      <div className="flex justify-between text-[10px] mb-1">
+                        <span className="font-bold text-slate-700">{b.name} Billing</span>
+                        <span className="text-slate-500">{b.count} customers ({pct(b.count,n)}%)</span>
+                      </div>
+                      <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500 rounded-full" style={{width:`${pct(b.count,n)}%`}}/>
+                      </div>
+                      <p className="text-[9px] text-slate-400 mt-1">
+                        Avg Total Paid: RM{Math.round(avg(customers.filter(c=>(c.billingCycle||"").toLowerCase().includes(b.name.toLowerCase().slice(0,3))),"totalPaid")).toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-[9px] font-bold text-amber-700">⚠️ Overdue by Method</p>
+                  {Object.entries(overdueByMethod).map(([k,v])=>(
+                    <p key={k} className="text-[9px] text-amber-700">{k}: <strong>{v}</strong> overdue ({pct(v,customers.filter(c=>(c.paymentMethod||"")===k).length||1)}%)</p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════ 10. MARKETING CHANNEL ════ */}
+        {activeSection==="channel" && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900">📣 Marketing Channel Effectiveness</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Which acquisition channel produces the highest quality customers by LTV?</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-700 mb-3">Average LTV by Acquisition Channel</h3>
+                <div className="h-52">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={channelData} margin={{left:0}}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.4}/>
+                      <XAxis dataKey="name" tick={{fontSize:9}}/>
+                      <YAxis tick={{fontSize:9}} tickFormatter={v=>`RM${(v/1000).toFixed(0)}K`}/>
+                      <Tooltip formatter={v=>[`RM${v.toLocaleString()}`,"Avg LTV"]} contentStyle={{fontSize:"10px",borderRadius:"6px"}}/>
+                      <Bar dataKey="avgLTV" radius={[4,4,0,0]}>
+                        {channelData.map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-700 mb-3">Channel Summary</h3>
+                <div className="overflow-y-auto max-h-52 space-y-2">
+                  {channelData.map((c,i)=>(
+                    <div key={c.name} className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+                      <div className="w-3 h-3 rounded-full shrink-0" style={{background:COLORS[i%COLORS.length]}}/>
+                      <div className="flex-1">
+                        <p className="text-[10px] font-bold text-slate-800">{c.name}</p>
+                        <p className="text-[9px] text-slate-500">{c.count} customers · Total: RM{c.revenue.toLocaleString()}</p>
+                      </div>
+                      <p className="text-[10px] font-bold text-indigo-700">RM{Math.round(c.avgLTV).toLocaleString()} LTV</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 p-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+                  <p className="text-[9px] text-indigo-700 font-semibold">💡 Best channel by avg LTV: <strong>{channelData[0]?.name||"N/A"}</strong> (RM{Math.round(channelData[0]?.avgLTV||0).toLocaleString()})</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="p-3 bg-slate-50 border-b"><h3 className="text-xs font-bold text-slate-700">Customers by Acquisition Channel</h3></div>
+              <div className="overflow-x-auto max-h-64">
+                <table className="w-full text-[10px]">
+                  <thead className="bg-slate-50 sticky top-0"><tr>{["Customer","Channel","Package","Total Paid","Health","Churn"].map(h=><th key={h} className="px-3 py-2 text-left font-bold text-slate-500 uppercase text-[9px]">{h}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {[...customers].sort((a,b)=>(parseFloat(b.totalPaid)||0)-(parseFloat(a.totalPaid)||0)).map(c=>(
+                      <tr key={c.customerId||c.email} className="hover:bg-slate-50">
+                        <td className="px-3 py-2 font-bold text-slate-900">{c.name}</td>
+                        <td className="px-3 py-2"><span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[9px] font-bold">{c.signupSource||"?"}</span></td>
+                        <td className="px-3 py-2">{c.package}</td>
+                        <td className="px-3 py-2 font-mono font-bold text-emerald-700">RM{(parseFloat(c.totalPaid)||0).toLocaleString()}</td>
+                        <td className="px-3 py-2 font-mono">{c.healthScore}</td>
+                        <td className="px-3 py-2"><span className={`font-bold ${(c.churnProbability||0)>50?"text-rose-600":"text-emerald-600"}`}>{c.churnProbability}%</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════ 11. HEALTH SCORE DASHBOARD ════ */}
+        {activeSection==="health" && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900">🏥 Customer Health Score Dashboard</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Health = 30% Usage + 20% Payment + 20% Adoption + 20% Satisfaction + 10% Support</p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label:"Healthy (≥70)", value:healthBreakdown.filter(c=>c.overallHealth>=70).length, color:"text-emerald-600", bg:"bg-emerald-50", border:"border-emerald-200" },
+                { label:"Moderate (40–69)", value:healthBreakdown.filter(c=>c.overallHealth>=40&&c.overallHealth<70).length, color:"text-amber-600", bg:"bg-amber-50", border:"border-amber-200" },
+                { label:"Critical (<40)", value:healthBreakdown.filter(c=>c.overallHealth<40).length, color:"text-rose-600", bg:"bg-rose-50", border:"border-rose-200" },
+              ].map(k=>(
+                <div key={k.label} className={`${k.bg} ${k.border} border rounded-xl p-3 text-center shadow-xs`}>
+                  <p className="text-[9px] uppercase font-bold text-slate-500">{k.label}</p>
+                  <p className={`text-2xl font-extrabold mt-1 ${k.color}`}>{k.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-3">
+              {healthBreakdown.map(c=>{
+                const h = c.overallHealth;
+                const hColor = h>=70?"#10b981":h>=40?"#f59e0b":"#f43f5e";
+                return (
+                  <div key={c.customerId||c.email} className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-xs font-bold text-slate-900">{c.name} <span className="text-[9px] text-slate-400 font-normal">· {c.company} · {c.package}</span></p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{background:hColor+"20",color:hColor}}>{h>=70?"Healthy":h>=40?"Moderate":"Critical"}</span>
+                        <span className="text-sm font-extrabold" style={{color:hColor}}>{h}/100</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-5 gap-2">
+                      {[
+                        { label:"Usage 30%", value:c.hUsage },
+                        { label:"Payment 20%", value:c.hPayment },
+                        { label:"Adoption 20%", value:c.hAdoption },
+                        { label:"Satisfaction 20%", value:c.hSatisfaction },
+                        { label:"Support 10%", value:c.hSupport },
+                      ].map(f=>(
+                        <div key={f.label}>
+                          <p className="text-[8px] text-slate-400 font-semibold mb-0.5">{f.label}</p>
+                          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{width:`${f.value}%`,background:f.value>=70?"#10b981":f.value>=40?"#f59e0b":"#f43f5e"}}/>
+                          </div>
+                          <p className="text-[8px] font-bold text-slate-600 mt-0.5">{f.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
 }
+
 
 function SimulatorView() {
   const [S, setS]               = useState(GLOBAL.S);
@@ -1944,7 +2952,7 @@ function PlaceholderView({ title, icon: Icon, description }) {
 
 const navItems = [
   { id: "dashboard",  label: "Dashboard",    icon: LayoutDashboard },
-  { id: "customers",  label: "Customer 360", icon: Users           },
+  { id: "customers", label: "Customer 360", icon: Users },
   { id: "insights",   label: "Insights",     icon: Lightbulb       },
   { id: "reports",    label: "Reports",      icon: FileBarChart2   },
   { id: "actions",    label: "Actions",      icon: Activity        },
@@ -2893,7 +3901,7 @@ export default function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   
-  const { customers, loading, error, addCustomers, updateCustomer, deleteCustomer } = useCustomers();
+  const { customers, loading, error, addCustomers, updateCustomer, deleteCustomer, clearAllCustomers } = useCustomers();
 
   const handleTabChange = (tab) => {
     setTransitioning(true);
@@ -2906,10 +3914,11 @@ export default function App() {
   const renderView = () => {
     switch (activeTab) {
       case "dashboard":  return <DashboardView customers={customers} />;
-      case "customers":  return <Customer360View customers={customers} addCustomers={addCustomers} updateCustomer={updateCustomer} />;
+      case "customers":  return <Customer360View customers={customers} addCustomers={addCustomers} updateCustomer={updateCustomer} clearAllCustomers={clearAllCustomers} />;
       case "insights":   return <InsightsView customers={customers} />;
       case "simulator":  return <SimulatorView />;
       case "reports":    return <ReportsView />;
+      case "fitlife":    return <FitLifeSaasDashboard />;
       default: return null;
     }
   };
