@@ -1921,33 +1921,87 @@ function ReportsView() {
 function ActionsView() {
   const [boardData, setBoardData] = useState({
     product: [
-      { id: "p1", title: "Fix API timeout bug affecting 12 accounts", priority: "Critical", impact: "High", rar: 122000 },
-      { id: "p2", title: "Resolve SSO login loop for Enterprise clients", priority: "High", impact: "Medium", rar: 85000 },
+      { id: "p1", title: "Fix API timeout bug affecting 12 accounts", priority: "Critical", impact: "High", rar: 122000, dept: "Product & Engineering Queue", system: "Jira" },
+      { id: "p2", title: "Resolve SSO login loop for Enterprise clients", priority: "High", impact: "Medium", rar: 85000, dept: "Product & Engineering Queue", system: "Jira" },
     ],
     sales: [
-      { id: "s1", title: "Generate counter-offer campaign for RivalTech move", priority: "High", impact: "High", rar: 69000 },
-      { id: "s2", title: "Setup onboarding pricing revisions", priority: "Medium", impact: "Low", rar: 29000 },
+      { id: "s1", title: "Generate counter-offer campaign for RivalTech move", priority: "High", impact: "High", rar: 69000, dept: "Sales & Marketing Queue", system: "Salesforce" },
+      { id: "s2", title: "Setup onboarding pricing revisions", priority: "Medium", impact: "Low", rar: 29000, dept: "Sales & Marketing Queue", system: "Salesforce" },
     ],
     cs: [
-      { id: "c1", title: "Schedule manual check-ins with top 5 Enterprise", priority: "Critical", impact: "High", rar: 150000 },
-      { id: "c2", title: "Conduct QBR for Emma Harrison's team", priority: "Medium", impact: "Medium", rar: 41000 },
+      { id: "c1", title: "Schedule manual check-ins with top 5 Enterprise", priority: "Critical", impact: "High", rar: 150000, dept: "Customer Success Queue", system: "Customer Success" },
+      { id: "c2", title: "Conduct QBR for Emma Harrison's team", priority: "Medium", impact: "Medium", rar: 41000, dept: "Customer Success Queue", system: "Customer Success" },
     ],
   });
 
   const [toast, setToast] = useState(null);
+  const [selectedBriefTask, setSelectedBriefTask] = useState(null);
 
   const triggerToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleAction = (taskTitle, actionType, dest) => {
-    if (actionType === "brief") {
-      triggerToast(`📄 Department Brief generated for "${taskTitle}"`);
-    } else if (actionType === "sync") {
-      triggerToast(`⚡ Synced "${taskTitle}" to ${dest}`);
-    }
+  const handleAction = (taskTitle, destSystem) => {
+    triggerToast(`⚡ Synced and routed "${taskTitle}" to ${destSystem}`);
+    setSelectedBriefTask(null);
   };
+
+  // Mock PDF Data based on the selected task
+  const getMockPdfDetails = (task) => {
+    if (!task) return {};
+    
+    let diagnosis = "AI-diagnosed retention risks indicate elevated system friction or competitor engagement telemetry.";
+    let actionItems = ["Conduct account diagnostics", "Review contact registry"];
+
+    if (task.title.includes("API timeout")) {
+      diagnosis = "Valkyrie API gateway telemetry logs report 142 timeout anomalies (HTTP 504 Gateway Timeout) inside client dashboard imports over the last 7 days. Affected accounts: 12 mid-market contracts. Primary root cause: Large payload un-indexed workspace tables.";
+      actionItems = [
+        "Upgrade database indexes for workspaces payloads",
+        "Deploy queue timeout retry buffers to API nodes",
+        "Notify key customer success contacts about resolution"
+      ];
+    } else if (task.title.includes("SSO login loop")) {
+      diagnosis = "Okta SSO identity loop triggers redirects on browser credentials. User telemetry indicates users loops between SAML authentication callback and main login page. Affected: Top Tier Enterprise users.";
+      actionItems = [
+        "Audit SAML redirection assertion callbacks logs",
+        "Update Okta integration tokens and renew security certs",
+        "Verify browser session cookies timeout persistence configuration"
+      ];
+    } else if (task.title.includes("counter-offer")) {
+      diagnosis = "NLP extraction from cancellation logs signals a 22% surge in RivalTech mentions. Key drivers: RivalTech's custom pricing bundles. Churn probability for this cohort group: 78%. Mid-market portfolio MRR risk: $69,000.";
+      actionItems = [
+        "Activate automated counter-offer discount campaigns (-15% renewal perks)",
+        "Schedule high-touch account calls with renewal executives",
+        "Launch competitor pricing positioning collateral in CS help desk"
+      ];
+    } else if (task.title.includes("pricing revisions")) {
+      diagnosis = "Onboarding flow drop-off rate increased. Customer feedback details complexity in billing setup screens and confusing tiered packages configuration.";
+      actionItems = [
+        "Simplify the tiered pricing registration wizard UI",
+        "Establish dunning retry intervals for failing trial cards",
+        "Add inline tooltip indicators for billing tiers description"
+      ];
+    } else if (task.title.includes("manual check-ins")) {
+      diagnosis = "Pulsing risk signals detected. Daily active login frequency decreased by 14% this week across top 5 EU Enterprise clients. Health index plummeted below 40/100, which correlates with historical contract terminations.";
+      actionItems = [
+        "Coordinate manual executive check-in calls within 48 hours",
+        "Deliver custom value presentation highlighting system ROI metrics",
+        "Propose early pilot access to upcoming automation widgets"
+      ];
+    } else if (task.title.includes("Conduct QBR")) {
+      diagnosis = "Quarterly Business Review is currently 15 days overdue. Client usage pattern is steady but lacks executive sponsorship alignment.";
+      actionItems = [
+        "Schedule standard executive business review with decision makers",
+        "Prepare account value report and product feedback logs",
+        "Align client renewal targets with CS expansion plans"
+      ];
+    }
+
+    return { diagnosis, actionItems };
+  };
+
+  const pdfInfo = getMockPdfDetails(selectedBriefTask);
 
   return (
     <div className="space-y-6 relative">
@@ -1989,26 +2043,23 @@ function ActionsView() {
           </div>
           <div className="space-y-3">
             {boardData.product.map((item) => (
-              <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 hover:border-blue-500/50 transition-colors text-left">
-                <div className="flex justify-between items-start gap-2">
-                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                    item.priority === "Critical" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"
-                  }`}>{item.priority}</span>
-                  <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
+              <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 hover:border-blue-500/50 transition-colors text-left flex flex-col justify-between h-[150px]">
+                <div>
+                  <div className="flex justify-between items-start gap-2">
+                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                      item.priority === "Critical" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"
+                    }`}>{item.priority}</span>
+                    <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-800 leading-snug mt-2">{item.title}</p>
                 </div>
-                <p className="text-xs font-bold text-slate-800 leading-snug">{item.title}</p>
-                <div className="flex gap-2 pt-2 border-t border-gray-150">
+                <div className="pt-2 border-t border-gray-150">
                   <button 
-                    onClick={() => handleAction(item.title, "brief")}
-                    className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
+                    onClick={() => setSelectedBriefTask(item)}
+                    className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
                   >
-                    Generate Brief
-                  </button>
-                  <button 
-                    onClick={() => handleAction(item.title, "sync", "Jira")}
-                    className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
-                  >
-                    Send to Jira
+                    <FileText size={11} />
+                    Preview PDF Brief
                   </button>
                 </div>
               </div>
@@ -2024,26 +2075,23 @@ function ActionsView() {
           </div>
           <div className="space-y-3">
             {boardData.sales.map((item) => (
-              <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 hover:border-blue-500/50 transition-colors text-left">
-                <div className="flex justify-between items-start gap-2">
-                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                    item.priority === "High" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
-                  }`}>{item.priority}</span>
-                  <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
+              <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 hover:border-blue-500/50 transition-colors text-left flex flex-col justify-between h-[150px]">
+                <div>
+                  <div className="flex justify-between items-start gap-2">
+                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                      item.priority === "High" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+                    }`}>{item.priority}</span>
+                    <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-805 leading-snug mt-2">{item.title}</p>
                 </div>
-                <p className="text-xs font-bold text-slate-805 leading-snug">{item.title}</p>
-                <div className="flex gap-2 pt-2 border-t border-gray-150">
+                <div className="pt-2 border-t border-gray-150">
                   <button 
-                    onClick={() => handleAction(item.title, "brief")}
-                    className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
+                    onClick={() => setSelectedBriefTask(item)}
+                    className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
                   >
-                    Generate Brief
-                  </button>
-                  <button 
-                    onClick={() => handleAction(item.title, "sync", "Salesforce")}
-                    className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
-                  >
-                    Send to Salesforce
+                    <FileText size={11} />
+                    Preview PDF Brief
                   </button>
                 </div>
               </div>
@@ -2059,26 +2107,23 @@ function ActionsView() {
           </div>
           <div className="space-y-3">
             {boardData.cs.map((item) => (
-              <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 hover:border-blue-500/50 transition-colors text-left">
-                <div className="flex justify-between items-start gap-2">
-                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                    item.priority === "Critical" ? "bg-rose-100 text-rose-700" : "bg-blue-100 text-blue-700"
-                  }`}>{item.priority}</span>
-                  <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
+              <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 hover:border-blue-500/50 transition-colors text-left flex flex-col justify-between h-[150px]">
+                <div>
+                  <div className="flex justify-between items-start gap-2">
+                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                      item.priority === "Critical" ? "bg-rose-100 text-rose-700" : "bg-blue-100 text-blue-700"
+                    }`}>{item.priority}</span>
+                    <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-805 leading-snug mt-2">{item.title}</p>
                 </div>
-                <p className="text-xs font-bold text-slate-805 leading-snug">{item.title}</p>
-                <div className="flex gap-2 pt-2 border-t border-gray-150">
+                <div className="pt-2 border-t border-gray-150">
                   <button 
-                    onClick={() => handleAction(item.title, "brief")}
-                    className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
+                    onClick={() => setSelectedBriefTask(item)}
+                    className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
                   >
-                    Generate Brief
-                  </button>
-                  <button 
-                    onClick={() => handleAction(item.title, "sync", "Customer Success")}
-                    className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
-                  >
-                    Send to CS
+                    <FileText size={11} />
+                    Preview PDF Brief
                   </button>
                 </div>
               </div>
@@ -2086,6 +2131,137 @@ function ActionsView() {
           </div>
         </div>
       </div>
+
+      {/* GORGEOUS PDF MODAL OVERLAY */}
+      {selectedBriefTask && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-800 rounded-xl shadow-2xl max-w-2xl w-full border border-slate-700 overflow-hidden flex flex-col h-[85vh] transition-all transform scale-100 text-slate-100">
+            {/* Slate PDF Toolbar */}
+            <div className="bg-slate-900 border-b border-slate-700 px-4 py-3 flex items-center justify-between text-slate-300">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 bg-rose-500 text-white rounded text-[10px] font-extrabold tracking-wider leading-none shadow-md select-none font-mono">
+                  PDF
+                </div>
+                <span className="text-[11px] font-semibold tracking-wide font-mono truncate max-w-[240px]">
+                  Momentum_Brief_{selectedBriefTask.id.toUpperCase()}.pdf
+                </span>
+              </div>
+              <div className="flex items-center gap-4 text-xs font-semibold select-none">
+                <span className="text-[10px] text-slate-405 font-mono">Page 1 of 1</span>
+                <span className="h-4 w-px bg-slate-700" />
+                <div className="flex gap-2 text-slate-400">
+                  <button className="hover:text-white cursor-pointer" title="Zoom Out">-</button>
+                  <span className="text-[10px] font-mono">100%</span>
+                  <button className="hover:text-white cursor-pointer" title="Zoom In">+</button>
+                </div>
+                <span className="h-4 w-px bg-slate-700" />
+                <button 
+                  onClick={() => setSelectedBriefTask(null)}
+                  className="hover:text-rose-400 transition-colors p-1 rounded hover:bg-slate-800 cursor-pointer"
+                  title="Close PDF Viewer"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+
+            {/* simulated paper preview sheet container */}
+            <div className="bg-slate-950/40 flex-1 overflow-y-auto p-6 md:p-8 flex justify-center shadow-inner">
+              <div className="bg-white shadow-xl w-full max-w-[550px] min-h-[640px] p-8 md:p-10 text-slate-800 flex flex-col text-left space-y-6 border border-gray-300 relative select-text font-serif">
+                {/* Paper watermarked line */}
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-900" />
+
+                {/* PDF Header */}
+                <div className="flex justify-between items-start border-b-2 border-slate-800 pb-4">
+                  <div className="space-y-1">
+                    <h1 className="text-sm font-extrabold uppercase tracking-widest text-slate-900 font-mono flex items-center gap-1.5">
+                      <span className="w-3.5 h-3.5 rounded bg-slate-900 flex items-center justify-center text-white text-[9px] font-bold">M</span>
+                      MOMENTUM
+                    </h1>
+                    <p className="text-[9px] text-slate-400 tracking-wider font-mono">RETENTIVE INTELLIGENCE ENGINE</p>
+                  </div>
+                  <div className="text-right text-[9px] font-mono text-slate-500 space-y-0.5">
+                    <p className="font-bold text-slate-800">REF: BRIEF-{selectedBriefTask.id.toUpperCase()}-2026</p>
+                    <p>Generated: 2026-07-21</p>
+                    <p>Dispatch: {selectedBriefTask.dept}</p>
+                  </div>
+                </div>
+
+                {/* Document Title */}
+                <div className="space-y-1.5">
+                  <span className="text-[8px] font-bold tracking-widest uppercase bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded font-mono">
+                    CHURN ROUTING DISPATCH BRIEF
+                  </span>
+                  <h2 className="text-base font-extrabold text-slate-900 leading-tight">
+                    {selectedBriefTask.title}
+                  </h2>
+                </div>
+
+                {/* Meta details key value table */}
+                <div className="grid grid-cols-3 gap-4 bg-slate-50 border border-slate-200 rounded-lg p-3 text-[10px] font-mono">
+                  <div className="space-y-0.5">
+                    <p className="text-slate-400">FINANCIAL IMPACT</p>
+                    <p className="font-extrabold text-rose-600 text-xs">${selectedBriefTask.rar.toLocaleString()} ARR</p>
+                  </div>
+                  <div className="space-y-0.5 border-l border-slate-200 pl-3">
+                    <p className="text-slate-400">RISK SEVERITY</p>
+                    <p className="font-extrabold text-slate-800 text-xs uppercase">{selectedBriefTask.priority}</p>
+                  </div>
+                  <div className="space-y-0.5 border-l border-slate-200 pl-3">
+                    <p className="text-slate-400">TARGET SYSTEM</p>
+                    <p className="font-extrabold text-blue-600 text-xs uppercase">{selectedBriefTask.system}</p>
+                  </div>
+                </div>
+
+                {/* Segment diagnosis */}
+                <div className="space-y-2 text-xs">
+                  <h3 className="font-bold text-slate-900 tracking-wide font-mono uppercase border-b border-slate-200 pb-1 text-[10px]">
+                    1. AI Retention Diagnosis &amp; Telemetry
+                  </h3>
+                  <p className="text-slate-650 leading-relaxed text-left pl-1 font-sans">
+                    {pdfInfo.diagnosis}
+                  </p>
+                </div>
+
+                {/* Prescriptive action plan */}
+                <div className="space-y-2 text-xs">
+                  <h3 className="font-bold text-slate-900 tracking-wide font-mono uppercase border-b border-slate-200 pb-1 text-[10px]">
+                    2. Mandated Action Items
+                  </h3>
+                  <ul className="list-decimal list-inside space-y-1.5 pl-1 text-slate-650 font-sans">
+                    {pdfInfo.actionItems?.map((item, i) => (
+                      <li key={i} className="text-left">
+                        <span className="font-semibold text-slate-805">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Disclaimer */}
+                <div className="pt-4 border-t border-slate-200 text-[8px] text-slate-400 leading-normal text-left font-mono">
+                  This document is auto-compiled from real-time customer health telemetry logs. Approval of this brief will automatically invoke system webhooks to dispatch tickets to the designated queues.
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions Footer */}
+            <div className="bg-slate-900 border-t border-slate-700 px-6 py-4 flex justify-between items-center">
+              <button 
+                onClick={() => setSelectedBriefTask(null)}
+                className="px-4 py-2 border border-slate-600 hover:border-slate-500 hover:bg-slate-800 text-slate-300 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => handleAction(selectedBriefTask.title, selectedBriefTask.system)}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md flex items-center gap-1.5 font-semibold"
+              >
+                Approve &amp; Send to {selectedBriefTask.system}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
