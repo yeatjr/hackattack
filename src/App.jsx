@@ -2483,16 +2483,16 @@ function ActionsView() {
                   Share Brief via...
                 </h4>
                 <div className="text-[10px] text-slate-300 font-medium font-sans">
-                  Target Recipient: <strong className="text-blue-400 font-semibold">{currentPic.name} ({currentPic.contact})</strong>
+                  Target Recipient: <strong className="text-blue-400 font-semibold">{currentPic.name} ({currentPic.role})</strong>
                 </div>
               </div>
               
               <div className="flex items-center justify-center gap-6 py-2">
                 {[
                   { id: "whatsapp", name: "WhatsApp", icon: <MessageCircle size={20} />, color: "text-emerald-400 hover:text-emerald-300 border-emerald-500/30 hover:border-emerald-400 bg-emerald-950/20" },
-                  { id: "email", name: "Email", icon: <Mail size={20} />, color: "text-blue-400 hover:text-blue-300 border-blue-500/30 hover:border-blue-400 bg-blue-950/20" },
                   { id: "telegram", name: "Telegram", icon: <Send size={20} />, color: "text-sky-400 hover:text-sky-300 border-sky-500/30 hover:border-sky-400 bg-sky-950/20" },
-                  { id: "slack", name: "Slack", icon: <MessageSquare size={20} />, color: "text-purple-400 hover:text-purple-300 border-purple-500/30 hover:border-purple-400 bg-purple-950/20" },
+                  { id: "email", name: "Email", icon: <Mail size={20} />, color: "text-blue-400 hover:text-blue-300 border-blue-500/30 hover:border-blue-400 bg-blue-950/20" },
+                  { id: "messenger", name: "Messenger", icon: <MessageSquare size={20} />, color: "text-indigo-400 hover:text-indigo-300 border-indigo-500/30 hover:border-indigo-400 bg-indigo-950/20" },
                 ].map((app) => {
                   const isSelected = selectedIntegration === app.id;
                   return (
@@ -2527,13 +2527,13 @@ function ActionsView() {
                 onClick={() => {
                   const apps = {
                     whatsapp: "WhatsApp",
-                    email: "Email",
                     telegram: "Telegram",
-                    slack: "Slack",
+                    email: "Email",
+                    messenger: "Messenger",
                   };
                   const selectedApp = apps[selectedIntegration];
                   if (selectedApp) {
-                    handleAction(selectedBriefTask.title, selectedApp, currentPic.name, currentPic.contact);
+                    handleAction(selectedBriefTask.title, selectedApp, currentPic.name, currentPic.role);
                   }
                 }}
                 className={`px-6 py-2 font-bold rounded-lg text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 font-semibold ${
