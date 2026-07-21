@@ -2065,26 +2065,71 @@ function ActionsView() {
               <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.product.length} Tasks</span>
             </div>
             {/* PIC details configuration block */}
-            <div className="bg-white border border-gray-200/60 rounded-lg p-2.5 space-y-1.5 shadow-sm">
-              <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono">
-                <span>Department PIC details</span>
-                <span className="text-[7px] text-blue-500 font-bold uppercase select-none tracking-wider">Configure Contact</span>
+            <div className="bg-white border border-gray-200/60 rounded-lg p-2.5 space-y-2 shadow-sm text-left">
+              <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono border-b border-gray-100 pb-1">
+                <span>Department PIC Details</span>
+                <span className="text-[7px] text-emerald-500 font-bold uppercase select-none tracking-wider flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  Live Config
+                </span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  value={pics.product.name}
-                  onChange={(e) => setPics({ ...pics, product: { ...pics.product, name: e.target.value } })}
-                  placeholder="PIC Name"
-                  className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-semibold text-slate-700 font-sans"
-                />
-                <input
-                  type="text"
-                  value={pics.product.contact}
-                  onChange={(e) => setPics({ ...pics, product: { ...pics.product, contact: e.target.value } })}
-                  placeholder="Contact Info"
-                  className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-medium text-slate-650 font-sans"
-                />
+              <div className="space-y-1.5">
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="text"
+                    value={pics.product.name}
+                    onChange={(e) => setPics({ ...pics, product: { ...pics.product, name: e.target.value } })}
+                    placeholder="PIC Name"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-semibold text-slate-700"
+                    title="PIC Name"
+                  />
+                  <input
+                    type="text"
+                    value={pics.product.role}
+                    onChange={(e) => setPics({ ...pics, product: { ...pics.product, role: e.target.value } })}
+                    placeholder="PIC Role"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-medium text-slate-650"
+                    title="PIC Role"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="text"
+                    value={pics.product.contact}
+                    onChange={(e) => setPics({ ...pics, product: { ...pics.product, contact: e.target.value } })}
+                    placeholder="Phone"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
+                    title="PIC Phone"
+                  />
+                  <input
+                    type="text"
+                    value={pics.product.email}
+                    onChange={(e) => setPics({ ...pics, product: { ...pics.product, email: e.target.value } })}
+                    placeholder="Email"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
+                    title="PIC Email"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="text"
+                    value={pics.product.slack}
+                    onChange={(e) => setPics({ ...pics, product: { ...pics.product, slack: e.target.value } })}
+                    placeholder="Slack Channel"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
+                    title="PIC Slack Channel"
+                  />
+                  <select
+                    value={pics.product.status}
+                    onChange={(e) => setPics({ ...pics, product: { ...pics.product, status: e.target.value } })}
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-semibold cursor-pointer"
+                    title="PIC Availability Status"
+                  >
+                    <option value="Active">🟢 Active</option>
+                    <option value="Away">🟡 Away</option>
+                    <option value="Off-duty">🔴 Off-duty</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -2122,26 +2167,71 @@ function ActionsView() {
               <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.sales.length} Tasks</span>
             </div>
             {/* PIC details configuration block */}
-            <div className="bg-white border border-gray-200/60 rounded-lg p-2.5 space-y-1.5 shadow-sm">
-              <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono">
-                <span>Department PIC details</span>
-                <span className="text-[7px] text-blue-500 font-bold uppercase select-none tracking-wider">Configure Contact</span>
+            <div className="bg-white border border-gray-200/60 rounded-lg p-2.5 space-y-2 shadow-sm text-left">
+              <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono border-b border-gray-100 pb-1">
+                <span>Department PIC Details</span>
+                <span className="text-[7px] text-emerald-500 font-bold uppercase select-none tracking-wider flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  Live Config
+                </span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  value={pics.sales.name}
-                  onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, name: e.target.value } })}
-                  placeholder="PIC Name"
-                  className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-semibold text-slate-700 font-sans"
-                />
-                <input
-                  type="text"
-                  value={pics.sales.contact}
-                  onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, contact: e.target.value } })}
-                  placeholder="Contact Info"
-                  className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-medium text-slate-650 font-sans"
-                />
+              <div className="space-y-1.5">
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="text"
+                    value={pics.sales.name}
+                    onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, name: e.target.value } })}
+                    placeholder="PIC Name"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-semibold text-slate-700"
+                    title="PIC Name"
+                  />
+                  <input
+                    type="text"
+                    value={pics.sales.role}
+                    onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, role: e.target.value } })}
+                    placeholder="PIC Role"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-medium text-slate-655"
+                    title="PIC Role"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="text"
+                    value={pics.sales.contact}
+                    onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, contact: e.target.value } })}
+                    placeholder="Phone"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
+                    title="PIC Phone"
+                  />
+                  <input
+                    type="text"
+                    value={pics.sales.email}
+                    onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, email: e.target.value } })}
+                    placeholder="Email"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
+                    title="PIC Email"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="text"
+                    value={pics.sales.slack}
+                    onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, slack: e.target.value } })}
+                    placeholder="Slack Channel"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
+                    title="PIC Slack Channel"
+                  />
+                  <select
+                    value={pics.sales.status}
+                    onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, status: e.target.value } })}
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-semibold cursor-pointer"
+                    title="PIC Availability Status"
+                  >
+                    <option value="Active">🟢 Active</option>
+                    <option value="Away">🟡 Away</option>
+                    <option value="Off-duty">🔴 Off-duty</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -2179,26 +2269,71 @@ function ActionsView() {
               <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.cs.length} Tasks</span>
             </div>
             {/* PIC details configuration block */}
-            <div className="bg-white border border-gray-200/60 rounded-lg p-2.5 space-y-1.5 shadow-sm">
-              <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono">
-                <span>Department PIC details</span>
-                <span className="text-[7px] text-blue-500 font-bold uppercase select-none tracking-wider">Configure Contact</span>
+            <div className="bg-white border border-gray-200/60 rounded-lg p-2.5 space-y-2 shadow-sm text-left">
+              <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono border-b border-gray-100 pb-1">
+                <span>Department PIC Details</span>
+                <span className="text-[7px] text-emerald-500 font-bold uppercase select-none tracking-wider flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  Live Config
+                </span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  value={pics.cs.name}
-                  onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, name: e.target.value } })}
-                  placeholder="PIC Name"
-                  className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-semibold text-slate-700 font-sans"
-                />
-                <input
-                  type="text"
-                  value={pics.cs.contact}
-                  onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, contact: e.target.value } })}
-                  placeholder="Contact Info"
-                  className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-medium text-slate-650 font-sans"
-                />
+              <div className="space-y-1.5">
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="text"
+                    value={pics.cs.name}
+                    onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, name: e.target.value } })}
+                    placeholder="PIC Name"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-semibold text-slate-700"
+                    title="PIC Name"
+                  />
+                  <input
+                    type="text"
+                    value={pics.cs.role}
+                    onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, role: e.target.value } })}
+                    placeholder="PIC Role"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-medium text-slate-650"
+                    title="PIC Role"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="text"
+                    value={pics.cs.contact}
+                    onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, contact: e.target.value } })}
+                    placeholder="Phone"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
+                    title="PIC Phone"
+                  />
+                  <input
+                    type="text"
+                    value={pics.cs.email}
+                    onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, email: e.target.value } })}
+                    placeholder="Email"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
+                    title="PIC Email"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="text"
+                    value={pics.cs.slack}
+                    onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, slack: e.target.value } })}
+                    placeholder="Slack Channel"
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
+                    title="PIC Slack Channel"
+                  />
+                  <select
+                    value={pics.cs.status}
+                    onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, status: e.target.value } })}
+                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-semibold cursor-pointer"
+                    title="PIC Availability Status"
+                  >
+                    <option value="Active">🟢 Active</option>
+                    <option value="Away">🟡 Away</option>
+                    <option value="Off-duty">🔴 Off-duty</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
