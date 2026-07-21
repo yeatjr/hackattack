@@ -9,7 +9,7 @@ import {
   Settings, ShieldCheck, ChevronRight, ChevronDown, ChevronUp,
   DollarSign, AlertTriangle, CheckCircle2, TrendingDown, Sparkles,
   ArrowUpRight, ArrowDownRight, Bell, Search, Play, Pause, Plus, Info, Target, Heart,
-  Clock, Zap, UserX, MessageSquare, X, Globe, LogOut, Brain, TrendingUp, Send,
+  Clock, Zap, UserX, MessageSquare, X, Globe, LogOut, Brain, TrendingUp, Send, FileText,
 } from "lucide-react";
 
 // ─── FORMULAS & CONSTANTS ─────────────────────────────────────────────────────
