@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -9,13 +9,9 @@ import {
   ShieldCheck, ChevronRight, ChevronDown, ChevronUp,
   DollarSign, AlertTriangle, CheckCircle2, TrendingDown, Sparkles,
   ArrowUpRight, ArrowDownRight, Bell, Search, Play, Pause, Plus, Info, Target, Heart,
-<<<<<<< Updated upstream
   Clock, Zap, UserX, MessageSquare, X, Globe, LogOut, Brain, TrendingUp, Send, FileText, Mail, MessageCircle,
-=======
-  Clock, Zap, UserX, MessageSquare, X, Globe, LogOut,
   Upload, Download, Trash2, ChevronLeft, Filter, SortAsc, SortDesc,
   Package, CreditCard, Wifi, WifiOff, Eye, EyeOff, RefreshCw,
->>>>>>> Stashed changes
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { useCustomers } from "./useCustomers";
@@ -853,146 +849,6 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 // ─── INSIGHTS VIEW ────────────────────────────────────────────────────────────
 
-<<<<<<< Updated upstream
-function InsightsView() {
-  const cohortRiskData = [
-    { name: "Europe Enterprise Tier", accounts: 12, probability: 25, loss: 150000, color: "#3b82f6" },
-    { name: "Basic Plan Users", accounts: 142, probability: 48, loss: 116400, color: "#a855f7" },
-    { name: "Stuck in Onboarding", accounts: 89, probability: 65, loss: 92860, color: "#f43f5e" },
-    { name: "High Ticket Inquiries", accounts: 18, probability: 30, loss: 78500, color: "#10b981" },
-    { name: "Inactive Integrations", accounts: 42, probability: 75, loss: 54200, color: "#f59e0b" },
-  ];
-
-  const totalLoss = cohortRiskData.reduce((acc, curr) => acc + curr.loss, 0);
-
-  return (
-    <div className="space-y-6">
-      {/* Top Card: Summary */}
-      <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-5 text-white shadow-md">
-        <div className="absolute -right-10 -top-10 w-52 h-52 rounded-full bg-white/5" />
-        <div className="absolute -right-4 -bottom-8 w-36 h-36 rounded-full bg-white/5" />
-        <div className="relative flex items-start gap-4">
-          <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 text-white shadow-inner">
-            <Sparkles size={18} />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Momentum Macro Forecast</p>
-            <h3 className="text-lg font-bold text-white mb-1">
-              Total Segment Revenue At-Risk: <span className="text-yellow-300 font-mono">${totalLoss.toLocaleString()}</span> ARR
-            </h3>
-            <p className="text-xs text-slate-350 leading-relaxed max-w-2xl">
-              Cohort-level analysis flags <strong>Europe Enterprise Tier</strong> and <strong>Basic Plan Users</strong> as our highest financial risks. Standardized playbooks could salvage up to 60% of this exposure.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Cohort Risk Analysis Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-        <div className="px-5 py-4 border-b border-gray-200 bg-slate-50/50 flex justify-between items-center">
-          <div>
-            <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Cohort Risk Analysis</h3>
-            <p className="text-[10px] text-slate-400 mt-0.5">Macro segmentation metrics and risk classification</p>
-          </div>
-          <span className="text-[10px] font-bold text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded font-mono">5 Active Cohorts</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-slate-50 border-b border-gray-200 text-slate-400">
-                <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-left">Cohort Name</th>
-                <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-center">Total Accounts</th>
-                <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-center">Churn Probability</th>
-                <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-right">Forecasted Revenue Loss (ARR)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-150">
-              {cohortRiskData.map((row) => (
-                <tr key={row.name} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-5 py-3.5 font-bold text-slate-800 flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: row.color }} />
-                    {row.name}
-                  </td>
-                  <td className="px-5 py-3.5 text-center font-semibold text-slate-600 font-mono">{row.accounts}</td>
-                  <td className="px-5 py-3.5 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-slate-700 font-bold font-mono">{row.probability}%</span>
-                      <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden hidden sm:block">
-                        <div className="h-full rounded-full" style={{ width: `${row.probability}%`, backgroundColor: row.color }} />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-right font-extrabold text-slate-900 text-sm font-mono">
-                    ${row.loss.toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Visual Chart Section */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-        <div>
-          <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-0.5">Revenue Impact chart</h3>
-          <p className="text-[10px] text-slate-400 mb-6">Visual comparison of forecasted ARR loss per cohort segment</p>
-        </div>
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={cohortRiskData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }} barSize={32}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-            <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#64748b", fontWeight: 600 }} stroke="#e2e8f0" />
-            <YAxis tickFormatter={(v) => `$${v/1000}k`} tick={{ fontSize: 10, fill: "#64748b" }} stroke="#e2e8f0" />
-            <Tooltip 
-              formatter={(value) => [`$${value.toLocaleString()}`, "Forecasted ARR Loss"]}
-              labelStyle={{ fontWeight: "bold", color: "#0f172a" }}
-              contentStyle={{ border: "1px solid #e2e8f0", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
-            />
-            <Bar dataKey="loss">
-              {cohortRiskData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} radius={[4, 4, 0, 0]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}
-
-function SliderRow({ label, formulaVar, min, max, step, value, onChange, formatFn, color = "#3b82f6" }) {
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1.5 text-xs">
-        <label className="font-bold text-slate-700 flex items-center gap-1.5">
-          <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-slate-100 border border-gray-200 text-slate-700 font-mono text-[10px] font-bold">{formulaVar}</span>
-          {label}
-        </label>
-        <span className="font-bold text-slate-900">{formatFn(value)}</span>
-      </div>
-      <input
-        type="range" min={min} max={max} step={step} value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-        style={{ accentColor: color }}
-      />
-      <div className="flex justify-between text-[9px] font-semibold text-slate-400 mt-0.5 font-mono">
-        <span>{formatFn(min)}</span><span>{formatFn(max)}</span>
-      </div>
-    </div>
-  );
-}
-
-function MetricOutputCard({ label, formulaKey, value, breakdown, colorClass, bgClass, borderClass }) {
-  return (
-    <div className={`rounded border ${borderClass} ${bgClass} p-3`}>
-      <div className="flex items-center gap-1 mb-1.5">
-        <p className={`text-[10px] font-bold uppercase tracking-wider ${colorClass}`}>{label}</p>
-        <FormulaTooltip formulaKey={formulaKey} side="bottom" />
-      </div>
-      <p className={`text-2xl font-bold tracking-tight ${colorClass} mb-1`}>{value}</p>
-      <p className="text-[10px] text-slate-500 font-mono leading-relaxed">{breakdown}</p>
-=======
 function InsightsView({ customers = [] }) {
   const activeCount = customers.filter(c => c.isPremiumActive).length;
   const inactiveCount = customers.length - activeCount;
@@ -1019,7 +875,6 @@ function InsightsView({ customers = [] }) {
           </div>
         </div>
       </div>
->>>>>>> Stashed changes
     </div>
   );
 }
@@ -3050,17 +2905,10 @@ export default function App() {
 
   const renderView = () => {
     switch (activeTab) {
-<<<<<<< Updated upstream
-      case "dashboard":  return <DashboardView />;
-      case "customers":  return <Customer360View />;
-      case "insights":   return <InsightsView />;
-      case "actions":    return <ActionsView />;
-=======
       case "dashboard":  return <DashboardView customers={customers} />;
       case "customers":  return <Customer360View customers={customers} addCustomers={addCustomers} updateCustomer={updateCustomer} />;
       case "insights":   return <InsightsView customers={customers} />;
       case "simulator":  return <SimulatorView />;
->>>>>>> Stashed changes
       case "reports":    return <ReportsView />;
       default: return null;
     }
