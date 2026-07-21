@@ -2064,73 +2064,26 @@ function ActionsView() {
               <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Product &amp; Engineering Queue</span>
               <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.product.length} Tasks</span>
             </div>
-            {/* PIC details configuration block */}
-            <div className="bg-white border border-gray-200/60 rounded-lg p-2.5 space-y-2 shadow-sm text-left">
-              <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono border-b border-gray-100 pb-1">
-                <span>Department PIC Details</span>
-                <span className="text-[7px] text-emerald-500 font-bold uppercase select-none tracking-wider flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                  Live Config
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                <div className="grid grid-cols-2 gap-1.5">
-                  <input
-                    type="text"
-                    value={pics.product.name}
-                    onChange={(e) => setPics({ ...pics, product: { ...pics.product, name: e.target.value } })}
-                    placeholder="PIC Name"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-semibold text-slate-700"
-                    title="PIC Name"
-                  />
-                  <input
-                    type="text"
-                    value={pics.product.role}
-                    onChange={(e) => setPics({ ...pics, product: { ...pics.product, role: e.target.value } })}
-                    placeholder="PIC Role"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-medium text-slate-650"
-                    title="PIC Role"
-                  />
+            {/* Minimalist Profile Card Container */}
+            <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                {/* Circular Avatar */}
+                <div className={`w-8 h-8 rounded-full ${pics.product.color} text-white flex items-center justify-center font-extrabold text-xs font-mono select-none`}>
+                  {pics.product.initials}
                 </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <input
-                    type="text"
-                    value={pics.product.contact}
-                    onChange={(e) => setPics({ ...pics, product: { ...pics.product, contact: e.target.value } })}
-                    placeholder="Phone"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
-                    title="PIC Phone"
-                  />
-                  <input
-                    type="text"
-                    value={pics.product.email}
-                    onChange={(e) => setPics({ ...pics, product: { ...pics.product, email: e.target.value } })}
-                    placeholder="Email"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
-                    title="PIC Email"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <input
-                    type="text"
-                    value={pics.product.slack}
-                    onChange={(e) => setPics({ ...pics, product: { ...pics.product, slack: e.target.value } })}
-                    placeholder="Slack Channel"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
-                    title="PIC Slack Channel"
-                  />
-                  <select
-                    value={pics.product.status}
-                    onChange={(e) => setPics({ ...pics, product: { ...pics.product, status: e.target.value } })}
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-semibold cursor-pointer"
-                    title="PIC Availability Status"
-                  >
-                    <option value="Active">🟢 Active</option>
-                    <option value="Away">🟡 Away</option>
-                    <option value="Off-duty">🔴 Off-duty</option>
-                  </select>
+                {/* Text Info */}
+                <div className="text-left flex flex-col justify-center">
+                  <span className="text-xs font-bold text-slate-900 leading-tight">{pics.product.name}</span>
+                  <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.product.role}</span>
                 </div>
               </div>
+              {/* Action Button Link */}
+              <button 
+                onClick={() => triggerToast("ℹ️ Redirecting to Team Settings to configure department personnel...")}
+                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
+              >
+                Manage Routing
+              </button>
             </div>
           </div>
           <div className="space-y-3">
@@ -2166,73 +2119,26 @@ function ActionsView() {
               <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Sales &amp; Marketing Queue</span>
               <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.sales.length} Tasks</span>
             </div>
-            {/* PIC details configuration block */}
-            <div className="bg-white border border-gray-200/60 rounded-lg p-2.5 space-y-2 shadow-sm text-left">
-              <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono border-b border-gray-100 pb-1">
-                <span>Department PIC Details</span>
-                <span className="text-[7px] text-emerald-500 font-bold uppercase select-none tracking-wider flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                  Live Config
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                <div className="grid grid-cols-2 gap-1.5">
-                  <input
-                    type="text"
-                    value={pics.sales.name}
-                    onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, name: e.target.value } })}
-                    placeholder="PIC Name"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-semibold text-slate-700"
-                    title="PIC Name"
-                  />
-                  <input
-                    type="text"
-                    value={pics.sales.role}
-                    onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, role: e.target.value } })}
-                    placeholder="PIC Role"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-medium text-slate-655"
-                    title="PIC Role"
-                  />
+            {/* Minimalist Profile Card Container */}
+            <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                {/* Circular Avatar */}
+                <div className={`w-8 h-8 rounded-full ${pics.sales.color} text-white flex items-center justify-center font-extrabold text-xs font-mono select-none`}>
+                  {pics.sales.initials}
                 </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <input
-                    type="text"
-                    value={pics.sales.contact}
-                    onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, contact: e.target.value } })}
-                    placeholder="Phone"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
-                    title="PIC Phone"
-                  />
-                  <input
-                    type="text"
-                    value={pics.sales.email}
-                    onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, email: e.target.value } })}
-                    placeholder="Email"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
-                    title="PIC Email"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <input
-                    type="text"
-                    value={pics.sales.slack}
-                    onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, slack: e.target.value } })}
-                    placeholder="Slack Channel"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
-                    title="PIC Slack Channel"
-                  />
-                  <select
-                    value={pics.sales.status}
-                    onChange={(e) => setPics({ ...pics, sales: { ...pics.sales, status: e.target.value } })}
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-semibold cursor-pointer"
-                    title="PIC Availability Status"
-                  >
-                    <option value="Active">🟢 Active</option>
-                    <option value="Away">🟡 Away</option>
-                    <option value="Off-duty">🔴 Off-duty</option>
-                  </select>
+                {/* Text Info */}
+                <div className="text-left flex flex-col justify-center">
+                  <span className="text-xs font-bold text-slate-900 leading-tight">{pics.sales.name}</span>
+                  <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.sales.role}</span>
                 </div>
               </div>
+              {/* Action Button Link */}
+              <button 
+                onClick={() => triggerToast("ℹ️ Redirecting to Team Settings to configure department personnel...")}
+                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
+              >
+                Manage Routing
+              </button>
             </div>
           </div>
           <div className="space-y-3">
@@ -2268,73 +2174,26 @@ function ActionsView() {
               <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Customer Success Queue</span>
               <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.cs.length} Tasks</span>
             </div>
-            {/* PIC details configuration block */}
-            <div className="bg-white border border-gray-200/60 rounded-lg p-2.5 space-y-2 shadow-sm text-left">
-              <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono border-b border-gray-100 pb-1">
-                <span>Department PIC Details</span>
-                <span className="text-[7px] text-emerald-500 font-bold uppercase select-none tracking-wider flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                  Live Config
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                <div className="grid grid-cols-2 gap-1.5">
-                  <input
-                    type="text"
-                    value={pics.cs.name}
-                    onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, name: e.target.value } })}
-                    placeholder="PIC Name"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-semibold text-slate-700"
-                    title="PIC Name"
-                  />
-                  <input
-                    type="text"
-                    value={pics.cs.role}
-                    onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, role: e.target.value } })}
-                    placeholder="PIC Role"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 font-medium text-slate-650"
-                    title="PIC Role"
-                  />
+            {/* Minimalist Profile Card Container */}
+            <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                {/* Circular Avatar */}
+                <div className={`w-8 h-8 rounded-full ${pics.cs.color} text-white flex items-center justify-center font-extrabold text-xs font-mono select-none`}>
+                  {pics.cs.initials}
                 </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <input
-                    type="text"
-                    value={pics.cs.contact}
-                    onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, contact: e.target.value } })}
-                    placeholder="Phone"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
-                    title="PIC Phone"
-                  />
-                  <input
-                    type="text"
-                    value={pics.cs.email}
-                    onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, email: e.target.value } })}
-                    placeholder="Email"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
-                    title="PIC Email"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <input
-                    type="text"
-                    value={pics.cs.slack}
-                    onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, slack: e.target.value } })}
-                    placeholder="Slack Channel"
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-mono"
-                    title="PIC Slack Channel"
-                  />
-                  <select
-                    value={pics.cs.status}
-                    onChange={(e) => setPics({ ...pics, cs: { ...pics.cs, status: e.target.value } })}
-                    className="bg-slate-50 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-blue-500 text-slate-600 font-semibold cursor-pointer"
-                    title="PIC Availability Status"
-                  >
-                    <option value="Active">🟢 Active</option>
-                    <option value="Away">🟡 Away</option>
-                    <option value="Off-duty">🔴 Off-duty</option>
-                  </select>
+                {/* Text Info */}
+                <div className="text-left flex flex-col justify-center">
+                  <span className="text-xs font-bold text-slate-900 leading-tight">{pics.cs.name}</span>
+                  <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.cs.role}</span>
                 </div>
               </div>
+              {/* Action Button Link */}
+              <button 
+                onClick={() => triggerToast("ℹ️ Redirecting to Team Settings to configure department personnel...")}
+                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
+              >
+                Manage Routing
+              </button>
             </div>
           </div>
           <div className="space-y-3">
