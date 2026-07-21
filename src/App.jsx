@@ -1684,38 +1684,31 @@ function RetentionStrategyMatrix() {
           <tbody className="divide-y divide-gray-200">
             {sorted.map((row, i) => (
               <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                {/* Reason */}
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="text-sm leading-none">{row.icon}</span>
                     <span className="font-bold text-slate-800 whitespace-nowrap">{row.reason}</span>
                   </div>
                 </td>
-                {/* Stage */}
                 <td className="px-4 py-3">
                   {row.stage === "All" ? (
                     <span className="text-slate-400 italic">Any stage</span>
                   ) : (
-                    <StageBadge stage={row.stage} />
+                    <span className="text-slate-600 font-medium">{row.stage}</span>
                   )}
                 </td>
-                {/* Risk */}
                 <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 rounded font-bold text-[10px] ${row.riskCls}`}>{row.risk}</span>
                 </td>
-                {/* Action */}
                 <td className="px-4 py-3">
                   <p className="font-bold text-blue-700 max-w-[200px]">{row.action}</p>
                 </td>
-                {/* Tactic */}
                 <td className="px-4 py-3">
                   <p className="text-slate-600 max-w-[260px] leading-relaxed">{row.tactic}</p>
                 </td>
-                {/* Outcome */}
                 <td className="px-4 py-3">
                   <span className="font-bold text-emerald-600 whitespace-nowrap">{row.outcome}</span>
                 </td>
-                {/* Urgency */}
                 <td className="px-4 py-3">
                   <span className={`font-semibold whitespace-nowrap ${
                     row.urgency === "Immediate" || row.urgency === "Same day" ? "text-rose-600" :
@@ -1739,18 +1732,53 @@ function RetentionStrategyMatrix() {
 
 function ReportsView() {
   const complaints = [
-    { text: "API Timeout Errors", mentions: 142, trend: "up", severity: "Critical" },
-    { text: "Confusing UI Update", mentions: 89, trend: "up", severity: "Medium" },
-    { text: "Billing & Payment Friction", mentions: 68, trend: "down", severity: "High" },
-    { text: "SSO Login Loop Bugs", mentions: 45, trend: "up", severity: "Critical" },
-    { text: "Missing Report CSV Export", mentions: 24, trend: "down", severity: "Low" },
+    { 
+      text: "API Timeout Errors", 
+      mentions: 142, 
+      trend: "up", 
+      severity: "Critical",
+      quote: "Gateway times out during bulk CSV imports, taking up to 12s.",
+      history: [10, 24, 45, 80, 142]
+    },
+    { 
+      text: "Confusing UI Update", 
+      mentions: 89, 
+      trend: "up", 
+      severity: "Medium",
+      quote: "Where did the dunning configuration move? Spent 20 mins looking.",
+      history: [5, 12, 35, 60, 89]
+    },
+    { 
+      text: "Billing & Payment Friction", 
+      mentions: 68, 
+      trend: "down", 
+      severity: "High",
+      quote: "My card failed twice without any notification, why was I suspended?",
+      history: [90, 85, 75, 70, 68]
+    },
+    { 
+      text: "SSO Login Loop Bugs", 
+      mentions: 45, 
+      trend: "up", 
+      severity: "Critical",
+      quote: "Users are looped back to credentials page even after Okta authorization succeeds.",
+      history: [2, 10, 18, 25, 45]
+    },
+    { 
+      text: "Missing Report CSV Export", 
+      mentions: 24, 
+      trend: "down", 
+      severity: "Low",
+      quote: "I need to export cohort charts to PDF/CSV for my exec meetings.",
+      history: [40, 38, 30, 25, 24]
+    },
   ];
 
   const competitors = [
-    { name: "RivalTech", mentions: 78, percent: 78, color: "bg-blue-600" },
-    { name: "OmniSync", mentions: 42, percent: 42, color: "bg-indigo-500" },
-    { name: "ChurnFree", mentions: 29, percent: 29, color: "bg-purple-500" },
-    { name: "RetainIQ", mentions: 15, percent: 15, color: "bg-slate-400" },
+    { name: "RivalTech", mentions: 78, percent: 78, arr: 185000, color: "bg-blue-600", driver: "custom contract pricing & integration support" },
+    { name: "OmniSync", mentions: 42, percent: 42, arr: 92500, color: "bg-indigo-500", driver: "enterprise white-labeling features" },
+    { name: "ChurnFree", mentions: 29, percent: 29, arr: 54200, color: "bg-purple-500", driver: "cheaper entry tier price" },
+    { name: "RetainIQ", mentions: 15, percent: 15, arr: 22000, color: "bg-slate-400", driver: "better dashboard automation widgets" },
   ];
 
   return (
@@ -1763,7 +1791,7 @@ function ReportsView() {
           <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 text-white shadow-inner">
             <Sparkles size={18} />
           </div>
-          <div>
+          <div className="text-left">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Voice of Customer NLP Parser</p>
             <h3 className="text-lg font-bold text-white mb-1">
               Top Customer Mentions & Competitor Signals
@@ -1787,33 +1815,53 @@ function ReportsView() {
             <span className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-100 px-2.5 py-0.5 rounded-full font-mono">Real-time Feed</span>
           </div>
 
-          <div className="p-5 divide-y divide-gray-100 text-left">
+          <div className="p-5 divide-y divide-gray-100 text-left space-y-3.5">
             {complaints.map((item, idx) => (
-              <div key={idx} className="py-3.5 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-xs font-bold text-slate-805 flex items-center gap-2">
-                    {item.text}
-                    <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded uppercase ${
-                      item.severity === "Critical" ? "bg-rose-100 text-rose-700" :
-                      item.severity === "High" ? "bg-amber-100 text-amber-700" :
-                      item.severity === "Medium" ? "bg-blue-100 text-blue-700" :
-                      "bg-slate-100 text-slate-600"
-                    }`}>
-                      {item.severity}
-                    </span>
-                  </p>
-                  <p className="text-[10px] text-slate-405 font-medium">
-                    Mentions: <span className="font-bold text-slate-600 font-mono">{item.mentions}</span> tickets this month
-                  </p>
+              <div key={idx} className="pt-3.5 first:pt-0 flex flex-col gap-2">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-slate-805 flex items-center gap-2">
+                      {item.text}
+                      <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded uppercase ${
+                        item.severity === "Critical" ? "bg-rose-100 text-rose-700" :
+                        item.severity === "High" ? "bg-amber-100 text-amber-700" :
+                        item.severity === "Medium" ? "bg-blue-100 text-blue-700" :
+                        "bg-slate-100 text-slate-600"
+                      }`}>
+                        {item.severity}
+                      </span>
+                    </p>
+                    <p className="text-[10px] text-slate-405 font-medium">
+                      Mentions: <span className="font-bold text-slate-600 font-mono">{item.mentions}</span> tickets this month
+                    </p>
+                  </div>
+                  
+                  {/* Trend & Sparkline */}
+                  <div className="flex items-center gap-4 flex-shrink-0 text-right">
+                    <div className="w-16 h-8 hidden sm:block">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={item.history.map(val => ({ val }))} margin={{ top: 2, bottom: 2 }}>
+                          <Line type="monotone" dataKey="val" stroke={item.trend === "up" ? "#ef4444" : "#10b981"} strokeWidth={1.5} dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`text-[10px] font-extrabold font-mono flex items-center gap-0.5 ${
+                        item.trend === "up" ? "text-rose-650" : "text-emerald-650"
+                      }`}>
+                        {item.trend === "up" ? "↗" : "↘"}
+                        {item.trend === "up" ? "Increasing" : "Decreasing"}
+                      </span>
+                      <button className="text-[9px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 border border-blue-100 px-2 py-0.5 rounded transition-all cursor-pointer font-semibold">
+                        Route
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0 text-right">
-                  <span className={`text-[10px] font-extrabold font-mono flex items-center gap-0.5 ${
-                    item.trend === "up" ? "text-rose-650" : "text-emerald-650"
-                  }`}>
-                    {item.trend === "up" ? "↗" : "↘"}
-                    {item.trend === "up" ? "Increasing" : "Decreasing"}
-                  </span>
-                </div>
+                <p className="text-[10px] text-slate-450 italic bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1.5 leading-relaxed">
+                  "{item.quote}"
+                </p>
               </div>
             ))}
           </div>
@@ -1829,23 +1877,28 @@ function ReportsView() {
             <span className="text-[10px] font-bold text-slate-500 bg-slate-200/60 px-2.5 py-0.5 rounded font-mono">30-day Window</span>
           </div>
 
-          <div className="p-5 space-y-5 text-left">
+          <div className="p-5 space-y-6 text-left">
             {competitors.map((item, idx) => (
-              <div key={idx} className="space-y-2">
+              <div key={idx} className="space-y-2 border-b border-slate-105 pb-4 last:border-b-0 last:pb-0">
                 <div className="flex justify-between items-end text-xs">
                   <span className="font-bold text-slate-805">{item.name}</span>
-                  <span className="text-[10px] text-slate-500 font-medium">
+                  <span className="text-[10px] text-slate-550 font-medium">
                     Mentions: <span className="font-bold text-slate-700 font-mono">{item.mentions}</span>
                   </span>
                 </div>
+                
+                <div className="flex justify-between items-center text-[10px] text-slate-405 font-medium">
+                  <span>Primary Driver: <strong className="text-slate-600 font-semibold">{item.driver}</strong></span>
+                  <span className="font-extrabold text-rose-600 font-mono">${item.arr.toLocaleString()} ARR</span>
+                </div>
+
                 <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden flex shadow-inner">
                   <div className={`h-full rounded-full transition-all duration-500 ${item.color}`} style={{ width: `${item.percent}%` }} />
                 </div>
               </div>
             ))}
 
-            {/* AI Callout note */}
-            <div className="bg-blue-55/40 border border-blue-100 rounded-lg p-3.5 text-[10px] text-slate-650 leading-relaxed text-left flex items-start gap-2.5">
+            <div className="bg-blue-55/40 border border-blue-100 rounded-lg p-3.5 text-[10px] text-slate-650 leading-relaxed text-left flex items-start gap-2.5 mt-2">
               <span className="text-blue-500 font-bold">💡</span>
               <p>
                 <strong>Competitive Threat Alert:</strong> Mentions of <strong className="text-slate-800">RivalTech</strong> have increased by 22% compared to last month. Most users indicate RivalTech's custom pricing campaigns as their primary migration driver.
