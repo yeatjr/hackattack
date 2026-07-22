@@ -1986,32 +1986,35 @@ function ActionsView({ resolvedTasks = [], setResolvedTasks, pics, setPics }) {
   });
 
   const [managingDept, setManagingDept] = useState(null);
-  const [editPic, setEditPic] = useState({ name: "", role: "", initials: "", color: "bg-blue-600", contact: "", email: "", slack: "" });
+  const [editUsers, setEditUsers] = useState([]);
 
   const [toast, setToast] = useState(null);
   const [selectedBriefTask, setSelectedBriefTask] = useState(null);
   const [selectedIntegration, setSelectedIntegration] = useState(null);
+  const [selectedPicIndex, setSelectedPicIndex] = useState(0);
 
   useEffect(() => {
     if (selectedBriefTask) {
       setSelectedIntegration(null);
+      setSelectedPicIndex(0);
     }
   }, [selectedBriefTask]);
 
   useEffect(() => {
     if (managingDept && pics[managingDept]) {
-      setEditPic({ ...pics[managingDept] });
+      setEditUsers(JSON.parse(JSON.stringify(pics[managingDept])));
     }
   }, [managingDept, pics]);
 
-  const getActivePic = () => {
-    if (!selectedBriefTask) return { name: "", role: "", initials: "", color: "bg-blue-600", contact: "", email: "", slack: "" };
-    if (selectedBriefTask.dept.includes("Product")) return pics.product;
-    if (selectedBriefTask.dept.includes("Sales")) return pics.sales;
-    return pics.cs;
+  const getActiveUsers = () => {
+    if (!selectedBriefTask) return [];
+    if (selectedBriefTask.dept.includes("Product")) return pics.product || [];
+    if (selectedBriefTask.dept.includes("Sales")) return pics.sales || [];
+    return pics.cs || [];
   };
 
-  const currentPic = getActivePic();
+  const activeUsers = getActiveUsers();
+  const currentPic = activeUsers[selectedPicIndex] || activeUsers[0] || { name: "Unassigned", role: "Team Lead", contact: "", email: "" };
 
   const triggerToast = (msg) => {
     setToast(msg);
@@ -2065,6 +2068,33 @@ function ActionsView({ resolvedTasks = [], setResolvedTasks, pics, setPics }) {
     };
     setResolvedTasks(prev => [newResolved, ...prev]);
     triggerToast(`✅ Mitigated: preserved $${task.rar.toLocaleString()} ARR!`);
+  };
+
+  const handleAddUser = () => {
+    setEditUsers(prev => [
+      ...prev,
+      { id: `u-${Date.now()}-${Math.floor(Math.random()*1000)}`, name: "", role: "", contact: "", email: "" }
+    ]);
+  };
+
+  const handleRemoveUser = (index) => {
+    setEditUsers(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUserChange = (index, field, value) => {
+    setEditUsers(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const handleSaveUsers = () => {
+    const validUsers = editUsers.filter(u => u.name.trim() !== "" || u.role.trim() !== "");
+    const finalUsers = validUsers.length > 0 ? validUsers : [{ id: `u-${Date.now()}`, name: "Unassigned PIC", role: "Team Member", contact: "", email: "" }];
+    setPics({ ...pics, [managingDept]: finalUsers });
+    setManagingDept(null);
+    triggerToast(`🟢 Updated routing team for ${managingDept === "product" ? "Product & Engineering" : managingDept === "sales" ? "Sales & Marketing" : "Customer Success"}`);
   };
 
   // Mock PDF Data based on the selected task
@@ -2162,20 +2192,19 @@ function ActionsView({ resolvedTasks = [], setResolvedTasks, pics, setPics }) {
               <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Product &amp; Engineering Queue</span>
               <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full font-mono">{boardData.product.length} Tasks</span>
             </div>
-            {/* Minimalist Read-Only Profile Card Container */}
+            {/* Minimalist Profile Card Container */}
             <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-3">
-                {/* Circular Avatar */}
-                <div className={`w-8 h-8 rounded-full ${pics.product.color} text-white flex items-center justify-center font-extrabold text-xs font-mono select-none`}>
-                  {pics.product.initials}
-                </div>
-                {/* Text Info */}
-                <div className="text-left flex flex-col justify-center">
-                  <span className="text-xs font-bold text-slate-900 leading-tight">{pics.product.name}</span>
-                  <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.product.role}</span>
-                </div>
+              <div className="text-left flex flex-col justify-center">
+                <span className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1.5">
+                  {pics.product[0]?.name || "Unassigned"}
+                  {pics.product.length > 1 && (
+                    <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.2 rounded font-mono font-semibold">
+                      +{pics.product.length - 1} user{pics.product.length > 2 ? 's' : ''}
+                    </span>
+                  )}
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.product[0]?.role || "Department Lead"}</span>
               </div>
-              {/* Action Button Link */}
               <button 
                 onClick={() => setManagingDept("product")}
                 className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
@@ -2217,20 +2246,19 @@ function ActionsView({ resolvedTasks = [], setResolvedTasks, pics, setPics }) {
               <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Sales &amp; Marketing Queue</span>
               <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full font-mono">{boardData.sales.length} Tasks</span>
             </div>
-            {/* Minimalist Read-Only Profile Card Container */}
+            {/* Minimalist Profile Card Container */}
             <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-3">
-                {/* Circular Avatar */}
-                <div className={`w-8 h-8 rounded-full ${pics.sales.color} text-white flex items-center justify-center font-extrabold text-xs font-mono select-none`}>
-                  {pics.sales.initials}
-                </div>
-                {/* Text Info */}
-                <div className="text-left flex flex-col justify-center">
-                  <span className="text-xs font-bold text-slate-900 leading-tight">{pics.sales.name}</span>
-                  <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.sales.role}</span>
-                </div>
+              <div className="text-left flex flex-col justify-center">
+                <span className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1.5">
+                  {pics.sales[0]?.name || "Unassigned"}
+                  {pics.sales.length > 1 && (
+                    <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.2 rounded font-mono font-semibold">
+                      +{pics.sales.length - 1} user{pics.sales.length > 2 ? 's' : ''}
+                    </span>
+                  )}
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.sales[0]?.role || "Department Lead"}</span>
               </div>
-              {/* Action Button Link */}
               <button 
                 onClick={() => setManagingDept("sales")}
                 className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
@@ -2272,20 +2300,19 @@ function ActionsView({ resolvedTasks = [], setResolvedTasks, pics, setPics }) {
               <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Customer Success Queue</span>
               <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full font-mono">{boardData.cs.length} Tasks</span>
             </div>
-            {/* Minimalist Read-Only Profile Card Container */}
+            {/* Minimalist Profile Card Container */}
             <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-3">
-                {/* Circular Avatar */}
-                <div className={`w-8 h-8 rounded-full ${pics.cs.color} text-white flex items-center justify-center font-extrabold text-xs font-mono select-none`}>
-                  {pics.cs.initials}
-                </div>
-                {/* Text Info */}
-                <div className="text-left flex flex-col justify-center">
-                  <span className="text-xs font-bold text-slate-900 leading-tight">{pics.cs.name}</span>
-                  <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.cs.role}</span>
-                </div>
+              <div className="text-left flex flex-col justify-center">
+                <span className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1.5">
+                  {pics.cs[0]?.name || "Unassigned"}
+                  {pics.cs.length > 1 && (
+                    <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.2 rounded font-mono font-semibold">
+                      +{pics.cs.length - 1} user{pics.cs.length > 2 ? 's' : ''}
+                    </span>
+                  )}
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.cs[0]?.role || "Department Lead"}</span>
               </div>
-              {/* Action Button Link */}
               <button 
                 onClick={() => setManagingDept("cs")}
                 className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
@@ -2373,11 +2400,11 @@ function ActionsView({ resolvedTasks = [], setResolvedTasks, pics, setPics }) {
         </div>
       </div>
 
-      {/* Manage Routing Overlay Modal */}
+      {/* Manage Routing Overlay Modal with Add User Support */}
       {managingDept && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full border border-gray-200 overflow-hidden flex flex-col transition-all transform scale-100 text-slate-800">
-            <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-gray-200 overflow-hidden flex flex-col transition-all transform scale-100 text-slate-800 max-h-[90vh]">
+            <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white flex-shrink-0">
               <div className="flex items-center gap-2">
                 <Settings size={16} className="text-blue-400" />
                 <h3 className="text-xs font-extrabold uppercase tracking-wider font-mono">
@@ -2392,98 +2419,86 @@ function ActionsView({ resolvedTasks = [], setResolvedTasks, pics, setPics }) {
               </button>
             </div>
             
-            <div className="p-6 space-y-4 text-left text-xs">
+            <div className="p-6 space-y-5 text-left text-xs overflow-y-auto flex-1">
               <p className="text-slate-500 leading-relaxed">
-                Configure target recipient details for this queue. Updates will apply instantly to all future brief dispatches.
+                Configure contact personnel for this department queue. You can add multiple users/workers to receive routed briefs.
               </p>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">PIC Name</label>
-                  <input
-                    type="text"
-                    value={editPic.name}
-                    onChange={(e) => setEditPic({ ...editPic, name: e.target.value })}
-                    className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 font-semibold"
-                    placeholder="e.g. Alex Chen"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">PIC Role</label>
-                  <input
-                    type="text"
-                    value={editPic.role}
-                    onChange={(e) => setEditPic({ ...editPic, role: e.target.value })}
-                    className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 font-medium"
-                    placeholder="e.g. Eng Lead"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Initials (Avatar)</label>
-                  <input
-                    type="text"
-                    maxLength={2}
-                    value={editPic.initials}
-                    onChange={(e) => setEditPic({ ...editPic, initials: e.target.value.toUpperCase() })}
-                    className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-center font-mono font-bold"
-                    placeholder="e.g. AC"
-                  />
-                </div>
-                <div className="space-y-1.5 col-span-2">
-                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Avatar Color</label>
-                  <select
-                    value={editPic.color}
-                    onChange={(e) => setEditPic({ ...editPic, color: e.target.value })}
-                    className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 font-semibold cursor-pointer"
-                  >
-                    <option value="bg-blue-600">🔵 Blue</option>
-                    <option value="bg-indigo-600">🟣 Indigo</option>
-                    <option value="bg-purple-600">🔮 Purple</option>
-                    <option value="bg-emerald-600">🟢 Emerald</option>
-                    <option value="bg-rose-600">🔴 Rose</option>
-                  </select>
-                </div>
-              </div>
+              {editUsers.map((user, idx) => (
+                <div key={user.id || idx} className="bg-slate-50 border border-gray-200 rounded-xl p-4 space-y-3 relative text-left shadow-sm">
+                  <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+                    <span className="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider font-mono">
+                      User #{idx + 1}
+                    </span>
+                    {editUsers.length > 1 && (
+                      <button
+                        onClick={() => handleRemoveUser(idx)}
+                        className="text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer transition-colors"
+                      >
+                        Remove User
+                      </button>
+                    )}
+                  </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Phone / Telegram Handle</label>
-                <input
-                  type="text"
-                  value={editPic.contact}
-                  onChange={(e) => setEditPic({ ...editPic, contact: e.target.value })}
-                  className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 font-mono text-slate-600"
-                  placeholder="e.g. +1 (555) 0192"
-                />
-              </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">PIC Name</label>
+                      <input
+                        type="text"
+                        value={user.name}
+                        onChange={(e) => handleUserChange(idx, "name", e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 font-semibold text-xs"
+                        placeholder="e.g. Alex Chen"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">PIC Role</label>
+                      <input
+                        type="text"
+                        value={user.role}
+                        onChange={(e) => handleUserChange(idx, "role", e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 font-medium text-xs"
+                        placeholder="e.g. Eng Lead"
+                      />
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Email Address</label>
-                  <input
-                    type="email"
-                    value={editPic.email}
-                    onChange={(e) => setEditPic({ ...editPic, email: e.target.value })}
-                    className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 font-mono text-slate-600"
-                    placeholder="e.g. alex.c@momentum.ai"
-                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">Phone / Telegram</label>
+                      <input
+                        type="text"
+                        value={user.contact}
+                        onChange={(e) => handleUserChange(idx, "contact", e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 font-mono text-slate-600 text-xs"
+                        placeholder="e.g. +1 (555) 0192"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">Email Address</label>
+                      <input
+                        type="email"
+                        value={user.email}
+                        onChange={(e) => handleUserChange(idx, "email", e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 font-mono text-slate-600 text-xs"
+                        placeholder="e.g. alex.c@momentum.ai"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Slack Channel</label>
-                  <input
-                    type="text"
-                    value={editPic.slack}
-                    onChange={(e) => setEditPic({ ...editPic, slack: e.target.value })}
-                    className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 font-mono text-slate-600"
-                    placeholder="e.g. #eng-triage"
-                  />
-                </div>
-              </div>
+              ))}
+
+              {/* Add User Button */}
+              <button
+                onClick={handleAddUser}
+                className="w-full py-2.5 bg-blue-50 hover:bg-blue-100 border border-dashed border-blue-300 text-blue-600 font-extrabold rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <Plus size={14} />
+                + Add User
+              </button>
             </div>
 
-            <div className="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
+            <div className="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200 flex-shrink-0">
               <button
                 onClick={() => setManagingDept(null)}
                 className="px-4 py-2 border border-gray-200 hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer"
@@ -2491,11 +2506,7 @@ function ActionsView({ resolvedTasks = [], setResolvedTasks, pics, setPics }) {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  setPics({ ...pics, [managingDept]: editPic });
-                  setManagingDept(null);
-                  triggerToast(`🟢 Updated PIC routing details for ${managingDept === "product" ? "Product & Engineering" : managingDept === "sales" ? "Sales & Marketing" : "Customer Success"}`);
-                }}
+                onClick={handleSaveUsers}
                 className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs uppercase tracking-wider transition-colors shadow-md cursor-pointer"
               >
                 Save Details
@@ -2623,8 +2634,21 @@ function ActionsView({ resolvedTasks = [], setResolvedTasks, pics, setPics }) {
                 <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-mono">
                   Share Brief via...
                 </h4>
-                <div className="text-[10px] text-slate-300 font-medium font-sans">
-                  Target Recipient: <strong className="text-blue-400 font-semibold">{currentPic.name} ({currentPic.role})</strong>
+                <div className="flex items-center gap-2 text-[10px] text-slate-300 font-medium font-sans">
+                  <span>Target Recipient:</span>
+                  {activeUsers.length > 1 ? (
+                    <select
+                      value={selectedPicIndex}
+                      onChange={(e) => setSelectedPicIndex(Number(e.target.value))}
+                      className="bg-slate-800 border border-slate-700 text-blue-400 font-semibold px-2 py-0.5 rounded focus:outline-none cursor-pointer"
+                    >
+                      {activeUsers.map((u, i) => (
+                        <option key={i} value={i}>{u.name} ({u.role})</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <strong className="text-blue-400 font-semibold">{currentPic.name} ({currentPic.role})</strong>
+                  )}
                 </div>
               </div>
               
@@ -3663,9 +3687,15 @@ export default function App() {
   const [transitioning, setTransit]   = useState(false);
 
   const [pics, setPics] = useState({
-    product: { name: "Alex Chen", role: "Eng Lead", initials: "AC", color: "bg-blue-600", contact: "+1 (555) 0192", email: "alex.c@momentum.ai", slack: "#eng-triage" },
-    sales: { name: "Sarah Jenkins", role: "Sales Ops", initials: "SJ", color: "bg-indigo-600", contact: "+1 (555) 0481", email: "sarah.j@momentum.ai", slack: "#sales-routing" },
-    cs: { name: "Marcus Vance", role: "CS Director", initials: "MV", color: "bg-purple-600", contact: "+1 (555) 0722", email: "marcus.v@momentum.ai", slack: "#cs-escalations" }
+    product: [
+      { id: "u-prod-1", name: "Alex Chen", role: "Eng Lead", contact: "+1 (555) 0192", email: "alex.c@momentum.ai" }
+    ],
+    sales: [
+      { id: "u-sales-1", name: "Sarah Jenkins", role: "Sales Ops", contact: "+1 (555) 0481", email: "sarah.j@momentum.ai" }
+    ],
+    cs: [
+      { id: "u-cs-1", name: "Marcus Vance", role: "CS Director", contact: "+1 (555) 0722", email: "marcus.v@momentum.ai" }
+    ]
   });
 
   const [resolvedTasks, setResolvedTasks] = useState([
