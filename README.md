@@ -16,7 +16,7 @@
 | 🌐 **Live Prototype** | https://hackattack-6d7de.web.app/ |
 | 📖 **Documentation** | https://hackattack-6d7de.web.app/ |
 | 📽️ **Presentation Video** | https://hackattack-6d7de.web.app/ |
-| 🎥 **Demo Video** | https://hackattack-6d7de.web.app/ |
+| 🎥 **Demo Video** | https://youtu.be/swGAI40E24w |
 | 📊 **Presentation Slides** | https://hackattack-6d7de.web.app/ |
 | 📄 **Seed Customer Data** | https://hackattack-6d7de.web.app/ |
 
