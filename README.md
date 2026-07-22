@@ -14,8 +14,8 @@
 | Resource | Link |
 |----------|------|
 | 🌐 **Live Prototype** | https://hackattack-6d7de.web.app/ |
-| 📖 **Documentation** | https://hackattack-6d7de.web.app/ |
-| 📽️ **Presentation Video** | https://hackattack-6d7de.web.app/ |
+| 📖 **Documentation** | [RouteToKampar_proposal](https://drive.google.com/file/d/1-IRm_z-VDwn1ey1mMhtGEY1oyUwmxi7p/view?usp=sharing) |
+| 📽️ **Presentation Video** | https://youtu.be/8SNtYXGSOCM |
 | 🎥 **Demo Video** | https://youtu.be/swGAI40E24w |
 | 📊 **Presentation Slides** | https://canva.link/hf4dt6pybpq40ma |
 | 📄 **Seed Customer Data** | [customer.csv](https://drive.google.com/file/d/1SRNgeQ8zCy5QLGqXKPh78lpPGHsoNSMr/view?usp=drive_link) |
