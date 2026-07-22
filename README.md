@@ -9,42 +9,18 @@
   <strong>Team:</strong> Yeat Jing Rong, Toh Shee Thong, Yon Yu Ki, Beh Kah Meng
 </p>
 
-<p align="center">
-  🔗 <strong>Live Prototype:</strong>
-  <a href="https://hackattack-6d7de.web.app/" target="_blank">
-    https://hackattack-6d7de.web.app/
-  </a>
-</p>
-<p align="center">
-  📖 <strong>Documentation:</strong>
-  <a href="https://hackattack-6d7de.web.app/" target="_blank">
-    https://hackattack-6d7de.web.app/
-  </a>
-</p>
-<p align="center">
-  📽️ <strong>Presentation Video:</strong>
-  <a href="https://hackattack-6d7de.web.app/" target="_blank">
-    https://hackattack-6d7de.web.app/
-  </a>
-</p>
-<p align="center">
-  🎥 <strong>Demo Video:</strong>
-  <a href="https://hackattack-6d7de.web.app/" target="_blank">
-    https://hackattack-6d7de.web.app/
-  </a>
-</p>
-<p align="center">
-  📊 <strong>Presentation Slides:</strong>
-  <a href="https://hackattack-6d7de.web.app/" target="_blank">
-    https://hackattack-6d7de.web.app/
-  </a>
-</p>
-<p align="center">
-  📄 <strong>Seed Customer Data:</strong>
-  <a href="https://hackattack-6d7de.web.app/" target="_blank">
-    https://hackattack-6d7de.web.app/
-  </a>
-</p>
+<div align="center">
+
+| Resource | Link |
+|----------|------|
+| 🌐 **Live Prototype** | https://hackattack-6d7de.web.app/ |
+| 📖 **Documentation** | https://hackattack-6d7de.web.app/ |
+| 📽️ **Presentation Video** | https://hackattack-6d7de.web.app/ |
+| 🎥 **Demo Video** | https://hackattack-6d7de.web.app/ |
+| 📊 **Presentation Slides** | https://hackattack-6d7de.web.app/ |
+| 📄 **Seed Customer Data** | https://hackattack-6d7de.web.app/ |
+
+</div>
 
 ### The retention command center that sees churn coming — before the cancellation email does.
 
