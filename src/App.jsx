@@ -2439,7 +2439,7 @@ function ReportsView() {
 
 // ─── ACTIONS VIEW ────────────────────────────────────────────────────────────
 
-function ActionsView() {
+function ActionsView({ resolvedTasks = [], setResolvedTasks, pics, setPics }) {
   const [boardData, setBoardData] = useState({
     product: [
       { id: "p1", title: "Fix API timeout bug affecting 12 accounts", priority: "Critical", impact: "High", rar: 122000, dept: "Product & Engineering Queue", system: "Jira" },
@@ -2453,41 +2453,119 @@ function ActionsView() {
       { id: "c1", title: "Schedule manual check-ins with top 5 Enterprise", priority: "Critical", impact: "High", rar: 150000, dept: "Customer Success Queue", system: "Customer Success" },
       { id: "c2", title: "Conduct QBR for Emma Harrison's team", priority: "Medium", impact: "Medium", rar: 41000, dept: "Customer Success Queue", system: "Customer Success" },
     ],
+    waiting: []
   });
 
-  const [pics, setPics] = useState({
-    product: { name: "Alex Chen (Eng Lead)", contact: "+1 (555) 0192" },
-    sales: { name: "Sarah Jenkins (Sales Ops)", contact: "sarah.j@company.com" },
-    cs: { name: "Marcus Vance (CS Lead)", contact: "+1 (555) 0722" }
-  });
+  const [managingDept, setManagingDept] = useState(null);
+  const [editUsers, setEditUsers] = useState([]);
 
   const [toast, setToast] = useState(null);
   const [selectedBriefTask, setSelectedBriefTask] = useState(null);
   const [selectedIntegration, setSelectedIntegration] = useState(null);
+  const [selectedPicIndex, setSelectedPicIndex] = useState(0);
 
   useEffect(() => {
     if (selectedBriefTask) {
       setSelectedIntegration(null);
+      setSelectedPicIndex(0);
     }
   }, [selectedBriefTask]);
 
-  const getActivePic = () => {
-    if (!selectedBriefTask) return { name: "", contact: "" };
-    if (selectedBriefTask.dept.includes("Product")) return pics.product;
-    if (selectedBriefTask.dept.includes("Sales")) return pics.sales;
-    return pics.cs;
+  useEffect(() => {
+    if (managingDept && pics[managingDept]) {
+      setEditUsers(JSON.parse(JSON.stringify(pics[managingDept])));
+    }
+  }, [managingDept, pics]);
+
+  const getActiveUsers = () => {
+    if (!selectedBriefTask) return [];
+    if (selectedBriefTask.dept.includes("Product")) return pics.product || [];
+    if (selectedBriefTask.dept.includes("Sales")) return pics.sales || [];
+    return pics.cs || [];
   };
 
-  const currentPic = getActivePic();
+  const activeUsers = getActiveUsers();
+  const currentPic = activeUsers[selectedPicIndex] || activeUsers[0] || { name: "Unassigned", role: "Team Lead", contact: "", email: "" };
 
   const triggerToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleAction = (taskTitle, destSystem, recipientName, recipientContact) => {
-    triggerToast(`⚡ Shared brief via ${destSystem} to PIC: ${recipientName} (${recipientContact})`);
+  const handleAction = (task, destSystem, name, role) => {
+    if (!task) return;
+    setBoardData(prev => {
+      const newBoard = { ...prev };
+      let foundTask = null;
+      for (const colKey of ["product", "sales", "cs"]) {
+        const idx = newBoard[colKey].findIndex(t => t.id === task.id);
+        if (idx !== -1) {
+          foundTask = { ...newBoard[colKey][idx] };
+          newBoard[colKey] = newBoard[colKey].filter(t => t.id !== task.id);
+          break;
+        }
+      }
+      if (foundTask) {
+        const updatedTask = {
+          ...foundTask,
+          sentTo: name,
+          sentRole: role,
+          sentApp: destSystem,
+          sentAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          status: "Pending Response"
+        };
+        newBoard.waiting = [...newBoard.waiting, updatedTask];
+      }
+      return newBoard;
+    });
+    triggerToast(`⚡ Shared brief via ${destSystem} to PIC: ${name} (${role})`);
     setSelectedBriefTask(null);
+  };
+
+  const handleResolveTask = (task) => {
+    setBoardData(prev => {
+      const newBoard = { ...prev };
+      newBoard.waiting = newBoard.waiting.filter(t => t.id !== task.id);
+      return newBoard;
+    });
+
+    const newResolved = {
+      id: `res-${Date.now()}`,
+      title: task.title,
+      dept: task.dept.replace(" Queue", ""),
+      pic: task.sentTo,
+      resolvedAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      rar: task.rar
+    };
+    setResolvedTasks(prev => [newResolved, ...prev]);
+    triggerToast(`✅ Mitigated: preserved $${task.rar.toLocaleString()} ARR!`);
+  };
+
+  const handleAddUser = () => {
+    setEditUsers(prev => [
+      ...prev,
+      { id: `u-${Date.now()}-${Math.floor(Math.random()*1000)}`, name: "", role: "", contact: "", email: "" }
+    ]);
+  };
+
+  const handleRemoveUser = (index) => {
+    setEditUsers(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUserChange = (index, field, value) => {
+    setEditUsers(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const handleSaveUsers = () => {
+    const validUsers = editUsers.filter(u => u.name.trim() !== "" || u.role.trim() !== "");
+    const finalUsers = validUsers.length > 0 ? validUsers : [{ id: `u-${Date.now()}`, name: "Unassigned PIC", role: "Team Member", contact: "", email: "" }];
+    setPics({ ...pics, [managingDept]: finalUsers });
+    setManagingDept(null);
+    triggerToast(`🟢 Updated routing team for ${managingDept === "product" ? "Product & Engineering" : managingDept === "sales" ? "Sales & Marketing" : "Customer Success"}`);
   };
 
   // Mock PDF Data based on the selected task
@@ -2569,7 +2647,7 @@ function ActionsView() {
             <h3 className="text-lg font-bold text-white mb-1">
               Action Routing &amp; Department Briefs
             </h3>
-            <p className="text-xs text-slate-355 leading-relaxed max-w-2xl text-left">
+            <p className="text-xs text-slate-300 leading-relaxed max-w-2xl text-left">
               Route churn indicators directly to responsible departments. Track critical actions across Product, Sales, and Customer Success queues to resolve revenue risks before contraction.
             </p>
           </div>
@@ -2577,30 +2655,29 @@ function ActionsView() {
       </div>
 
       {/* Kanban Board Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
         {/* Column 1: Product & Engineering Queue */}
         <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
           <div className="space-y-2 pb-2 border-b border-gray-200 text-left">
             <div className="flex justify-between items-center">
               <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Product &amp; Engineering Queue</span>
-              <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.product.length} Tasks</span>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full font-mono">{boardData.product.length} Tasks</span>
             </div>
             {/* Minimalist Profile Card Container */}
             <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-3">
-                {/* Circular Avatar */}
-                <div className={`w-8 h-8 rounded-full ${pics.product.color} text-white flex items-center justify-center font-extrabold text-xs font-mono select-none`}>
-                  {pics.product.initials}
-                </div>
-                {/* Text Info */}
-                <div className="text-left flex flex-col justify-center">
-                  <span className="text-xs font-bold text-slate-900 leading-tight">{pics.product.name}</span>
-                  <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.product.role}</span>
-                </div>
+              <div className="text-left flex flex-col justify-center">
+                <span className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1.5">
+                  {pics.product[0]?.name || "Unassigned"}
+                  {pics.product.length > 1 && (
+                    <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.2 rounded font-mono font-semibold">
+                      +{pics.product.length - 1} user{pics.product.length > 2 ? 's' : ''}
+                    </span>
+                  )}
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.product[0]?.role || "Department Lead"}</span>
               </div>
-              {/* Action Button Link */}
               <button 
-                onClick={() => triggerToast("ℹ️ Redirecting to Team Settings to configure department personnel...")}
+                onClick={() => setManagingDept("product")}
                 className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
               >
                 Manage Routing
@@ -2638,24 +2715,23 @@ function ActionsView() {
           <div className="space-y-2 pb-2 border-b border-gray-200 text-left">
             <div className="flex justify-between items-center">
               <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Sales &amp; Marketing Queue</span>
-              <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.sales.length} Tasks</span>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full font-mono">{boardData.sales.length} Tasks</span>
             </div>
             {/* Minimalist Profile Card Container */}
             <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-3">
-                {/* Circular Avatar */}
-                <div className={`w-8 h-8 rounded-full ${pics.sales.color} text-white flex items-center justify-center font-extrabold text-xs font-mono select-none`}>
-                  {pics.sales.initials}
-                </div>
-                {/* Text Info */}
-                <div className="text-left flex flex-col justify-center">
-                  <span className="text-xs font-bold text-slate-900 leading-tight">{pics.sales.name}</span>
-                  <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.sales.role}</span>
-                </div>
+              <div className="text-left flex flex-col justify-center">
+                <span className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1.5">
+                  {pics.sales[0]?.name || "Unassigned"}
+                  {pics.sales.length > 1 && (
+                    <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.2 rounded font-mono font-semibold">
+                      +{pics.sales.length - 1} user{pics.sales.length > 2 ? 's' : ''}
+                    </span>
+                  )}
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.sales[0]?.role || "Department Lead"}</span>
               </div>
-              {/* Action Button Link */}
               <button 
-                onClick={() => triggerToast("ℹ️ Redirecting to Team Settings to configure department personnel...")}
+                onClick={() => setManagingDept("sales")}
                 className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
               >
                 Manage Routing
@@ -2672,7 +2748,7 @@ function ActionsView() {
                     }`}>{item.priority}</span>
                     <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
                   </div>
-                  <p className="text-xs font-bold text-slate-805 leading-snug mt-2">{item.title}</p>
+                  <p className="text-xs font-bold text-slate-800 leading-snug mt-2">{item.title}</p>
                 </div>
                 <div className="pt-2 border-t border-gray-150">
                   <button 
@@ -2693,24 +2769,23 @@ function ActionsView() {
           <div className="space-y-2 pb-2 border-b border-gray-200 text-left">
             <div className="flex justify-between items-center">
               <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Customer Success Queue</span>
-              <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.cs.length} Tasks</span>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full font-mono">{boardData.cs.length} Tasks</span>
             </div>
             {/* Minimalist Profile Card Container */}
             <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-3">
-                {/* Circular Avatar */}
-                <div className={`w-8 h-8 rounded-full ${pics.cs.color} text-white flex items-center justify-center font-extrabold text-xs font-mono select-none`}>
-                  {pics.cs.initials}
-                </div>
-                {/* Text Info */}
-                <div className="text-left flex flex-col justify-center">
-                  <span className="text-xs font-bold text-slate-900 leading-tight">{pics.cs.name}</span>
-                  <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.cs.role}</span>
-                </div>
+              <div className="text-left flex flex-col justify-center">
+                <span className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1.5">
+                  {pics.cs[0]?.name || "Unassigned"}
+                  {pics.cs.length > 1 && (
+                    <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.2 rounded font-mono font-semibold">
+                      +{pics.cs.length - 1} user{pics.cs.length > 2 ? 's' : ''}
+                    </span>
+                  )}
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium leading-normal mt-0.5">{pics.cs[0]?.role || "Department Lead"}</span>
               </div>
-              {/* Action Button Link */}
               <button 
-                onClick={() => triggerToast("ℹ️ Redirecting to Team Settings to configure department personnel...")}
+                onClick={() => setManagingDept("cs")}
                 className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
               >
                 Manage Routing
@@ -2727,7 +2802,7 @@ function ActionsView() {
                     }`}>{item.priority}</span>
                     <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
                   </div>
-                  <p className="text-xs font-bold text-slate-805 leading-snug mt-2">{item.title}</p>
+                  <p className="text-xs font-bold text-slate-800 leading-snug mt-2">{item.title}</p>
                 </div>
                 <div className="pt-2 border-t border-gray-150">
                   <button 
@@ -2742,7 +2817,175 @@ function ActionsView() {
             ))}
           </div>
         </div>
+
+        {/* Column 4: Waiting Response Queue */}
+        <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
+          <div className="space-y-2 pb-2 border-b border-gray-200 text-left">
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                Waiting Response List
+              </span>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full font-mono">{boardData.waiting.length} Tasks</span>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg p-2.5 text-[10px] text-slate-500 font-medium leading-normal shadow-sm">
+              Dispatched briefs awaiting PIC resolution acknowledgment.
+            </div>
+          </div>
+          <div className="space-y-3">
+            {boardData.waiting.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-[10px] border-2 border-dashed border-gray-200 rounded-xl bg-white/50 font-mono">
+                No active dispatches.
+              </div>
+            ) : (
+              boardData.waiting.map((item) => (
+                <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 hover:border-amber-500/50 transition-colors text-left flex flex-col justify-between min-h-[170px]">
+                  <div>
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded uppercase bg-amber-100 text-amber-700">
+                        {item.priority}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
+                    </div>
+                    <p className="text-xs font-bold text-slate-800 leading-snug mt-2">{item.title}</p>
+                    {/* Dispatch metadata details */}
+                    <div className="mt-2.5 bg-slate-50 border border-slate-100 rounded-lg p-2 text-[9px] text-slate-500 space-y-1 font-mono leading-relaxed">
+                      <p>📢 PIC: <strong className="text-slate-700">{item.sentTo}</strong></p>
+                      <p>📲 Channel: <strong className="text-blue-600">{item.sentApp}</strong></p>
+                      <p>⏰ Time: <span>{item.sentAt}</span></p>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-gray-150">
+                    <button 
+                      onClick={() => handleResolveTask(item)}
+                      className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      <CheckCircle2 size={11} />
+                      Mark Resolved
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Manage Routing Overlay Modal with Add User Support */}
+      {managingDept && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-gray-200 overflow-hidden flex flex-col transition-all transform scale-100 text-slate-800 max-h-[90vh]">
+            <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <Settings size={16} className="text-blue-400" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider font-mono">
+                  Manage Routing: {managingDept === "product" ? "Product & Engineering" : managingDept === "sales" ? "Sales & Marketing" : "Customer Success"}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setManagingDept(null)}
+                className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-5 text-left text-xs overflow-y-auto flex-1">
+              <p className="text-slate-500 leading-relaxed">
+                Configure contact personnel for this department queue. You can add multiple users/workers to receive routed briefs.
+              </p>
+
+              {editUsers.map((user, idx) => (
+                <div key={user.id || idx} className="bg-slate-50 border border-gray-200 rounded-xl p-4 space-y-3 relative text-left shadow-sm">
+                  <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+                    <span className="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider font-mono">
+                      User #{idx + 1}
+                    </span>
+                    {editUsers.length > 1 && (
+                      <button
+                        onClick={() => handleRemoveUser(idx)}
+                        className="text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer transition-colors"
+                      >
+                        Remove User
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">PIC Name</label>
+                      <input
+                        type="text"
+                        value={user.name}
+                        onChange={(e) => handleUserChange(idx, "name", e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 font-semibold text-xs"
+                        placeholder="e.g. Alex Chen"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">PIC Role</label>
+                      <input
+                        type="text"
+                        value={user.role}
+                        onChange={(e) => handleUserChange(idx, "role", e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 font-medium text-xs"
+                        placeholder="e.g. Eng Lead"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">Phone / Telegram</label>
+                      <input
+                        type="text"
+                        value={user.contact}
+                        onChange={(e) => handleUserChange(idx, "contact", e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 font-mono text-slate-600 text-xs"
+                        placeholder="e.g. +1 (555) 0192"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">Email Address</label>
+                      <input
+                        type="email"
+                        value={user.email}
+                        onChange={(e) => handleUserChange(idx, "email", e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 font-mono text-slate-600 text-xs"
+                        placeholder="e.g. alex.c@momentum.ai"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Add User Button */}
+              <button
+                onClick={handleAddUser}
+                className="w-full py-2.5 bg-blue-50 hover:bg-blue-100 border border-dashed border-blue-300 text-blue-600 font-extrabold rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <Plus size={14} />
+                + Add User
+              </button>
+            </div>
+
+            <div className="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200 flex-shrink-0">
+              <button
+                onClick={() => setManagingDept(null)}
+                className="px-4 py-2 border border-gray-200 hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveUsers}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs uppercase tracking-wider transition-colors shadow-md cursor-pointer"
+              >
+                Save Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* GORGEOUS PDF MODAL OVERLAY */}
       {selectedBriefTask && (
@@ -2759,7 +3002,7 @@ function ActionsView() {
                 </span>
               </div>
               <div className="flex items-center gap-4 text-xs font-semibold select-none">
-                <span className="text-[10px] text-slate-405 font-mono">Page 1 of 1</span>
+                <span className="text-[10px] text-slate-400 font-mono">Page 1 of 1</span>
                 <span className="h-4 w-px bg-slate-700" />
                 <div className="flex gap-2 text-slate-400">
                   <button className="hover:text-white cursor-pointer" title="Zoom Out">-</button>
@@ -2794,7 +3037,7 @@ function ActionsView() {
                   </div>
                   <div className="text-right text-[9px] font-mono text-slate-500 space-y-0.5">
                     <p className="font-bold text-slate-800">REF: BRIEF-{selectedBriefTask.id.toUpperCase()}-2026</p>
-                    <p>Generated: 2026-07-21</p>
+                    <p>Generated: 2026-07-22</p>
                     <p>Dispatch: {selectedBriefTask.dept}</p>
                   </div>
                 </div>
@@ -2830,7 +3073,7 @@ function ActionsView() {
                   <h3 className="font-bold text-slate-900 tracking-wide font-mono uppercase border-b border-slate-200 pb-1 text-[10px]">
                     1. AI Retention Diagnosis &amp; Telemetry
                   </h3>
-                  <p className="text-slate-650 leading-relaxed text-left pl-1 font-sans">
+                  <p className="text-slate-600 leading-relaxed text-left pl-1 font-sans">
                     {pdfInfo.diagnosis}
                   </p>
                 </div>
@@ -2840,10 +3083,10 @@ function ActionsView() {
                   <h3 className="font-bold text-slate-900 tracking-wide font-mono uppercase border-b border-slate-200 pb-1 text-[10px]">
                     2. Mandated Action Items
                   </h3>
-                  <ul className="list-decimal list-inside space-y-1.5 pl-1 text-slate-650 font-sans">
+                  <ul className="list-decimal list-inside space-y-1.5 pl-1 text-slate-600 font-sans">
                     {pdfInfo.actionItems?.map((item, i) => (
                       <li key={i} className="text-left">
-                        <span className="font-semibold text-slate-805">{item}</span>
+                        <span className="font-semibold text-slate-800">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -2857,13 +3100,26 @@ function ActionsView() {
             </div>
 
             {/* Share Brief via... section */}
-            <div className="bg-slate-900 border-t border-slate-750 p-5 space-y-4 text-left">
+            <div className="bg-slate-900 border-t border-slate-700 p-5 space-y-4 text-left">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-mono">
                   Share Brief via...
                 </h4>
-                <div className="text-[10px] text-slate-300 font-medium font-sans">
-                  Target Recipient: <strong className="text-blue-400 font-semibold">{currentPic.name} ({currentPic.role})</strong>
+                <div className="flex items-center gap-2 text-[10px] text-slate-300 font-medium font-sans">
+                  <span>Target Recipient:</span>
+                  {activeUsers.length > 1 ? (
+                    <select
+                      value={selectedPicIndex}
+                      onChange={(e) => setSelectedPicIndex(Number(e.target.value))}
+                      className="bg-slate-800 border border-slate-700 text-blue-400 font-semibold px-2 py-0.5 rounded focus:outline-none cursor-pointer"
+                    >
+                      {activeUsers.map((u, i) => (
+                        <option key={i} value={i}>{u.name} ({u.role})</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <strong className="text-blue-400 font-semibold">{currentPic.name} ({currentPic.role})</strong>
+                  )}
                 </div>
               </div>
               
@@ -2882,7 +3138,7 @@ function ActionsView() {
                       title={`Share via ${app.name}`}
                       className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all cursor-pointer shadow-md ${
                         isSelected 
-                          ? "border-blue-500 bg-blue-950 text-blue-450 scale-110 ring-4 ring-blue-500/20 shadow-blue-500/10" 
+                          ? "border-blue-500 bg-blue-950 text-blue-400 scale-110 ring-4 ring-blue-500/20 shadow-blue-500/10" 
                           : app.color
                       }`}
                     >
@@ -2897,7 +3153,7 @@ function ActionsView() {
             <div className="bg-slate-900 border-t border-slate-700 px-6 py-4 flex justify-between items-center">
               <button 
                 onClick={() => setSelectedBriefTask(null)}
-                className="px-4 py-2 border border-slate-700 hover:border-slate-655 hover:bg-slate-800 text-slate-300 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                className="px-4 py-2 border border-slate-700 hover:border-slate-600 hover:bg-slate-800 text-slate-300 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -2913,7 +3169,7 @@ function ActionsView() {
                   };
                   const selectedApp = apps[selectedIntegration];
                   if (selectedApp) {
-                    handleAction(selectedBriefTask.title, selectedApp, currentPic.name, currentPic.role);
+                    handleAction(selectedBriefTask, selectedApp, currentPic.name, currentPic.role);
                   }
                 }}
                 className={`px-6 py-2 font-bold rounded-lg text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 font-semibold ${
@@ -3903,22 +4159,36 @@ export default function App() {
   
   const { customers, loading, error, addCustomers, updateCustomer, deleteCustomer, clearAllCustomers } = useCustomers();
 
-  const handleTabChange = (tab) => {
-    setTransitioning(true);
-    setTimeout(() => {
-      setActiveTab(tab);
-      setTransitioning(false);
-    }, 150);
+  const [pics, setPics] = useState({
+    product: [
+      { id: "u-prod-1", name: "Alex Chen", role: "Eng Lead", contact: "+1 (555) 0192", email: "alex.c@momentum.ai" }
+    ],
+    sales: [
+      { id: "u-sales-1", name: "Sarah Jenkins", role: "Sales Ops", contact: "+1 (555) 0481", email: "sarah.j@momentum.ai" }
+    ],
+    cs: [
+      { id: "u-cs-1", name: "Marcus Vance", role: "CS Director", contact: "+1 (555) 0722", email: "marcus.v@momentum.ai" }
+    ]
+  });
+
+  const [resolvedTasks, setResolvedTasks] = useState([
+    { id: "res-1", title: "API Timeout Errors during bulk CSV imports", rar: 185000, dept: "Product & Engineering", resolvedAt: "Today, 05:22 PM", pic: "Alex Chen" },
+    { id: "res-2", title: "Conduct QBR for Emma Harrison's team", rar: 41000, dept: "Customer Success", resolvedAt: "Today, 04:10 PM", pic: "Marcus Vance" }
+  ]);
+
+  const handleTabChange = id => {
+    if (id === activeTab) return;
+    setTransit(true);
+    setTimeout(() => { setActiveTab(id); setTransit(false); }, 180);
   };
 
   const renderView = () => {
     switch (activeTab) {
-      case "dashboard":  return <DashboardView customers={customers} />;
-      case "customers":  return <Customer360View customers={customers} addCustomers={addCustomers} updateCustomer={updateCustomer} clearAllCustomers={clearAllCustomers} />;
-      case "insights":   return <InsightsView customers={customers} />;
-      case "simulator":  return <SimulatorView />;
+      case "dashboard":  return <DashboardView />;
+      case "customers":  return <Customer360View />;
+      case "insights":   return <InsightsView resolvedTasks={resolvedTasks} />;
+      case "actions":    return <ActionsView resolvedTasks={resolvedTasks} setResolvedTasks={setResolvedTasks} pics={pics} setPics={setPics} />;
       case "reports":    return <ReportsView />;
-      case "fitlife":    return <FitLifeSaasDashboard />;
       default: return null;
     }
   };
