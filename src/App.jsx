@@ -1224,7 +1224,7 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 // ─── INSIGHTS VIEW ────────────────────────────────────────────────────────────
 
-function InsightsView() {
+function InsightsView({ resolvedTasks = [] }) {
   const cohortRiskData = [
     { name: "Europe Enterprise Tier", accounts: 12, probability: 25, loss: 150000, color: "#3b82f6" },
     { name: "Basic Plan Users", accounts: 142, probability: 48, loss: 116400, color: "#a855f7" },
@@ -1250,7 +1250,7 @@ function InsightsView() {
             <h3 className="text-lg font-bold text-white mb-1">
               Total Segment Revenue At-Risk: <span className="text-yellow-300 font-mono">${totalLoss.toLocaleString()}</span> ARR
             </h3>
-            <p className="text-xs text-slate-350 leading-relaxed max-w-2xl">
+            <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
               Cohort-level analysis flags <strong>Europe Enterprise Tier</strong> and <strong>Basic Plan Users</strong> as our highest financial risks. Standardized playbooks could salvage up to 60% of this exposure.
             </p>
           </div>
@@ -1325,6 +1325,56 @@ function InsightsView() {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Resolved Issues Registry */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-gray-200 bg-slate-50/50 flex justify-between items-center">
+          <div>
+            <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Triage Resolution Log (Resolved Issues)</h3>
+            <p className="text-[10px] text-slate-400 mt-0.5">Audit log of successfully mitigated customer health indicators and preserved ARR</p>
+          </div>
+          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1 font-mono uppercase tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            {resolvedTasks.length} Mitigated
+          </span>
+        </div>
+        
+        {resolvedTasks.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 text-xs">
+            No resolved issues logged in the current billing cycle.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-slate-50 border-b border-gray-200 text-slate-400">
+                  <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-left">Prescribed Mitigating Task</th>
+                  <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-center">Owner Department</th>
+                  <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-center">PIC Name</th>
+                  <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-center">Resolution Timestamp</th>
+                  <th className="px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider text-right">Preserved Revenue (ARR)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-150">
+                {resolvedTasks.map((task) => (
+                  <tr key={task.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-5 py-3.5 font-bold text-slate-800 text-left flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      {task.title}
+                    </td>
+                    <td className="px-5 py-3.5 text-center font-semibold text-slate-600">{task.dept}</td>
+                    <td className="px-5 py-3.5 text-center font-medium text-slate-700">{task.pic}</td>
+                    <td className="px-5 py-3.5 text-center font-mono text-slate-500">{task.resolvedAt}</td>
+                    <td className="px-5 py-3.5 text-right font-extrabold text-emerald-600 font-mono">
+                      +${task.rar.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1918,7 +1968,7 @@ function ReportsView() {
 
 // ─── ACTIONS VIEW ────────────────────────────────────────────────────────────
 
-function ActionsView() {
+function ActionsView({ resolvedTasks = [], setResolvedTasks, pics, setPics }) {
   const [boardData, setBoardData] = useState({
     product: [
       { id: "p1", title: "Fix API timeout bug affecting 12 accounts", priority: "Critical", impact: "High", rar: 122000, dept: "Product & Engineering Queue", system: "Jira" },
@@ -1932,13 +1982,11 @@ function ActionsView() {
       { id: "c1", title: "Schedule manual check-ins with top 5 Enterprise", priority: "Critical", impact: "High", rar: 150000, dept: "Customer Success Queue", system: "Customer Success" },
       { id: "c2", title: "Conduct QBR for Emma Harrison's team", priority: "Medium", impact: "Medium", rar: 41000, dept: "Customer Success Queue", system: "Customer Success" },
     ],
+    waiting: []
   });
 
-  const [pics, setPics] = useState({
-    product: { name: "Alex Chen (Eng Lead)", contact: "+1 (555) 0192" },
-    sales: { name: "Sarah Jenkins (Sales Ops)", contact: "sarah.j@company.com" },
-    cs: { name: "Marcus Vance (CS Lead)", contact: "+1 (555) 0722" }
-  });
+  const [managingDept, setManagingDept] = useState(null);
+  const [editPic, setEditPic] = useState({ name: "", role: "", initials: "", color: "bg-blue-600", contact: "", email: "", slack: "" });
 
   const [toast, setToast] = useState(null);
   const [selectedBriefTask, setSelectedBriefTask] = useState(null);
@@ -1950,8 +1998,14 @@ function ActionsView() {
     }
   }, [selectedBriefTask]);
 
+  useEffect(() => {
+    if (managingDept && pics[managingDept]) {
+      setEditPic({ ...pics[managingDept] });
+    }
+  }, [managingDept, pics]);
+
   const getActivePic = () => {
-    if (!selectedBriefTask) return { name: "", contact: "" };
+    if (!selectedBriefTask) return { name: "", role: "", initials: "", color: "bg-blue-600", contact: "", email: "", slack: "" };
     if (selectedBriefTask.dept.includes("Product")) return pics.product;
     if (selectedBriefTask.dept.includes("Sales")) return pics.sales;
     return pics.cs;
@@ -1964,9 +2018,53 @@ function ActionsView() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleAction = (taskTitle, destSystem, recipientName, recipientContact) => {
-    triggerToast(`⚡ Shared brief via ${destSystem} to PIC: ${recipientName} (${recipientContact})`);
+  const handleAction = (task, destSystem, name, role) => {
+    if (!task) return;
+    setBoardData(prev => {
+      const newBoard = { ...prev };
+      let foundTask = null;
+      for (const colKey of ["product", "sales", "cs"]) {
+        const idx = newBoard[colKey].findIndex(t => t.id === task.id);
+        if (idx !== -1) {
+          foundTask = { ...newBoard[colKey][idx] };
+          newBoard[colKey] = newBoard[colKey].filter(t => t.id !== task.id);
+          break;
+        }
+      }
+      if (foundTask) {
+        const updatedTask = {
+          ...foundTask,
+          sentTo: name,
+          sentRole: role,
+          sentApp: destSystem,
+          sentAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          status: "Pending Response"
+        };
+        newBoard.waiting = [...newBoard.waiting, updatedTask];
+      }
+      return newBoard;
+    });
+    triggerToast(`⚡ Shared brief via ${destSystem} to PIC: ${name} (${role})`);
     setSelectedBriefTask(null);
+  };
+
+  const handleResolveTask = (task) => {
+    setBoardData(prev => {
+      const newBoard = { ...prev };
+      newBoard.waiting = newBoard.waiting.filter(t => t.id !== task.id);
+      return newBoard;
+    });
+
+    const newResolved = {
+      id: `res-${Date.now()}`,
+      title: task.title,
+      dept: task.dept.replace(" Queue", ""),
+      pic: task.sentTo,
+      resolvedAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      rar: task.rar
+    };
+    setResolvedTasks(prev => [newResolved, ...prev]);
+    triggerToast(`✅ Mitigated: preserved $${task.rar.toLocaleString()} ARR!`);
   };
 
   // Mock PDF Data based on the selected task
@@ -2048,7 +2146,7 @@ function ActionsView() {
             <h3 className="text-lg font-bold text-white mb-1">
               Action Routing &amp; Department Briefs
             </h3>
-            <p className="text-xs text-slate-355 leading-relaxed max-w-2xl text-left">
+            <p className="text-xs text-slate-300 leading-relaxed max-w-2xl text-left">
               Route churn indicators directly to responsible departments. Track critical actions across Product, Sales, and Customer Success queues to resolve revenue risks before contraction.
             </p>
           </div>
@@ -2056,15 +2154,15 @@ function ActionsView() {
       </div>
 
       {/* Kanban Board Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
         {/* Column 1: Product & Engineering Queue */}
         <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
           <div className="space-y-2 pb-2 border-b border-gray-200 text-left">
             <div className="flex justify-between items-center">
               <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Product &amp; Engineering Queue</span>
-              <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.product.length} Tasks</span>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full font-mono">{boardData.product.length} Tasks</span>
             </div>
-            {/* Minimalist Profile Card Container */}
+            {/* Minimalist Read-Only Profile Card Container */}
             <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-3">
                 {/* Circular Avatar */}
@@ -2079,7 +2177,7 @@ function ActionsView() {
               </div>
               {/* Action Button Link */}
               <button 
-                onClick={() => triggerToast("ℹ️ Redirecting to Team Settings to configure department personnel...")}
+                onClick={() => setManagingDept("product")}
                 className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
               >
                 Manage Routing
@@ -2117,9 +2215,9 @@ function ActionsView() {
           <div className="space-y-2 pb-2 border-b border-gray-200 text-left">
             <div className="flex justify-between items-center">
               <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Sales &amp; Marketing Queue</span>
-              <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.sales.length} Tasks</span>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full font-mono">{boardData.sales.length} Tasks</span>
             </div>
-            {/* Minimalist Profile Card Container */}
+            {/* Minimalist Read-Only Profile Card Container */}
             <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-3">
                 {/* Circular Avatar */}
@@ -2134,7 +2232,7 @@ function ActionsView() {
               </div>
               {/* Action Button Link */}
               <button 
-                onClick={() => triggerToast("ℹ️ Redirecting to Team Settings to configure department personnel...")}
+                onClick={() => setManagingDept("sales")}
                 className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
               >
                 Manage Routing
@@ -2151,7 +2249,7 @@ function ActionsView() {
                     }`}>{item.priority}</span>
                     <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
                   </div>
-                  <p className="text-xs font-bold text-slate-805 leading-snug mt-2">{item.title}</p>
+                  <p className="text-xs font-bold text-slate-800 leading-snug mt-2">{item.title}</p>
                 </div>
                 <div className="pt-2 border-t border-gray-150">
                   <button 
@@ -2172,9 +2270,9 @@ function ActionsView() {
           <div className="space-y-2 pb-2 border-b border-gray-200 text-left">
             <div className="flex justify-between items-center">
               <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider">Customer Success Queue</span>
-              <span className="text-[10px] font-bold text-slate-500 bg-slate-205 px-2 py-0.5 rounded-full font-mono">{boardData.cs.length} Tasks</span>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full font-mono">{boardData.cs.length} Tasks</span>
             </div>
-            {/* Minimalist Profile Card Container */}
+            {/* Minimalist Read-Only Profile Card Container */}
             <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-3">
                 {/* Circular Avatar */}
@@ -2189,7 +2287,7 @@ function ActionsView() {
               </div>
               {/* Action Button Link */}
               <button 
-                onClick={() => triggerToast("ℹ️ Redirecting to Team Settings to configure department personnel...")}
+                onClick={() => setManagingDept("cs")}
                 className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
               >
                 Manage Routing
@@ -2206,7 +2304,7 @@ function ActionsView() {
                     }`}>{item.priority}</span>
                     <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
                   </div>
-                  <p className="text-xs font-bold text-slate-805 leading-snug mt-2">{item.title}</p>
+                  <p className="text-xs font-bold text-slate-800 leading-snug mt-2">{item.title}</p>
                 </div>
                 <div className="pt-2 border-t border-gray-150">
                   <button 
@@ -2221,7 +2319,191 @@ function ActionsView() {
             ))}
           </div>
         </div>
+
+        {/* Column 4: Waiting Response Queue */}
+        <div className="bg-slate-100/60 rounded-xl p-4 border border-gray-200/80 space-y-4">
+          <div className="space-y-2 pb-2 border-b border-gray-200 text-left">
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                Waiting Response List
+              </span>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full font-mono">{boardData.waiting.length} Tasks</span>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg p-2.5 text-[10px] text-slate-500 font-medium leading-normal shadow-sm">
+              Dispatched briefs awaiting PIC resolution acknowledgment.
+            </div>
+          </div>
+          <div className="space-y-3">
+            {boardData.waiting.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-[10px] border-2 border-dashed border-gray-200 rounded-xl bg-white/50 font-mono">
+                No active dispatches.
+              </div>
+            ) : (
+              boardData.waiting.map((item) => (
+                <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 hover:border-amber-500/50 transition-colors text-left flex flex-col justify-between min-h-[170px]">
+                  <div>
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded uppercase bg-amber-100 text-amber-700">
+                        {item.priority}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-900 font-mono">${item.rar.toLocaleString()} RAR</span>
+                    </div>
+                    <p className="text-xs font-bold text-slate-800 leading-snug mt-2">{item.title}</p>
+                    {/* Dispatch metadata details */}
+                    <div className="mt-2.5 bg-slate-50 border border-slate-100 rounded-lg p-2 text-[9px] text-slate-500 space-y-1 font-mono leading-relaxed">
+                      <p>📢 PIC: <strong className="text-slate-700">{item.sentTo}</strong></p>
+                      <p>📲 Channel: <strong className="text-blue-600">{item.sentApp}</strong></p>
+                      <p>⏰ Time: <span>{item.sentAt}</span></p>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-gray-150">
+                    <button 
+                      onClick={() => handleResolveTask(item)}
+                      className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[9px] uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      <CheckCircle2 size={11} />
+                      Mark Resolved
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Manage Routing Overlay Modal */}
+      {managingDept && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full border border-gray-200 overflow-hidden flex flex-col transition-all transform scale-100 text-slate-800">
+            <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white">
+              <div className="flex items-center gap-2">
+                <Settings size={16} className="text-blue-400" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider font-mono">
+                  Manage Routing: {managingDept === "product" ? "Product & Engineering" : managingDept === "sales" ? "Sales & Marketing" : "Customer Success"}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setManagingDept(null)}
+                className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4 text-left text-xs">
+              <p className="text-slate-500 leading-relaxed">
+                Configure target recipient details for this queue. Updates will apply instantly to all future brief dispatches.
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">PIC Name</label>
+                  <input
+                    type="text"
+                    value={editPic.name}
+                    onChange={(e) => setEditPic({ ...editPic, name: e.target.value })}
+                    className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 font-semibold"
+                    placeholder="e.g. Alex Chen"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">PIC Role</label>
+                  <input
+                    type="text"
+                    value={editPic.role}
+                    onChange={(e) => setEditPic({ ...editPic, role: e.target.value })}
+                    className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 font-medium"
+                    placeholder="e.g. Eng Lead"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Initials (Avatar)</label>
+                  <input
+                    type="text"
+                    maxLength={2}
+                    value={editPic.initials}
+                    onChange={(e) => setEditPic({ ...editPic, initials: e.target.value.toUpperCase() })}
+                    className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-center font-mono font-bold"
+                    placeholder="e.g. AC"
+                  />
+                </div>
+                <div className="space-y-1.5 col-span-2">
+                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Avatar Color</label>
+                  <select
+                    value={editPic.color}
+                    onChange={(e) => setEditPic({ ...editPic, color: e.target.value })}
+                    className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 font-semibold cursor-pointer"
+                  >
+                    <option value="bg-blue-600">🔵 Blue</option>
+                    <option value="bg-indigo-600">🟣 Indigo</option>
+                    <option value="bg-purple-600">🔮 Purple</option>
+                    <option value="bg-emerald-600">🟢 Emerald</option>
+                    <option value="bg-rose-600">🔴 Rose</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Phone / Telegram Handle</label>
+                <input
+                  type="text"
+                  value={editPic.contact}
+                  onChange={(e) => setEditPic({ ...editPic, contact: e.target.value })}
+                  className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 font-mono text-slate-600"
+                  placeholder="e.g. +1 (555) 0192"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Email Address</label>
+                  <input
+                    type="email"
+                    value={editPic.email}
+                    onChange={(e) => setEditPic({ ...editPic, email: e.target.value })}
+                    className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 font-mono text-slate-600"
+                    placeholder="e.g. alex.c@momentum.ai"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Slack Channel</label>
+                  <input
+                    type="text"
+                    value={editPic.slack}
+                    onChange={(e) => setEditPic({ ...editPic, slack: e.target.value })}
+                    className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 font-mono text-slate-600"
+                    placeholder="e.g. #eng-triage"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
+              <button
+                onClick={() => setManagingDept(null)}
+                className="px-4 py-2 border border-gray-200 hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setPics({ ...pics, [managingDept]: editPic });
+                  setManagingDept(null);
+                  triggerToast(`🟢 Updated PIC routing details for ${managingDept === "product" ? "Product & Engineering" : managingDept === "sales" ? "Sales & Marketing" : "Customer Success"}`);
+                }}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs uppercase tracking-wider transition-colors shadow-md cursor-pointer"
+              >
+                Save Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* GORGEOUS PDF MODAL OVERLAY */}
       {selectedBriefTask && (
@@ -2238,7 +2520,7 @@ function ActionsView() {
                 </span>
               </div>
               <div className="flex items-center gap-4 text-xs font-semibold select-none">
-                <span className="text-[10px] text-slate-405 font-mono">Page 1 of 1</span>
+                <span className="text-[10px] text-slate-400 font-mono">Page 1 of 1</span>
                 <span className="h-4 w-px bg-slate-700" />
                 <div className="flex gap-2 text-slate-400">
                   <button className="hover:text-white cursor-pointer" title="Zoom Out">-</button>
@@ -2273,7 +2555,7 @@ function ActionsView() {
                   </div>
                   <div className="text-right text-[9px] font-mono text-slate-500 space-y-0.5">
                     <p className="font-bold text-slate-800">REF: BRIEF-{selectedBriefTask.id.toUpperCase()}-2026</p>
-                    <p>Generated: 2026-07-21</p>
+                    <p>Generated: 2026-07-22</p>
                     <p>Dispatch: {selectedBriefTask.dept}</p>
                   </div>
                 </div>
@@ -2309,7 +2591,7 @@ function ActionsView() {
                   <h3 className="font-bold text-slate-900 tracking-wide font-mono uppercase border-b border-slate-200 pb-1 text-[10px]">
                     1. AI Retention Diagnosis &amp; Telemetry
                   </h3>
-                  <p className="text-slate-650 leading-relaxed text-left pl-1 font-sans">
+                  <p className="text-slate-600 leading-relaxed text-left pl-1 font-sans">
                     {pdfInfo.diagnosis}
                   </p>
                 </div>
@@ -2319,10 +2601,10 @@ function ActionsView() {
                   <h3 className="font-bold text-slate-900 tracking-wide font-mono uppercase border-b border-slate-200 pb-1 text-[10px]">
                     2. Mandated Action Items
                   </h3>
-                  <ul className="list-decimal list-inside space-y-1.5 pl-1 text-slate-650 font-sans">
+                  <ul className="list-decimal list-inside space-y-1.5 pl-1 text-slate-600 font-sans">
                     {pdfInfo.actionItems?.map((item, i) => (
                       <li key={i} className="text-left">
-                        <span className="font-semibold text-slate-805">{item}</span>
+                        <span className="font-semibold text-slate-800">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -2336,7 +2618,7 @@ function ActionsView() {
             </div>
 
             {/* Share Brief via... section */}
-            <div className="bg-slate-900 border-t border-slate-750 p-5 space-y-4 text-left">
+            <div className="bg-slate-900 border-t border-slate-700 p-5 space-y-4 text-left">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-mono">
                   Share Brief via...
@@ -2361,7 +2643,7 @@ function ActionsView() {
                       title={`Share via ${app.name}`}
                       className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all cursor-pointer shadow-md ${
                         isSelected 
-                          ? "border-blue-500 bg-blue-950 text-blue-450 scale-110 ring-4 ring-blue-500/20 shadow-blue-500/10" 
+                          ? "border-blue-500 bg-blue-950 text-blue-400 scale-110 ring-4 ring-blue-500/20 shadow-blue-500/10" 
                           : app.color
                       }`}
                     >
@@ -2376,7 +2658,7 @@ function ActionsView() {
             <div className="bg-slate-900 border-t border-slate-700 px-6 py-4 flex justify-between items-center">
               <button 
                 onClick={() => setSelectedBriefTask(null)}
-                className="px-4 py-2 border border-slate-700 hover:border-slate-655 hover:bg-slate-800 text-slate-300 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                className="px-4 py-2 border border-slate-700 hover:border-slate-600 hover:bg-slate-800 text-slate-300 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -2392,7 +2674,7 @@ function ActionsView() {
                   };
                   const selectedApp = apps[selectedIntegration];
                   if (selectedApp) {
-                    handleAction(selectedBriefTask.title, selectedApp, currentPic.name, currentPic.role);
+                    handleAction(selectedBriefTask, selectedApp, currentPic.name, currentPic.role);
                   }
                 }}
                 className={`px-6 py-2 font-bold rounded-lg text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 font-semibold ${
@@ -3380,6 +3662,17 @@ export default function App() {
   const [activeTab, setActiveTab]     = useState("dashboard");
   const [transitioning, setTransit]   = useState(false);
 
+  const [pics, setPics] = useState({
+    product: { name: "Alex Chen", role: "Eng Lead", initials: "AC", color: "bg-blue-600", contact: "+1 (555) 0192", email: "alex.c@momentum.ai", slack: "#eng-triage" },
+    sales: { name: "Sarah Jenkins", role: "Sales Ops", initials: "SJ", color: "bg-indigo-600", contact: "+1 (555) 0481", email: "sarah.j@momentum.ai", slack: "#sales-routing" },
+    cs: { name: "Marcus Vance", role: "CS Director", initials: "MV", color: "bg-purple-600", contact: "+1 (555) 0722", email: "marcus.v@momentum.ai", slack: "#cs-escalations" }
+  });
+
+  const [resolvedTasks, setResolvedTasks] = useState([
+    { id: "res-1", title: "API Timeout Errors during bulk CSV imports", rar: 185000, dept: "Product & Engineering", resolvedAt: "Today, 05:22 PM", pic: "Alex Chen" },
+    { id: "res-2", title: "Conduct QBR for Emma Harrison's team", rar: 41000, dept: "Customer Success", resolvedAt: "Today, 04:10 PM", pic: "Marcus Vance" }
+  ]);
+
   const handleTabChange = id => {
     if (id === activeTab) return;
     setTransit(true);
@@ -3390,8 +3683,8 @@ export default function App() {
     switch (activeTab) {
       case "dashboard":  return <DashboardView />;
       case "customers":  return <Customer360View />;
-      case "insights":   return <InsightsView />;
-      case "actions":    return <ActionsView />;
+      case "insights":   return <InsightsView resolvedTasks={resolvedTasks} />;
+      case "actions":    return <ActionsView resolvedTasks={resolvedTasks} setResolvedTasks={setResolvedTasks} pics={pics} setPics={setPics} />;
       case "reports":    return <ReportsView />;
       default: return null;
     }
