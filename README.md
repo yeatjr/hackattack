@@ -17,7 +17,7 @@
 | 📖 **Documentation** | https://hackattack-6d7de.web.app/ |
 | 📽️ **Presentation Video** | https://hackattack-6d7de.web.app/ |
 | 🎥 **Demo Video** | https://youtu.be/swGAI40E24w |
-| 📊 **Presentation Slides** | https://hackattack-6d7de.web.app/ |
+| 📊 **Presentation Slides** | https://canva.link/hf4dt6pybpq40ma |
 | 📄 **Seed Customer Data** | [customer.csv](https://drive.google.com/file/d/1SRNgeQ8zCy5QLGqXKPh78lpPGHsoNSMr/view?usp=drive_link) |
 
 </div>
