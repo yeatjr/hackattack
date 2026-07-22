@@ -445,7 +445,7 @@ const TREND_DATA = [
   { name: "Sun", value: 34 },
 ];
 
-function DashboardView({ customers = [] }) {
+function DashboardView({ customers = [], onNavigate }) {
   const S = customers.length || 1;
   const churned = customers.filter(c => (c.churnProbability || 10) > 80).length;
   const ARPU = customers.reduce((sum, c) => sum + (parseFloat(c.packagePrice) || 0), 0) / S || 0;
@@ -503,6 +503,12 @@ function DashboardView({ customers = [] }) {
               <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Priority Action List</h3>
               <p className="text-[10px] text-slate-400 mt-0.5">Top accounts by churn probability</p>
             </div>
+            <button
+              onClick={() => onNavigate && onNavigate("customers")}
+              className="text-[10px] font-bold text-blue-600 hover:underline cursor-pointer"
+            >
+              View in Customer 360 →
+            </button>
           </div>
           <div className="overflow-y-auto flex-1 h-44">
             <table className="w-full text-xs">
@@ -515,7 +521,12 @@ function DashboardView({ customers = [] }) {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {sortedCustomers.map((c) => (
-                  <tr key={c.firestoreId || c.email} className="hover:bg-slate-50 transition-colors">
+                  <tr
+                    key={c.firestoreId || c.email}
+                    onClick={() => onNavigate && onNavigate("customers")}
+                    className="hover:bg-slate-50 transition-colors cursor-pointer"
+                    title="Click to view in Customer 360"
+                  >
                     <td className="px-4 py-2 font-bold text-slate-900 truncate max-w-[120px]">{c.name}</td>
                     <td className="px-4 py-2">
                       <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold border
@@ -702,10 +713,11 @@ function Customer360View({ customers = [], addCustomers, updateCustomer, clearAl
       if (allOthers.size > 0) {
         setMapperData({ parsedRows, otherCols: Array.from(allOthers), mapping: {} });
       } else {
-        addCustomers(parsedRows.map(pr => pr.canonical));
+        if (addCustomers) addCustomers(parsedRows.map(pr => pr.canonical));
       }
     };
     reader.readAsBinaryString(uploadedFile);
+    e.target.value = "";
   };
 
   const confirmMapping = () => {
@@ -1055,7 +1067,7 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 // ─── INSIGHTS VIEW ────────────────────────────────────────────────────────────
 
-function InsightsView({ customers = [] }) {
+function InsightsView({ customers = [], onNavigate }) {
   const [activeSection, setActiveSection] = useState("segmentation");
 
   const n = customers.length || 1;
@@ -2251,7 +2263,7 @@ function RetentionStrategyMatrix() {
 
 // ─── REPORTS VIEW ────────────────────────────────────────────────────────────
 
-function ReportsView() {
+function ReportsView({ onNavigate }) {
   const complaints = [
     { 
       text: "API Timeout Errors", 
@@ -2308,19 +2320,27 @@ function ReportsView() {
       <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-5 text-white shadow-md">
         <div className="absolute -right-10 -top-10 w-52 h-52 rounded-full bg-white/5" />
         <div className="absolute -right-4 -bottom-8 w-36 h-36 rounded-full bg-white/5" />
-        <div className="relative flex items-start gap-4">
-          <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 text-white shadow-inner">
-            <Sparkles size={18} />
+        <div className="relative flex items-start justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 text-white shadow-inner">
+              <Sparkles size={18} />
+            </div>
+            <div className="text-left">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Voice of Customer NLP Parser</p>
+              <h3 className="text-lg font-bold text-white mb-1">
+                Top Customer Mentions & Competitor Signals
+              </h3>
+              <p className="text-xs text-slate-355 leading-relaxed max-w-2xl text-left">
+                NLP-driven analysis highlights critical support frustrations and competitive threats extracted from chat tickets, email logs, and cancellation reviews.
+              </p>
+            </div>
           </div>
-          <div className="text-left">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Voice of Customer NLP Parser</p>
-            <h3 className="text-lg font-bold text-white mb-1">
-              Top Customer Mentions & Competitor Signals
-            </h3>
-            <p className="text-xs text-slate-355 leading-relaxed max-w-2xl text-left">
-              NLP-driven analysis highlights critical support frustrations and competitive threats extracted from chat tickets, email logs, and cancellation reviews.
-            </p>
-          </div>
+          <button
+            onClick={() => onNavigate && onNavigate("customers")}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm flex-shrink-0"
+          >
+            Go to Customer 360 →
+          </button>
         </div>
       </div>
 
@@ -2375,11 +2395,17 @@ function ReportsView() {
                         {item.trend === "up" ? "Increasing" : "Decreasing"}
                       </span>
                       <div className="flex gap-2 items-center">
-                        <button className="text-[9px] font-bold text-slate-500 hover:text-slate-800 hover:underline transition-all cursor-pointer">
+                        <button
+                          onClick={() => onNavigate && onNavigate("insights")}
+                          className="text-[9px] font-bold text-slate-500 hover:text-slate-800 hover:underline transition-all cursor-pointer"
+                        >
                           Analyze Trend
                         </button>
-                        <button className="text-[9px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded transition-all cursor-pointer font-semibold">
-                          Route
+                        <button
+                          onClick={() => onNavigate && onNavigate("customers")}
+                          className="text-[9px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded transition-all cursor-pointer font-semibold"
+                        >
+                          Route to Customer 360
                         </button>
                       </div>
                     </div>
@@ -4178,17 +4204,17 @@ export default function App() {
 
   const handleTabChange = id => {
     if (id === activeTab) return;
-    setTransit(true);
-    setTimeout(() => { setActiveTab(id); setTransit(false); }, 180);
+    setTransitioning(true);
+    setTimeout(() => { setActiveTab(id); setTransitioning(false); }, 180);
   };
 
   const renderView = () => {
     switch (activeTab) {
-      case "dashboard":  return <DashboardView />;
-      case "customers":  return <Customer360View />;
-      case "insights":   return <InsightsView resolvedTasks={resolvedTasks} />;
-      case "actions":    return <ActionsView resolvedTasks={resolvedTasks} setResolvedTasks={setResolvedTasks} pics={pics} setPics={setPics} />;
-      case "reports":    return <ReportsView />;
+      case "dashboard":  return <DashboardView customers={customers} onNavigate={handleTabChange} />;
+      case "customers":  return <Customer360View customers={customers} addCustomers={addCustomers} updateCustomer={updateCustomer} deleteCustomer={deleteCustomer} clearAllCustomers={clearAllCustomers} loading={loading} error={error} />;
+      case "insights":   return <InsightsView customers={customers} resolvedTasks={resolvedTasks} onNavigate={handleTabChange} />;
+      case "actions":    return <ActionsView resolvedTasks={resolvedTasks} setResolvedTasks={setResolvedTasks} pics={pics} setPics={setPics} onNavigate={handleTabChange} />;
+      case "reports":    return <ReportsView onNavigate={handleTabChange} customers={customers} />;
       default: return null;
     }
   };
