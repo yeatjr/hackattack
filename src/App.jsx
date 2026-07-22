@@ -317,7 +317,7 @@ function CustomerTimeline({ events }) {
 
 // ─── PROACTIVE HEALTH CENTER DATA TABLE ──────────────────────────────────────
 
-function ProactiveHealthCenter({ customers = [] }) {
+function ProactiveHealthCenter({ customers = [], onNavigate }) {
   // Generate alerts based on live customer data
   const alerts = customers.map(c => {
     const isOverdue = c.paymentStatus === "Overdue";
@@ -366,7 +366,12 @@ function ProactiveHealthCenter({ customers = [] }) {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {alerts.map((row) => (
-              <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
+              <tr 
+                key={row.id} 
+                className="hover:bg-slate-50/50 transition-colors cursor-pointer"
+                onClick={() => onNavigate && onNavigate("customers", { customerId: row.id })}
+                title={`View ${row.name} in Customer 360`}
+              >
                 <td className="px-4 py-2 font-bold text-slate-900">{row.name}</td>
                 <td className="px-4 py-2">
                   <div className="flex items-center gap-2">
@@ -461,8 +466,210 @@ function DashboardView({ customers = [], onNavigate }) {
   customers.forEach(c => { if(stages[c.stage] !== undefined) stages[c.stage]++; });
   const lifecycleData = Object.keys(stages).map(k => ({ stage: k, count: stages[k] }));
 
+  // ── Compute metrics from all Insight tabs for Action Items ──────────────
+  const pct = (v, total) => total > 0 ? ((v / total) * 100).toFixed(1) : "0.0";
+  const avg = (arr, key) => arr.length ? arr.reduce((s,c)=>s+(parseFloat(c[key])||0),0)/arr.length : 0;
+  const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
+
+  // 1. Segmentation
+  const segCustomers = customers.map(c => {
+    const pkg = (c.package || "").toLowerCase();
+    const size = (c.companySize || "").toLowerCase();
+    const adoption = parseFloat(c.coreFeatureAdoption) || 0;
+    const churn = c.churnProbability || 0;
+    if (pkg.includes("4") && (size.includes("500") || size.includes("201"))) return { ...c, segment: "Enterprise" };
+    if (churn > 50 || adoption < 30) return { ...c, segment: "At-Risk" };
+    if ((c.expansionScore||0) > 60 || adoption > 80) return { ...c, segment: "Champion" };
+    if (pkg.includes("2") || pkg.includes("3")) return { ...c, segment: "Growth" };
+    return { ...c, segment: "SMB" };
+  });
+  const atRiskCount = segCustomers.filter(c=>c.segment==="At-Risk").length;
+  const atRiskRevenue = segCustomers.filter(c=>c.segment==="At-Risk").reduce((a,c)=>a+(parseFloat(c.packagePrice)||0),0);
+  const totalRevenue = customers.reduce((a,c)=>a+(parseFloat(c.packagePrice)||0),0);
+
+  // 2. Churn
+  const churnTable = [...customers].map(c=>({...c, churnScore:c.churnProbability||0, revenueRisk:((c.churnProbability||0)/100)*(parseFloat(c.packagePrice)||0)})).sort((a,b)=>b.churnScore-a.churnScore).slice(0,5);
+  const totalChurnRisk = churnTable.reduce((a,c)=>a+c.revenueRisk, 0);
+
+  // 3. CLV
+  const clvData = [...customers].map(c => {
+    const totalPaid = parseFloat(c.totalPaid)||0;
+    return { ...c, totalPaid };
+  }).sort((a,b)=>b.totalPaid-a.totalPaid);
+  const topCLV = clvData[0]?.totalPaid || 0;
+  const bottomCLV = clvData[clvData.length-1]?.totalPaid || 0;
+
+  // 4. Adoption
+  const lowAdoption = customers.filter(c=>parseFloat(c.coreFeatureAdoption)<50).length;
+  const highAdoption = customers.filter(c=>parseFloat(c.coreFeatureAdoption)>80).length;
+
+  // 5. Engagement
+  const engagementData = customers.map(c => {
+    const freq = clamp(parseFloat(c.loginFrequency)||0,0,30)/30*100;
+    const dur = clamp(parseFloat(c.avgSessionDuration)||0,0,60)/60*100;
+    const adopt = parseFloat(c.coreFeatureAdoption)||0;
+    const seatsRatio = (parseFloat(c.seatsLicensed)||0)>0 ? clamp(((parseFloat(c.seatsActive)||0)/(parseFloat(c.seatsLicensed)||1))*100,0,100) : 0;
+    return Math.round(0.3*freq + 0.3*dur + 0.2*adopt + 0.2*seatsRatio);
+  });
+  const lowEngagement = engagementData.filter(s=>s<40).length;
+  const highEngagement = engagementData.filter(s=>s>=70).length;
+
+  // 6. Seat Utilization
+  const seatCustomers = customers.filter(c=>(parseFloat(c.seatsLicensed)||0)>0).map(c => {
+    const licensed = parseFloat(c.seatsLicensed)||0;
+    const active = parseFloat(c.seatsActive)||0;
+    return { util: licensed>0 ? Math.round((active/licensed)*100) : 0 };
+  });
+  const lowSeats = seatCustomers.filter(c=>c.util<50).length;
+  const fullSeats = seatCustomers.filter(c=>c.util>=90).length;
+
+  // 7. Upsell
+  const upsellReady = customers.filter(c=>(c.expansionScore||0)>50).length;
+  const estUpsellMRR = customers.filter(c=>(c.expansionScore||0)>50).reduce((a,c)=>a+(parseFloat(c.packagePrice)||0)*0.5,0);
+
+  // 8. NPS
+  const promoters = customers.filter(c=>parseFloat(c.surveyResponses||0)>=80).length;
+  const detractors = customers.filter(c=>parseFloat(c.surveyResponses||0)<60).length;
+  const npsScore = Math.round((promoters-detractors)/S*100);
+
+  // 9. Payment
+  const overdueCount = customers.filter(c=>(c.paymentStatus||"").toLowerCase()==="overdue").length;
+  const cancelledCount = customers.filter(c=>(c.paymentStatus||"").toLowerCase()==="cancelled").length;
+
+  // 10. Channel
+  const channelMap = customers.reduce((acc,c)=>{
+    const k=c.signupSource||"Unknown";
+    if(!acc[k]) acc[k]={count:0,revenue:0};
+    acc[k].count++;
+    acc[k].revenue+=(parseFloat(c.totalPaid)||0);
+    return acc;
+  },{});
+  const channelSorted = Object.entries(channelMap).map(([name,v])=>({name,...v,avgLTV:v.count?v.revenue/v.count:0})).sort((a,b)=>b.avgLTV-a.avgLTV);
+  const bestChannel = channelSorted[0]?.name || "N/A";
+  const worstChannel = channelSorted[channelSorted.length-1]?.name || "N/A";
+
+  // 11. Health
+  const healthScores = customers.map(c => {
+    const usage = clamp(((parseFloat(c.sessionsPerWeek)||0)/10)*100,0,100);
+    const payment = (c.paymentStatus||"").toLowerCase()==="active"?100:(c.paymentStatus||"").toLowerCase()==="overdue"?40:0;
+    const adoption = clamp(parseFloat(c.coreFeatureAdoption)||0,0,100);
+    const satisfaction = clamp((parseFloat(c.surveyResponses)||0),0,100);
+    const support = clamp(100-(parseFloat(c.bugReportsSubmitted)||0)*10,0,100);
+    return Math.round(0.30*usage+0.20*payment+0.20*adoption+0.20*satisfaction+0.10*support);
+  });
+  const criticalHealth = healthScores.filter(h=>h<40).length;
+  const healthyCount = healthScores.filter(h=>h>=70).length;
+
+  // ── Action items data ──
+  const actionItems = [
+    {
+      id: "segmentation", icon: "👥", title: "Segmentation",
+      bg: "bg-blue-50", border: "border-blue-200", headerBg: "bg-blue-100", headerText: "text-blue-800",
+      metricColor: "text-blue-700", actionColor: "text-blue-600",
+      metric: `${atRiskCount} At-Risk`, metricSub: `RM${Math.round(atRiskRevenue).toLocaleString()} MRR exposed`,
+      action: atRiskCount > 0 ? `Deploy retention campaigns for ${atRiskCount} at-risk accounts (${pct(atRiskRevenue,totalRevenue)}% of MRR).` : "All segments are healthy. Monitor growth accounts for upgrade potential.",
+      severity: atRiskCount > 3 ? "critical" : atRiskCount > 0 ? "warning" : "ok"
+    },
+    {
+      id: "churn", icon: "🔥", title: "Churn Risk",
+      bg: "bg-rose-50", border: "border-rose-200", headerBg: "bg-rose-100", headerText: "text-rose-800",
+      metricColor: "text-rose-700", actionColor: "text-rose-600",
+      metric: `RM${Math.round(totalChurnRisk).toLocaleString()}`, metricSub: "revenue at critical risk (30 days)",
+      action: totalChurnRisk > 1000 ? `Schedule priority intervention calls with top ${churnTable.length} highest-risk accounts immediately.` : "Churn risk is manageable. Continue monitoring engagement trends.",
+      severity: totalChurnRisk > 3000 ? "critical" : totalChurnRisk > 500 ? "warning" : "ok"
+    },
+    {
+      id: "clv", icon: "💎", title: "CLV Analysis",
+      bg: "bg-emerald-50", border: "border-emerald-200", headerBg: "bg-emerald-100", headerText: "text-emerald-800",
+      metricColor: "text-emerald-700", actionColor: "text-emerald-600",
+      metric: `RM${Math.round(topCLV).toLocaleString()}`, metricSub: `top CLV vs RM${Math.round(bottomCLV).toLocaleString()} bottom`,
+      action: (topCLV - bottomCLV) > 5000 ? "High CLV disparity detected. Implement structured upsell paths for lower-tier customers." : "CLV distribution is balanced. Focus on retention to sustain lifetime value.",
+      severity: (topCLV - bottomCLV) > 10000 ? "warning" : "ok"
+    },
+    {
+      id: "adoption", icon: "📊", title: "Product Adoption",
+      bg: "bg-indigo-50", border: "border-indigo-200", headerBg: "bg-indigo-100", headerText: "text-indigo-800",
+      metricColor: "text-indigo-700", actionColor: "text-indigo-600",
+      metric: `${lowAdoption} Low (<50%)`, metricSub: `${highAdoption} high adopters (>80%)`,
+      action: lowAdoption > 5 ? `${lowAdoption} customers have poor feature adoption. Launch in-app tutorials and training campaigns.` : "Adoption is strong across the base. Introduce advanced features to high adopters.",
+      severity: lowAdoption > 8 ? "critical" : lowAdoption > 3 ? "warning" : "ok"
+    },
+    {
+      id: "engagement", icon: "⚡", title: "Engagement",
+      bg: "bg-amber-50", border: "border-amber-200", headerBg: "bg-amber-100", headerText: "text-amber-800",
+      metricColor: "text-amber-700", actionColor: "text-amber-600",
+      metric: `${lowEngagement} Inactive`, metricSub: `${highEngagement} highly engaged`,
+      action: lowEngagement > 0 ? `${lowEngagement} customers have critically low engagement. Trigger automated re-engagement workflows highlighting quick-win features.` : "All customers are actively engaged. Maintain current touchpoint cadence.",
+      severity: lowEngagement > 5 ? "critical" : lowEngagement > 2 ? "warning" : "ok"
+    },
+    {
+      id: "seats", icon: "💺", title: "Seat Utilization",
+      bg: "bg-sky-50", border: "border-sky-200", headerBg: "bg-sky-100", headerText: "text-sky-800",
+      metricColor: "text-sky-700", actionColor: "text-sky-600",
+      metric: `${lowSeats} Under-used`, metricSub: `${fullSeats} at full capacity (upsell ready)`,
+      action: lowSeats > 0 ? `${lowSeats} accounts using <50% seats. Offer end-user training before next renewal.` : fullSeats > 0 ? `${fullSeats} accounts at full capacity. Pitch expanded seat packages.` : "Seat utilization is balanced across all accounts.",
+      severity: lowSeats > 5 ? "critical" : lowSeats > 2 ? "warning" : "ok"
+    },
+    {
+      id: "upsell", icon: "🚀", title: "Upsell Opportunities",
+      bg: "bg-emerald-50", border: "border-emerald-200", headerBg: "bg-emerald-100", headerText: "text-emerald-800",
+      metricColor: "text-emerald-700", actionColor: "text-emerald-600",
+      metric: `${upsellReady} Ready`, metricSub: `Est. +RM${Math.round(estUpsellMRR).toLocaleString()} additional MRR`,
+      action: upsellReady > 0 ? `${upsellReady} accounts show strong expansion signals. Assign sales reps to pitch upgrades immediately.` : "No strong upsell candidates at this time. Focus on increasing product adoption first.",
+      severity: upsellReady > 5 ? "ok" : "warning" // More upsell = good
+    },
+    {
+      id: "nps", icon: "⭐", title: "NPS / Satisfaction",
+      bg: "bg-purple-50", border: "border-purple-200", headerBg: "bg-purple-100", headerText: "text-purple-800",
+      metricColor: "text-purple-700", actionColor: "text-purple-600",
+      metric: `NPS ${npsScore}`, metricSub: `${promoters} promoters · ${detractors} detractors`,
+      action: npsScore < 0 ? `NPS is negative (${npsScore}). Urgently follow up with detractors to resolve pain points.` : detractors > 0 ? `Follow up with ${detractors} detractors individually. Request referrals from ${promoters} promoters.` : "Excellent NPS. Leverage promoters for case studies and referrals.",
+      severity: npsScore < 0 ? "critical" : npsScore < 30 ? "warning" : "ok"
+    },
+    {
+      id: "payment", icon: "💳", title: "Payment Behavior",
+      bg: "bg-orange-50", border: "border-orange-200", headerBg: "bg-orange-100", headerText: "text-orange-800",
+      metricColor: "text-orange-700", actionColor: "text-orange-600",
+      metric: `${overdueCount} Overdue`, metricSub: `${cancelledCount} cancelled accounts`,
+      action: overdueCount > 0 ? `${overdueCount} accounts overdue. Enforce automated dunning sequences and consider soft-locking features.` : "All payments are current. Monitor upcoming renewal dates for proactive outreach.",
+      severity: overdueCount > 3 ? "critical" : overdueCount > 0 ? "warning" : "ok"
+    },
+    {
+      id: "channel", icon: "📣", title: "Marketing Channel",
+      bg: "bg-teal-50", border: "border-teal-200", headerBg: "bg-teal-100", headerText: "text-teal-800",
+      metricColor: "text-teal-700", actionColor: "text-teal-600",
+      metric: bestChannel, metricSub: `highest LTV channel (vs ${worstChannel} lowest)`,
+      action: `'${bestChannel}' yields highest LTV. Reallocate marketing spend from '${worstChannel}' to maximize acquisition ROI.`,
+      severity: "ok"
+    },
+    {
+      id: "health", icon: "🏥", title: "Health Score",
+      bg: "bg-pink-50", border: "border-pink-200", headerBg: "bg-pink-100", headerText: "text-pink-800",
+      metricColor: "text-pink-700", actionColor: "text-pink-600",
+      metric: `${criticalHealth} Critical`, metricSub: `${healthyCount} healthy · ${S - healthyCount - criticalHealth} moderate`,
+      action: criticalHealth > 0 ? `${criticalHealth} customers in critical health. Prioritize fixing outstanding bugs and offer onboarding refreshers.` : "Overall customer health is strong. Maintain current support quality.",
+      severity: criticalHealth > 3 ? "critical" : criticalHealth > 0 ? "warning" : "ok"
+      }
+  ];
+
+
+  const severityIcon = (s) => s === "critical" ? "🔴" : s === "warning" ? "🟡" : "🟢";
+
   return (
     <div className="space-y-6">
+      {/* ── Dynamic AI Summary Banner ── */}
+      <div className="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 flex items-start gap-2.5 shadow-sm">
+        <Brain size={16} className="text-indigo-600 mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="text-[10px] uppercase font-bold text-indigo-500 mb-0.5 tracking-wider">AI Insight & Recommended Action</p>
+          <p className="text-xs font-semibold text-indigo-950 leading-snug">
+            {totalRAR > 5000 
+              ? `Critical revenue at risk (RM${totalRAR.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}). Prioritize reaching out to high-risk accounts in the Priority Action List.` 
+              : `Overall platform health is stable at ${avgHealth.toFixed(0)}/100. Focus on expanding high-engagement accounts.`}
+          </p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard icon={Heart} label="Avg Platform Health" value={`${avgHealth.toFixed(0)}/100`} formulaHint={`Based on usage & NPS`} color="bg-gradient-to-br from-blue-600 to-indigo-600" />
         <KpiCard icon={AlertTriangle} label="Avg Churn Probability" value={`${avgChurn.toFixed(1)}%`} formulaHint={`Based on engagement drop-off`} color="bg-gradient-to-br from-rose-500 to-rose-600" />
@@ -470,12 +677,14 @@ function DashboardView({ customers = [], onNavigate }) {
         <KpiCard icon={Zap} label="Avg Expansion Score" value={`${avgExpansion.toFixed(0)}/100`} formulaHint={`Upsell readiness`} color="bg-gradient-to-br from-emerald-500 to-teal-600" />
       </div>
 
-      <ProactiveHealthCenter customers={customers} />
+      <ProactiveHealthCenter customers={customers} onNavigate={onNavigate} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Lifecycle Pipeline */}
-        <div className="bg-white rounded-md border border-gray-200 p-4">
-          <div className="flex items-center justify-between mb-3">
+        {/* Left Column */}
+        <div className="flex flex-col gap-6">
+          {/* Lifecycle Pipeline */}
+          <div className="bg-white rounded-md border border-gray-200 p-4 flex-shrink-0">
+            <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Lifecycle Pipeline</h3>
               <p className="text-[10px] text-slate-400">Live distribution of accounts</p>
@@ -484,17 +693,59 @@ function DashboardView({ customers = [], onNavigate }) {
           </div>
           <div className="h-44 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={lifecycleData} layout="vertical" margin={{ top: 10, right: 15, left: -20, bottom: 5 }}>
-                <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 9, fill: "#94a3b8" }} />
-                <YAxis dataKey="stage" type="category" tickLine={false} axisLine={false} tick={{ fontSize: 9, fill: "#475569", fontWeight: "bold" }} />
-                <Tooltip contentStyle={{ fontSize: 10, borderRadius: 4, background: "#1e293b", color: "#fff", border: "none" }} />
-                <Bar dataKey="count" fill="#475569" barSize={12} radius={[0, 2, 2, 0]}>
+              <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                <Pie 
+                  data={lifecycleData} 
+                  dataKey="count" 
+                  nameKey="stage" 
+                  cx="35%" 
+                  cy="50%" 
+                  innerRadius={40} 
+                  outerRadius={65}
+                  stroke="none"
+                >
                   {lifecycleData.map((entry, index) => <Cell key={`cell-${index}`} fill={STAGE_STYLE[entry.stage]?.hex || "#94a3b8"} />)}
-                </Bar>
-              </BarChart>
+                </Pie>
+                <Tooltip contentStyle={{ fontSize: 10, borderRadius: 4, background: "#1e293b", color: "#fff", border: "none" }} />
+                <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: 10 }} iconType="circle" />
+              </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
+
+        {/* Reports and Actions Summary */}
+        <div className="grid grid-cols-2 gap-4">
+          <div 
+            onClick={() => onNavigate && onNavigate("reports")}
+            className="bg-white rounded-md border border-rose-200 hover:border-rose-300 hover:shadow-md transition-all cursor-pointer overflow-hidden group flex flex-col"
+          >
+            <div className="bg-rose-50 px-3 py-2 flex items-center gap-2 border-b border-rose-100">
+              <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider">Reports (VoC)</span>
+            </div>
+            <div className="p-3 flex-1 flex flex-col">
+              <p className="text-sm font-extrabold text-rose-700 leading-tight">2 Critical UI/API Bugs</p>
+              <p className="text-[9px] text-slate-500 font-medium mb-2">187 user complaints this month</p>
+              <p className="text-[10px] text-slate-700 leading-snug flex-1">Fix 'API Timeout Errors' (142) and 'SSO Login Loop' (45).</p>
+              <p className="text-[9px] font-bold text-rose-600 mt-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">View Reports <ChevronRight size={10}/></p>
+            </div>
+          </div>
+
+          <div 
+            onClick={() => onNavigate && onNavigate("actions")}
+            className="bg-white rounded-md border border-rose-200 hover:border-rose-300 hover:shadow-md transition-all cursor-pointer overflow-hidden group flex flex-col"
+          >
+            <div className="bg-rose-50 px-3 py-2 flex items-center gap-2 border-b border-rose-100">
+              <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider">Pending Actions</span>
+            </div>
+            <div className="p-3 flex-1 flex flex-col">
+              <p className="text-sm font-extrabold text-rose-700 leading-tight">2 Critical Tickets</p>
+              <p className="text-[9px] text-slate-500 font-medium mb-2">RM272,000 RAR exposed</p>
+              <p className="text-[10px] text-slate-700 leading-snug flex-1">Execute 'Fix API timeout' and 'Manual check-ins' immediately.</p>
+              <p className="text-[9px] font-bold text-rose-600 mt-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">View Actions <ChevronRight size={10}/></p>
+            </div>
+          </div>
+        </div>
+      </div>
 
         {/* Action List */}
         <div className="bg-white rounded-md border border-gray-200 overflow-hidden flex flex-col">
@@ -510,7 +761,7 @@ function DashboardView({ customers = [], onNavigate }) {
               View in Customer 360 →
             </button>
           </div>
-          <div className="overflow-y-auto flex-1 h-44">
+          <div className="overflow-y-auto flex-1 min-h-[300px]">
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-slate-50">
                 <tr className="text-slate-500 border-b border-gray-200 uppercase font-semibold text-[10px]">
@@ -523,7 +774,7 @@ function DashboardView({ customers = [], onNavigate }) {
                 {sortedCustomers.map((c) => (
                   <tr
                     key={c.firestoreId || c.email}
-                    onClick={() => onNavigate && onNavigate("customers")}
+                    onClick={() => onNavigate && onNavigate("customers", { customerId: c.firestoreId || c.customerId || c.email })}
                     className="hover:bg-slate-50 transition-colors cursor-pointer"
                     title="Click to view in Customer 360"
                   >
@@ -549,6 +800,73 @@ function DashboardView({ customers = [], onNavigate }) {
           </div>
         </div>
       </div>
+
+      {/* ════════════════════════════════════════════════════════════════════════ */}
+      {/* ── KEY ACTION ITEMS FROM ALL INSIGHTS ── */}
+      {/* ════════════════════════════════════════════════════════════════════════ */}
+      <div className="bg-white rounded-md border border-gray-200 overflow-hidden flex flex-col">
+        <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-rose-100 rounded-md flex items-center justify-center">
+              <AlertTriangle size={12} className="text-rose-600" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Critical Action Items</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">Automated insights from all analytics modules</p>
+            </div>
+          </div>
+          <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-semibold border border-gray-200">
+            {actionItems.filter(i=>i.severity==="critical").length} Critical Alerts
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-slate-50">
+              <tr className="text-slate-500 border-b border-gray-200 uppercase font-semibold text-[10px]">
+                <th className="px-4 py-2 text-left">Module</th>
+                <th className="px-4 py-2 text-left">Metric / Alert</th>
+                <th className="px-4 py-2 text-left">Recommended Action</th>
+                <th className="px-4 py-2 text-center">Severity</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {actionItems.filter(i => i.severity === "critical").map((item) => (
+                <tr 
+                  key={item.id} 
+                  className="hover:bg-slate-50 transition-colors cursor-pointer"
+                  onClick={() => onNavigate && onNavigate(item.id === "reports" ? "reports" : item.id === "actions" ? "actions" : "insights")}
+                  title={`Click to view ${item.title} insights`}
+                >
+                  <td className="px-4 py-2 font-bold text-slate-900 whitespace-nowrap">
+                    <span className="mr-1.5">{item.icon}</span>{item.title}
+                  </td>
+                  <td className="px-4 py-2">
+                    <span className="font-bold text-slate-900 block leading-tight">{item.metric}</span>
+                    <span className="text-[10px] text-slate-500">{item.metricSub}</span>
+                  </td>
+                  <td className="px-4 py-2 text-slate-700 leading-snug max-w-sm">
+                    {item.action}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-100 uppercase inline-block whitespace-nowrap">
+                      Critical
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {actionItems.filter(i => i.severity === "critical").length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
+                    <CheckCircle2 size={24} className="mx-auto text-emerald-500 mb-2" />
+                    No critical action items detected across any module.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <FormulaGuide />
     </div>
   );
@@ -648,14 +966,38 @@ function StageMetricsPanel({ customer }) {
   );
 }
 
-function Customer360View({ customers = [], addCustomers, updateCustomer, clearAllCustomers }) {
+function Customer360View({ customers = [], addCustomers, updateCustomer, clearAllCustomers, selectedCustomerId, setSelectedCustomerId }) {
   const [mapperData, setMapperData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [flippedId, setFlippedId] = useState(null);
+  const [activeCard, setActiveCard] = useState({ id: null, view: 'front' });
   const [activeTab, setActiveTab] = useState("all");
+
+  useEffect(() => {
+    if (selectedCustomerId) {
+      const target = customers.find(c => (c.firestoreId || c.customerId || c.email) === selectedCustomerId);
+      if (target) {
+        setSearchQuery(target.name || target.email);
+        setActiveCard({ id: selectedCustomerId, view: 'front' });
+      }
+      if (setSelectedCustomerId) {
+        setSelectedCustomerId(null);
+      }
+    }
+  }, [selectedCustomerId, customers, setSelectedCustomerId]);
 
   const formatDateTime = (val) => {
     if (!val) return "—";
+    const num = Number(val);
+    if (!isNaN(num) && num > 30000 && num < 60000) {
+      const date = new Date(Math.round((num - 25569) * 86400 * 1000));
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      const hours = String(date.getUTCHours()).padStart(2, '0');
+      const mins = String(date.getUTCMinutes()).padStart(2, '0');
+      const secs = String(date.getUTCSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${mins}:${secs}`;
+    }
     const str = String(val).trim();
     if (str.includes(":") || str.includes("T")) {
       const d = new Date(str.replace(" ", "T"));
@@ -674,6 +1016,20 @@ function Customer360View({ customers = [], addCustomers, updateCustomer, clearAl
       return `${str} 09:30:00`;
     }
     return str;
+  };
+
+  const formatDisplayDate = (val) => {
+    if (!val) return "—";
+    const num = Number(val);
+    if (!isNaN(num) && num > 30000 && num < 60000) {
+      const date = new Date(Math.round((num - 25569) * 86400 * 1000));
+      return date.toISOString().split('T')[0];
+    }
+    const str = String(val).trim();
+    if (str.length === 8 && !isNaN(str)) {
+      return `${str.substring(0,4)}-${str.substring(4,6)}-${str.substring(6,8)}`;
+    }
+    return str.split(' ')[0];
   };
 
   const getCustomerSparkline = (c) => {
@@ -807,7 +1163,7 @@ function Customer360View({ customers = [], addCustomers, updateCustomer, clearAl
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {customers.length > 0 && (
-            <button onClick={async () => { if (window.confirm(`Delete ALL ${customers.length} records?`)) { if (clearAllCustomers) await clearAllCustomers(customers); setFlippedId(null); } }} className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all cursor-pointer">
+            <button onClick={async () => { if (window.confirm(`Delete ALL ${customers.length} records?`)) { if (clearAllCustomers) await clearAllCustomers(customers); setActiveCard({ id: null, view: 'front' }); } }} className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all cursor-pointer">
               <Trash2 size={13} /> Clear All
             </button>
           )}
@@ -823,7 +1179,8 @@ function Customer360View({ customers = [], addCustomers, updateCustomer, clearAl
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredCustomers.map((c) => {
             const cardId = c.firestoreId || c.customerId || c.email;
-            const isFlipped = flippedId === cardId;
+            const isActive = activeCard.id === cardId;
+            const currentView = isActive ? activeCard.view : 'front';
             const churnRisk = c.churnProbability || 0;
             const statusLabel = churnRisk > 50 ? "Review due" : c.isPremiumActive ? "Active" : "Onboarding";
             const statusDotColor = churnRisk > 50 ? "bg-rose-500" : c.isPremiumActive ? "bg-emerald-500" : "bg-blue-500";
@@ -834,13 +1191,13 @@ function Customer360View({ customers = [], addCustomers, updateCustomer, clearAl
             return (
               <div 
                 key={cardId} 
-                className={`h-[390px] rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-md ${
-                  isFlipped 
-                    ? "bg-slate-900 border-slate-700 text-white" 
-                    : "bg-white/95 backdrop-blur-md border-slate-200/80 text-slate-900"
+                className={`h-[390px] rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-md backdrop-blur-md ${
+                  currentView === 'log' ? 'bg-blue-50/95 border-blue-200 text-slate-900' :
+                  currentView === 'info' ? 'bg-slate-950 border-slate-800 text-slate-300' :
+                  'bg-white/95 border-slate-200/80 text-slate-900'
                 }`}
               >
-                {!isFlipped ? (
+                {currentView === 'front' && (
                   /* ── FRONT: AI Analysis Page (Fixed 390px Height) ── */
                   <div className="p-3.5 flex flex-col justify-between h-full">
                     <div>
@@ -925,23 +1282,40 @@ function Customer360View({ customers = [], addCustomers, updateCustomer, clearAl
                     </div>
 
                     {/* Bottom Action Footer */}
-                    <div className="flex items-center justify-between border-t border-slate-100 pt-2 mt-1">
-                      <span className="text-[9px] font-semibold text-slate-400">{c.package || "Level 1"}</span>
-                      <button
-                        onClick={() => setFlippedId(cardId)}
-                        className="flex items-center gap-1 px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer shadow-2xs"
+                    <div className="flex flex-col gap-1.5 border-t border-slate-100 pt-2 mt-1">
+                      <a
+                        href={`https://wa.me/${(c.phone || '').replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-1 w-full py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer shadow-2xs"
                       >
-                        Details <ChevronRight size={12} />
-                      </button>
+                        <MessageCircle size={12} /> WhatsApp
+                      </a>
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => setActiveCard({ id: cardId, view: 'log' })}
+                          className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer shadow-2xs"
+                        >
+                          Log <MessageSquare size={12} />
+                        </button>
+                        <button
+                          onClick={() => setActiveCard({ id: cardId, view: 'info' })}
+                          className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer shadow-2xs"
+                        >
+                          Details <ChevronRight size={12} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                ) : (
+                )}
+
+                {currentView === 'info' && (
                   /* ── BACK: Customer Information Page (Fixed 390px Height) ── */
                   <div className="p-3.5 flex flex-col h-full">
                     {/* Back Header */}
-                    <div className="flex items-center justify-between pb-2 border-b border-slate-700/80 flex-shrink-0">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-800 flex-shrink-0">
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-7 h-7 rounded-full bg-white/10 text-white font-bold text-[9px] flex items-center justify-center border border-white/20">
+                        <div className="w-7 h-7 rounded-full bg-slate-800 text-slate-300 font-bold text-[9px] flex items-center justify-center border border-slate-700">
                           {getInitials(c.name)}
                         </div>
                         <div className="min-w-0">
@@ -950,8 +1324,8 @@ function Customer360View({ customers = [], addCustomers, updateCustomer, clearAl
                         </div>
                       </div>
                       <button 
-                        onClick={() => setFlippedId(null)}
-                        className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                        onClick={() => setActiveCard({ id: null, view: 'front' })}
+                        className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
                       >
                         <X size={14} />
                       </button>
@@ -973,7 +1347,7 @@ function Customer360View({ customers = [], addCustomers, updateCustomer, clearAl
 
                       {/* 1. Basic Info */}
                       <div>
-                        <p className="text-[8px] uppercase font-bold text-slate-400 mb-1 tracking-wider border-b border-slate-800 pb-0.5">1. Basic Info</p>
+                        <p className="text-[8px] uppercase font-bold text-slate-500 mb-1 tracking-wider border-b border-slate-800 pb-0.5">1. Basic Info</p>
                         <div className="space-y-0.5">
                           <div className="flex justify-between"><span className="text-slate-400">Email:</span><span className="text-slate-200 font-medium truncate max-w-[60%]">{c.email || "-"}</span></div>
                           <div className="flex justify-between"><span className="text-slate-400">Phone:</span><span className="text-slate-200 font-medium">{c.phone || "-"}</span></div>
@@ -981,19 +1355,19 @@ function Customer360View({ customers = [], addCustomers, updateCustomer, clearAl
                           <div className="flex justify-between"><span className="text-slate-400">Industry:</span><span className="text-slate-200 font-medium">{c.industry || "-"}</span></div>
                           <div className="flex justify-between"><span className="text-slate-400">Company Size:</span><span className="text-slate-200 font-medium">{c.companySize || "-"}</span></div>
                           <div className="flex justify-between"><span className="text-slate-400">Country/TZ:</span><span className="text-slate-200 font-medium">{c.country || "-"} {c.timezone ? `(${c.timezone})` : ''}</span></div>
-                          <div className="flex justify-between"><span className="text-slate-400">Join Date:</span><span className="text-slate-200 font-medium">{c.joinDate || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Join Date:</span><span className="text-slate-200 font-medium">{formatDisplayDate(c.joinDate)}</span></div>
                           <div className="flex justify-between"><span className="text-slate-400">Source:</span><span className="text-slate-200 font-medium">{c.signupSource || "-"}</span></div>
                         </div>
                       </div>
 
                       {/* 2. Package & Financials */}
                       <div>
-                        <p className="text-[8px] uppercase font-bold text-slate-400 mb-1 tracking-wider border-b border-slate-800 pb-0.5">2. Package & Financials</p>
+                        <p className="text-[8px] uppercase font-bold text-slate-500 mb-1 tracking-wider border-b border-slate-800 pb-0.5">2. Package & Financials</p>
                         <div className="space-y-0.5">
                           <div className="flex justify-between"><span className="text-slate-400">Package Tier:</span><span className="text-slate-200 font-medium">{c.package || "-"}</span></div>
                           <div className="flex justify-between"><span className="text-slate-400">Billing Cycle:</span><span className="text-slate-200 font-medium">{c.billingCycle || "-"}</span></div>
-                          <div className="flex justify-between"><span className="text-slate-400">Payment Status:</span><span className={`font-bold ${c.paymentStatus === 'Overdue' ? 'text-rose-400' : 'text-emerald-400'}`}>{c.paymentStatus || "-"}</span></div>
-                          <div className="flex justify-between"><span className="text-slate-400">Last Payment:</span><span className="text-slate-200 font-medium">{c.lastPaymentDate || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Payment Status:</span><span className={`font-bold ${c.paymentStatus === 'Overdue' ? 'text-rose-500' : 'text-emerald-500'}`}>{c.paymentStatus || "-"}</span></div>
+                          <div className="flex justify-between"><span className="text-slate-400">Last Payment:</span><span className="text-slate-200 font-medium">{formatDisplayDate(c.lastPaymentDate)}</span></div>
                           <div className="flex justify-between"><span className="text-slate-400">Payment Method:</span><span className="text-slate-200 font-medium">{c.paymentMethod || "-"}</span></div>
                           <div className="flex justify-between"><span className="text-slate-400">Discount:</span><span className="text-slate-200 font-medium">{c.discountApplied || "None"}</span></div>
                         </div>
@@ -1001,7 +1375,7 @@ function Customer360View({ customers = [], addCustomers, updateCustomer, clearAl
 
                       {/* 3. Product Usage & Activity */}
                       <div>
-                        <p className="text-[8px] uppercase font-bold text-slate-400 mb-1 tracking-wider border-b border-slate-800 pb-0.5">3. Product Usage</p>
+                        <p className="text-[8px] uppercase font-bold text-slate-500 mb-1 tracking-wider border-b border-slate-800 pb-0.5">3. Product Usage</p>
                         <div className="space-y-0.5">
                           <div className="flex justify-between"><span className="text-slate-400">Last Login Date:</span><span className="text-slate-200 font-semibold">{formatDateTime(c.lastLoginDate)}</span></div>
                           <div className="flex justify-between"><span className="text-slate-400">Login Frequency:</span><span className="text-slate-200 font-medium">{c.loginFrequency || 0}</span></div>
@@ -1013,7 +1387,7 @@ function Customer360View({ customers = [], addCustomers, updateCustomer, clearAl
 
                       {/* 4. Product Feedback */}
                       <div>
-                        <p className="text-[8px] uppercase font-bold text-slate-400 mb-1 tracking-wider border-b border-slate-800 pb-0.5">4. Product Feedback</p>
+                        <p className="text-[8px] uppercase font-bold text-slate-500 mb-1 tracking-wider border-b border-slate-800 pb-0.5">4. Product Feedback</p>
                         <div className="space-y-0.5">
                           <div className="flex justify-between"><span className="text-slate-400">Feature Requests:</span><span className="text-slate-200 font-medium">{c.customFeatureRequests || "None"}</span></div>
                           <div className="flex justify-between"><span className="text-slate-400">Bugs Submitted:</span><span className="text-slate-200 font-medium">{c.bugReportsSubmitted || 0}</span></div>
@@ -1024,14 +1398,91 @@ function Customer360View({ customers = [], addCustomers, updateCustomer, clearAl
                     </div>
 
                     {/* Back Footer */}
-                    <div className="pt-2 border-t border-slate-700/80 flex-shrink-0">
+                    <div className="pt-2 border-t border-slate-800 flex-shrink-0">
                       <button 
-                        onClick={() => setFlippedId(null)}
-                        className="w-full py-1 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg text-[9px] transition-colors cursor-pointer flex items-center justify-center gap-1"
+                        onClick={() => setActiveCard({ id: null, view: 'front' })}
+                        className="w-full py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg text-[9px] transition-colors cursor-pointer flex items-center justify-center gap-1"
                       >
                         ← Back to AI Analysis
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {currentView === 'log' && (
+                  /* ── LOG VIEW: Activity Log Page (Fixed 390px Height) ── */
+                  <div className="p-3.5 flex flex-col h-full">
+                    {/* Back Header */}
+                    <div className="flex items-center justify-between pb-2 border-b border-blue-200 flex-shrink-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-800 font-bold text-[9px] flex items-center justify-center border border-blue-200">
+                          {getInitials(c.name)}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="text-xs font-bold text-blue-950 truncate">{c.name} - Log</h3>
+                          <p className="text-[9px] text-blue-600 truncate">{c.company || c.email}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setActiveCard({ id: null, view: 'front' })}
+                        className="p-1 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+
+                    {/* Scrollable Conversation Log */}
+                    <div className="flex-1 overflow-y-auto py-3 space-y-3 pr-1 text-[10px]">
+                      {churnRisk > 50 ? (
+                        <>
+                          <div className="flex flex-col items-start max-w-[85%]">
+                            <span className="text-[8px] text-slate-500 mb-0.5 ml-1 flex items-center gap-1"><Brain size={8}/> AI Agent • 2 days ago</span>
+                            <div className="bg-slate-50 border border-slate-200 p-2 rounded-xl rounded-tl-sm text-slate-700">
+                              System detected high churn risk. Sent automated WhatsApp check-in: "Hi {c.name.split(' ')[0]}, we noticed your usage dropped. Anything we can help with?"
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end self-end max-w-[85%] ml-auto">
+                            <span className="text-[8px] text-slate-500 mb-0.5 mr-1">Customer • 1 day ago</span>
+                            <div className="bg-blue-600 p-2 rounded-xl rounded-tr-sm text-white">
+                              Yes, I'm having trouble with the new API integration.
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-start max-w-[85%]">
+                            <span className="text-[8px] text-slate-500 mb-0.5 ml-1 flex items-center gap-1"><Brain size={8}/> AI Agent • 1 day ago</span>
+                            <div className="bg-slate-50 border border-slate-200 p-2 rounded-xl rounded-tl-sm text-slate-700">
+                              Activity logged. Manual intervention required to assist with API integration.
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex flex-col items-start max-w-[85%]">
+                            <span className="text-[8px] text-slate-500 mb-0.5 ml-1 flex items-center gap-1"><Brain size={8}/> AI Agent • 1 week ago</span>
+                            <div className="bg-slate-50 border border-slate-200 p-2 rounded-xl rounded-tl-sm text-slate-700">
+                              Sent monthly summary report via WhatsApp. Account health is excellent.
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-start max-w-[85%]">
+                            <span className="text-[8px] text-slate-500 mb-0.5 ml-1 flex items-center gap-1"><Brain size={8}/> AI Agent • Just now</span>
+                            <div className="bg-slate-50 border border-slate-200 p-2 rounded-xl rounded-tl-sm text-slate-700">
+                              No urgent action needed. Monitoring normal activity.
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Action Footer */}
+                    <div className="pt-2 border-t border-blue-200 flex-shrink-0 flex gap-2">
+                      <a 
+                        href={`https://wa.me/${(c.phone || '').replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex-1 py-1 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg text-[10px] transition-colors cursor-pointer flex items-center justify-center gap-1"
+                      >
+                        <MessageCircle size={12} /> Reply on WhatsApp
+                      </a>
+                      </div>
                   </div>
                 )}
               </div>
@@ -1077,6 +1528,20 @@ function InsightsView({ customers = [], onNavigate }) {
   const avg = (arr, key) => arr.length ? arr.reduce((s,c)=>s+(parseFloat(c[key])||0),0)/arr.length : 0;
   const fRM = v => `RM${Number(v).toFixed(2)}`;
   const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
+
+  const renderCustomerLink = (c, fallbackName = "", extraClasses = "") => {
+    const id = c.firestoreId || c.customerId || c.email;
+    const name = c.name || fallbackName || "Customer";
+    return (
+      <button 
+        onClick={() => onNavigate && onNavigate("customers", { customerId: id })}
+        className={`font-bold text-indigo-600 hover:underline hover:text-indigo-855 text-left transition-colors cursor-pointer block truncate ${extraClasses}`}
+        title={`View 360 for ${name}`}
+      >
+        {name}
+      </button>
+    );
+  };
 
   // ── 1. Customer Segmentation ─────────────────────────────────────────────────
   const segments = useMemo(() => {
@@ -1221,6 +1686,56 @@ function InsightsView({ customers = [], onNavigate }) {
   }).sort((a,b)=>b.overallHealth-a.overallHealth);
 
   // ── Section meta ─────────────────────────────────────────────────────────────
+  const generateAISummary = () => {
+    switch(activeSection) {
+      case "segmentation": {
+        const atRisk = segCounts.find(s=>s.name==="At-Risk")?.revenue || 0;
+        const pctAtRisk = pct(atRisk, totalRevenue);
+        return `${pctAtRisk}% of MRR is currently locked in the At-Risk segment; immediately deploy targeted retention campaigns focused on High-Value Enterprise accounts to prevent revenue leakage.`;
+      }
+      case "churn": {
+        const totalRisk = churnTable.reduce((a,c)=>a+c.revenueRisk, 0);
+        return `RM${Math.round(totalRisk).toLocaleString()} is at critical risk of churn in the next 30 days; schedule priority intervention calls with the top 3 highest-risk accounts today.`;
+      }
+      case "clv": {
+        const topCLV = clvData[0]?.totalPaid || 0;
+        return `High disparity observed in CLV (Top account at RM${Math.round(topCLV).toLocaleString()}); action needed to implement structured upsell paths for lower-tier cohorts to lift overall average.`;
+      }
+      case "adoption": {
+        const topFeat = featureData[0]?.name || "Core Features";
+        return `Over-reliance on '${topFeat}' indicates poor feature discovery; launch in-app tutorials for secondary features to boost daily active usage and platform stickiness.`;
+      }
+      case "engagement": {
+        const lowEng = engagementData.filter(c=>c.engagementScore < 50).length;
+        return `${lowEng} customers have critically low engagement scores; trigger automated re-engagement workflows highlighting quick-win features to reactivate them.`;
+      }
+      case "seats": {
+        const lowSeats = seatData.filter(c=>c.seatUtil < 50).length;
+        return `${lowSeats} accounts are utilizing less than 50% of their paid seats; proactively reach out to offer end-user training sessions before their next renewal cycle.`;
+      }
+      case "upsell": {
+        const ready = upsellData.length;
+        return `${ready} accounts are exhibiting strong expansion signals; immediately assign sales representatives to pitch Level 4 upgrades based on their high utilization rates.`;
+      }
+      case "nps": {
+        return `NPS score is currently ${npsScore}; follow up individually with detractors to resolve outstanding pain points and request referrals/case studies from promoters.`;
+      }
+      case "payment": {
+        const overdueTotal = Object.values(overdueByMethod).reduce((a,b)=>a+b, 0);
+        return `${overdueTotal} accounts are currently overdue on payments; enforce strict automated dunning sequences and consider soft-locking features until balances are cleared.`;
+      }
+      case "channel": {
+        const bestChan = channelData[0]?.name || "Organic";
+        return `'${bestChan}' is yielding the highest LTV by a significant margin; immediately reallocate marketing spend away from underperforming channels to maximize acquisition ROI.`;
+      }
+      case "health": {
+        const poorHealth = healthBreakdown.filter(c=>c.overallHealth < 50).length;
+        return `${poorHealth} customers have severe health issues spanning usage and support; prioritize fixing their outstanding bugs and offer white-glove onboarding refreshers.`;
+      }
+      default: return "";
+    }
+  };
+
   const sections = [
     { id:"segmentation", label:"Segmentation" },
     { id:"churn",        label:"Churn" },
@@ -1252,6 +1767,15 @@ function InsightsView({ customers = [], onNavigate }) {
 
       {/* ── Main Panel ── */}
       <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        
+        {/* ── Dynamic AI Summary Banner ── */}
+        <div className="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 flex items-start gap-2.5 shadow-sm">
+          <Brain size={16} className="text-indigo-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-[10px] uppercase font-bold text-indigo-500 mb-0.5 tracking-wider">AI Insight & Recommended Action</p>
+            <p className="text-xs font-semibold text-indigo-950 leading-snug">{generateAISummary()}</p>
+          </div>
+        </div>
 
         {/* ════ 1. CUSTOMER SEGMENTATION ════ */}
         {activeSection==="segmentation" && (
@@ -1317,7 +1841,7 @@ function InsightsView({ customers = [], onNavigate }) {
                   <tbody className="divide-y divide-slate-100">
                     {segments.map(c=>(
                       <tr key={c.customerId||c.email} className="hover:bg-slate-50">
-                        <td className="px-3 py-2 font-bold text-slate-900">{c.name}</td>
+                        <td className="px-3 py-2">{renderCustomerLink(c)}</td>
                         <td className="px-3 py-2 text-slate-500">{c.company}</td>
                         <td className="px-3 py-2"><span className="px-1.5 py-0.5 rounded-full text-white text-[9px] font-bold" style={{background:{Enterprise:"#3b82f6",Champion:"#10b981",Growth:"#8b5cf6",SMB:"#f59e0b","At-Risk":"#f43f5e"}[c.segment]}}>{c.segment}</span></td>
                         <td className="px-3 py-2">{c.package}</td>
@@ -1365,7 +1889,10 @@ function InsightsView({ customers = [], onNavigate }) {
                   <tbody className="divide-y divide-slate-100">
                     {churnTable.map(c=>(
                       <tr key={c.customerId||c.email} className="hover:bg-slate-50">
-                        <td className="px-3 py-2"><p className="font-bold text-slate-900">{c.name}</p><p className="text-slate-400">{c.company}</p></td>
+                        <td className="px-3 py-2">
+                          {renderCustomerLink(c, "", "text-[10px]")}
+                          <p className="text-slate-400">{c.company}</p>
+                        </td>
                         <td className="px-3 py-2">{c.package}</td>
                         <td className="px-3 py-2 font-mono">RM{parseFloat(c.packagePrice||0).toFixed(0)}</td>
                         <td className="px-3 py-2"><span className={`px-2 py-0.5 rounded-full font-bold text-[9px] ${(c.churnProbability||0)>70?"bg-rose-100 text-rose-700":"bg-amber-100 text-amber-700"}`}>{c.churnProbability}%</span></td>
@@ -1430,7 +1957,10 @@ function InsightsView({ customers = [], onNavigate }) {
                       return (
                         <tr key={c.customerId||c.email} className="hover:bg-slate-50">
                           <td className="px-3 py-2 font-bold text-slate-400">#{i+1}</td>
-                          <td className="px-3 py-2"><p className="font-bold text-slate-900">{c.name}</p><p className="text-slate-400">{c.company}</p></td>
+                          <td className="px-3 py-2">
+                            {renderCustomerLink(c, "", "text-[10px]")}
+                            <p className="text-slate-400">{c.company}</p>
+                          </td>
                           <td className="px-3 py-2 text-slate-500">{c.industry}</td>
                           <td className="px-3 py-2">{c.package}</td>
                           <td className="px-3 py-2 font-mono font-bold text-emerald-700">RM{c.totalPaid.toLocaleString()}</td>
@@ -1487,7 +2017,9 @@ function InsightsView({ customers = [], onNavigate }) {
                     const adopt = parseFloat(c.coreFeatureAdoption)||0;
                     return (
                       <div key={c.customerId||c.email} className="flex items-center gap-2">
-                        <span className="text-[9px] text-slate-500 w-20 shrink-0 truncate">{c.name}</span>
+                        <div className="w-20 shrink-0 truncate">
+                          {renderCustomerLink(c, "", "text-[9px] font-semibold")}
+                        </div>
                         <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{width:`${adopt}%`,background:adopt>70?"#10b981":adopt>40?"#f59e0b":"#f43f5e"}}/>
                         </div>
@@ -1537,7 +2069,7 @@ function InsightsView({ customers = [], onNavigate }) {
                   <div key={c.customerId||c.email} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
                     <span className="text-[9px] font-bold text-slate-400 w-5">#{i+1}</span>
                     <div className="w-24 shrink-0">
-                      <p className="text-[10px] font-bold text-slate-900 truncate">{c.name}</p>
+                      {renderCustomerLink(c, "", "text-[10px]")}
                       <p className="text-[9px] text-slate-400 truncate">{c.company}</p>
                     </div>
                     <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
@@ -1578,7 +2110,7 @@ function InsightsView({ customers = [], onNavigate }) {
                 {seatData.map(c=>(
                   <div key={c.customerId||c.email} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
                     <div className="w-28 shrink-0">
-                      <p className="text-[10px] font-bold text-slate-900 truncate">{c.name}</p>
+                      {renderCustomerLink(c, "", "text-[10px]")}
                       <p className="text-[9px] text-slate-400">{c.seatsActive}/{c.seatsLicensed} seats</p>
                     </div>
                     <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -1624,7 +2156,7 @@ function InsightsView({ customers = [], onNavigate }) {
                       const seatUtil = (parseFloat(c.seatsLicensed)||0)>0?Math.round(((parseFloat(c.seatsActive)||0)/(parseFloat(c.seatsLicensed)||1))*100):0;
                       return (
                         <tr key={c.customerId||c.email} className="hover:bg-slate-50">
-                          <td className="px-3 py-2 font-bold text-slate-900">{c.name}</td>
+                          <td className="px-3 py-2">{renderCustomerLink(c)}</td>
                           <td className="px-3 py-2 text-slate-500">{c.company}</td>
                           <td className="px-3 py-2">{c.package}</td>
                           <td className="px-3 py-2"><span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-bold text-[9px]">{c.expansionScore}/100</span></td>
@@ -1692,7 +2224,9 @@ function InsightsView({ customers = [], onNavigate }) {
                     const s = parseFloat(c.surveyResponses)||0;
                     return (
                       <div key={c.customerId||c.email} className="flex items-center gap-2">
-                        <span className="text-[9px] w-24 truncate text-slate-600">{c.name}</span>
+                        <div className="w-24 shrink-0 truncate">
+                          {renderCustomerLink(c, "", "text-[9px] font-semibold")}
+                        </div>
                         <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{width:`${s}%`,background:s>=80?"#10b981":s>=60?"#f59e0b":"#f43f5e"}}/>
                         </div>
@@ -1820,7 +2354,7 @@ function InsightsView({ customers = [], onNavigate }) {
                   <tbody className="divide-y divide-slate-100">
                     {[...customers].sort((a,b)=>(parseFloat(b.totalPaid)||0)-(parseFloat(a.totalPaid)||0)).map(c=>(
                       <tr key={c.customerId||c.email} className="hover:bg-slate-50">
-                        <td className="px-3 py-2 font-bold text-slate-900">{c.name}</td>
+                        <td className="px-3 py-2">{renderCustomerLink(c)}</td>
                         <td className="px-3 py-2"><span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[9px] font-bold">{c.signupSource||"?"}</span></td>
                         <td className="px-3 py-2">{c.package}</td>
                         <td className="px-3 py-2 font-mono font-bold text-emerald-700">RM{(parseFloat(c.totalPaid)||0).toLocaleString()}</td>
@@ -1862,7 +2396,10 @@ function InsightsView({ customers = [], onNavigate }) {
                   <div key={c.customerId||c.email} className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="text-xs font-bold text-slate-900">{c.name} <span className="text-[9px] text-slate-400 font-normal">· {c.company} · {c.package}</span></p>
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                          {renderCustomerLink(c, "", "text-[11px] font-bold")}
+                          <span className="text-[9px] text-slate-400 font-normal">· {c.company} · {c.package}</span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{background:hColor+"20",color:hColor}}>{h>=70?"Healthy":h>=40?"Moderate":"Critical"}</span>
@@ -4202,7 +4739,12 @@ export default function App() {
     { id: "res-2", title: "Conduct QBR for Emma Harrison's team", rar: 41000, dept: "Customer Success", resolvedAt: "Today, 04:10 PM", pic: "Marcus Vance" }
   ]);
 
-  const handleTabChange = id => {
+  const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+
+  const handleTabChange = (id, extra) => {
+    if (extra && extra.customerId) {
+      setSelectedCustomerId(extra.customerId);
+    }
     if (id === activeTab) return;
     setTransitioning(true);
     setTimeout(() => { setActiveTab(id); setTransitioning(false); }, 180);
@@ -4211,7 +4753,7 @@ export default function App() {
   const renderView = () => {
     switch (activeTab) {
       case "dashboard":  return <DashboardView customers={customers} onNavigate={handleTabChange} />;
-      case "customers":  return <Customer360View customers={customers} addCustomers={addCustomers} updateCustomer={updateCustomer} deleteCustomer={deleteCustomer} clearAllCustomers={clearAllCustomers} loading={loading} error={error} />;
+      case "customers":  return <Customer360View customers={customers} addCustomers={addCustomers} updateCustomer={updateCustomer} deleteCustomer={deleteCustomer} clearAllCustomers={clearAllCustomers} loading={loading} error={error} selectedCustomerId={selectedCustomerId} setSelectedCustomerId={setSelectedCustomerId} />;
       case "insights":   return <InsightsView customers={customers} resolvedTasks={resolvedTasks} onNavigate={handleTabChange} />;
       case "actions":    return <ActionsView resolvedTasks={resolvedTasks} setResolvedTasks={setResolvedTasks} pics={pics} setPics={setPics} onNavigate={handleTabChange} />;
       case "reports":    return <ReportsView onNavigate={handleTabChange} customers={customers} />;
