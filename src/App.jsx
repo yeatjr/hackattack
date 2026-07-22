@@ -11,7 +11,7 @@ import {
   ArrowUpRight, ArrowDownRight, Bell, Search, Play, Pause, Plus, Info, Target, Heart,
   Clock, Zap, UserX, MessageSquare, X, Globe, LogOut, Brain, TrendingUp, Send, FileText, Mail, MessageCircle,
   Upload, Download, Trash2, ChevronLeft, Filter, SortAsc, SortDesc,
-  Package, CreditCard, Wifi, WifiOff, Eye, EyeOff, RefreshCw,
+  Package, CreditCard, Wifi, WifiOff, Eye, EyeOff, RefreshCw, Settings,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { useCustomers } from "./useCustomers";
